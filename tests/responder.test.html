@@ -210,6 +210,28 @@ async function send(text){
     const igv = G.calls.find(c => c.method === 'GET' && c.path === G.posts[0].id);
     check('Instagram: se verifica leyendo text, username y parent_id', igv && /text/.test(igv.params.fields) && /parent_id/.test(igv.params.fields), igv && igv.params.fields);
     check('Instagram: respuesta verificada y comentario atendido', S().comments.find(c => c.source === 'respuesta').verified && comment('17841001').teamAnswered);
+
+    // 8. A los miembros del equipo no se les responde
+    session(); await loadFacebook();
+    const y = comment('P_1003');
+    check('El comentario de un miembro del equipo no es pendiente', y.isTeam && !y.needsTeam);
+    const yNode = d.querySelector('#conv .cnode[data-id="P_1003"]');
+    check('…y no muestra el botón de responder', yNode && !yNode.querySelector(':scope > .crow [data-act="reply"]'));
+    d.getElementById('replyDlg').open && d.getElementById('replyDlg').close();
+    w.openReply(y, null); await wait(200);
+    check('Intentar responderle no abre el asistente', !d.getElementById('replyDlg').open, d.getElementById('snackMsg').textContent);
+    check('…y avisa de que forma parte del equipo', /forma parte de tu equipo/.test(d.getElementById('snackMsg').textContent));
+    check('La cola de pendientes no incluye a miembros del equipo', !S().pending.some(c => c.isTeam));
+    // añadir al equipo a la persona del comentario abierto: el asistente la omite
+    d.getElementById('assistStart').click();
+    await until(() => d.getElementById('replyDlg').open);
+    const first = w.eval('RP.c'), firstName = first.authorName;
+    w.eval(`TEAM.add(${JSON.stringify(firstName)})`); w.teamChanged(); await wait(200);
+    const now = w.eval('RP.c');
+    check('Si se añade al equipo a quien se está respondiendo, el asistente lo omite', !d.getElementById('replyDlg').open || (now && now.authorName !== firstName), 'antes: ' + firstName + ' · ahora: ' + (d.getElementById('replyDlg').open ? now.authorName : '(cerrado)'));
+    G.posts.length = 0; w.eval('RP.c = S.comments.find(c => c.id === "P_1003")'); d.getElementById('rpText').value = 'x';
+    await w.eval('sendReply()'); await wait(200);
+    check('Publicar forzado a un miembro del equipo no envía nada', G.posts.length === 0);
   }catch(e){ check('Excepción durante la prueba', false, e.stack || String(e)); }
   const ok = results.filter(Boolean).length, all = results.length;
   const sum = document.getElementById('sum');

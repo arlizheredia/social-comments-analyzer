@@ -1596,6 +1596,7 @@ Antes de responder, el asistente comprueba que haya una **sesión de Facebook ac
 - Añade personas desde la lista *Personas en estos comentarios*, escribiendo su nombre, o desde el detalle de un comentario (**Añadir al equipo**).
 - Un comentario está **respondido** cuando alguien del equipo contesta en su hilo (o lo menciona en una respuesta posterior del mismo hilo). Sus mensajes llevan la insignia *Equipo*.
 - Por defecto, el **autor de la publicación** (tu página o cuenta) cuenta como equipo.
+- **A los miembros del equipo no se les responde**: sus comentarios nunca son pendientes, no muestran el botón de responder y el asistente los omite (también si añades a alguien mientras respondes).
 - Son **pendientes** los comentarios principales y las respuestas dirigidas a tu equipo. Marca *Considerar pendientes también las respuestas entre usuarios* para incluir todas.
 
 ## Catálogo de respuestas {#as-catalogo}
@@ -3858,7 +3859,13 @@ function renderTeamDlg(){
   }).join('') || '<p class="small muted" style="padding:0 8px">No hay personas que coincidan.</p>';
 }
 function openTeam(){ $('#teamSearch').value = ''; renderTeamDlg(); $('#teamDlg').showModal(); }
-function teamChanged(){ renderTeamDlg(); renderTable(); if($('#replyDlg').open) renderReply(); }
+function teamChanged(){
+  renderTeamDlg(); renderTable();
+  if(!$('#replyDlg').open) return;
+  // si el comentario abierto pasa a ser de alguien del equipo, se salta
+  if(RP.c && RP.c.isTeam){ const n = RP.c.authorName; replyStep(1); if($('#replyDlg').open && RP.c && RP.c.isTeam) $('#replyDlg').close(); toast(`${n} ahora es del equipo: se omiten sus comentarios`); }
+  else renderReply();
+}
 
 /* ---------- Diálogo: catálogo ---------- */
 const TAG_NAME = { positivo:'Positivos', neutral:'Neutrales', negativo:'Negativos', pregunta:'Preguntas' };
@@ -3947,8 +3954,17 @@ function pickReply(id){
 }
 const graphemes = s => { try{ return [...new Intl.Segmenter('es', { granularity:'grapheme' }).segment(s)].length; }catch(e){ return [...s].length; } };
 function updateRpChars(){ $('#rpChars').textContent = fmtN(graphemes($('#rpText').value)); }
+// Regla: a los miembros del equipo (ni al autor de la publicación, si cuenta como equipo) no se les responde
+function teamBlock(c){
+  computeTeam();
+  if(!c || !c.isTeam) return false;
+  toast(`${c.authorName || 'Esta persona'} forma parte de tu equipo: no se le responde`);
+  return true;
+}
 function openReply(c, queue){
-  RP.queue = queue && queue.length ? queue.map(x => x.id) : [c.id];
+  if(teamBlock(c)) return;
+  queue = (queue || []).filter(x => !x.isTeam);
+  RP.queue = queue.length ? queue.map(x => x.id) : [c.id];
   RP.i = Math.max(0, RP.queue.indexOf(c.id)); RP.c = c;
   renderReply(); if(!$('#replyDlg').open) $('#replyDlg').showModal();
   setTimeout(() => $('#rpText').focus(), 50);
@@ -3964,7 +3980,7 @@ function startAssistant(){
 }
 function replyStep(d){
   const ids = RP.queue; let i = RP.i + d;
-  while(i >= 0 && i < ids.length){ const c = S.comments.find(x => x.id === ids[i]); if(c){ RP.i = i; RP.c = c; renderReply(); return; } i += d; }
+  while(i >= 0 && i < ids.length){ const c = S.comments.find(x => x.id === ids[i]); if(c && !c.isTeam){ RP.i = i; RP.c = c; renderReply(); return; } i += d; }
   if(d > 0){ $('#replyDlg').close(); toast('No quedan más comentarios pendientes en la lista'); }
 }
 function finalText(){
@@ -4015,6 +4031,7 @@ function ensureReplyPerm(platform){
 }
 async function sendReply(){
   const c = RP.c, text = finalText();
+  if(teamBlock(c)){ setStatus('#rpStatus', 'No se responde a miembros del equipo.', true); return; }
   if(!text){ setStatus('#rpStatus', 'Escribe o elige una respuesta.', true); $('#rpText').focus(); return; }
   if(!sessionGuard(c)) return;
   const route = replyRoute(c);
@@ -4061,6 +4078,7 @@ async function verifyReply(platform, id, target, text, token, tries = 3){
 }
 async function copyAndOpen(){
   const c = RP.c, text = finalText();
+  if(teamBlock(c)){ setStatus('#rpStatus', 'No se responde a miembros del equipo.', true); return; }
   if(!sessionGuard(c)) return;
   if(!text){ setStatus('#rpStatus', 'Escribe o elige una respuesta.', true); $('#rpText').focus(); return; }
   const url = c.permalink || S.meta.url;
