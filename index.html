@@ -307,14 +307,16 @@ a.nm:hover{text-decoration:underline}
 .pill-s.reply{background:var(--primary-container);color:var(--on-primary-container)}
 .pill-s.pos{background:var(--success-container);color:var(--success)}
 .pill-s.neg{background:var(--error-container);color:var(--error)}
-td.c-text{min-width:260px;max-width:560px}
+td.c-text{min-width:240px;max-width:520px}
 td.c-text .txt{white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 tr.reply td.c-text{padding-left:40px;position:relative}
 tr.reply td.c-text::before{content:"subdirectory_arrow_right";font-family:"Material Symbols Rounded";position:absolute;left:14px;top:12px;font-size:18px;color:var(--on-surface-variant)}
 .att{display:flex;gap:4px;align-items:center;font-size:12px;color:var(--on-surface-variant);margin-top:6px}
 .att .ms{font-size:16px}
 td.c-date{white-space:nowrap;font-size:13px;color:var(--on-surface-variant)}
-.rowacts{display:flex;gap:0;opacity:.55;transition:opacity .15s}
+.rowacts{display:flex;gap:0;opacity:.55;transition:opacity .15s;flex-wrap:nowrap;justify-content:flex-end}
+td.c-acts{width:1%;white-space:nowrap;padding-left:4px;padding-right:8px}
+.rowacts [data-act="reply"] .ms.fill{color:var(--pend-fg);background:var(--pend-bg);border-radius:50%;padding:4px;margin:-4px}
 tr:hover .rowacts,tr:focus-within .rowacts{opacity:1}
 mark{background:#fde293;color:#1f1f1f;border-radius:2px;padding:0 1px}
 .pager{display:flex;justify-content:flex-end;align-items:center;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--on-surface-variant)}
@@ -364,7 +366,8 @@ mark{background:#fde293;color:#1f1f1f;border-radius:2px;padding:0 1px}
 .plat-seg button:hover .pdot{transform:scale(1.08)}
 .conv-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;min-height:40px;font-size:13px;color:var(--on-surface-variant)}
 .conv-bar select.input{height:36px;width:auto;padding:0 36px 0 12px;background-position:calc(100% - 18px) 15px,calc(100% - 13px) 15px}
-.conv{--line:var(--outline-variant);max-width:780px}
+.conv{--line:var(--outline-variant)}
+.conv .cmain>.bubble-wrap,.conv .cmain>.cimg{max-width:min(100%,760px)}
 .cnode{position:relative}
 .cthread{padding:4px 0 12px}
 .cthread+.cthread{border-top:1px solid var(--outline-variant);padding-top:8px}
@@ -525,6 +528,11 @@ dialog[open]{animation:dlg .2s cubic-bezier(.2,0,0,1)}
 .dlg-body{padding:24px;overflow:auto;max-height:calc(100vh - 140px)}
 .dlg-actions{display:flex;justify-content:flex-end;gap:8px;padding:0 24px 24px;flex-wrap:wrap;align-items:center}
 .dlg-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:20px 16px 0 24px}
+.dlg-head-acts{display:flex;gap:4px;align-items:center}
+/* Diálogos con cabecera, cuerpo y acciones: solo se desplaza el cuerpo (sin doble barra) */
+dialog:has(>.dlg-body)[open]{display:flex;flex-direction:column;overflow:hidden}
+dialog:has(>.dlg-body)>.dlg-head,dialog:has(>.dlg-body)>.dlg-actions{flex:none}
+dialog:has(>.dlg-body)>.dlg-body{flex:1 1 auto;min-height:0;max-height:none}
 #detailDlg{max-width:min(720px,calc(100vw - 32px))}
 .kv{display:grid;grid-template-columns:160px 1fr;gap:10px 16px;font-size:14px;margin:0}
 .kv dt{color:var(--on-surface-variant)}
@@ -767,7 +775,171 @@ mark.hl{background:#fde293;color:#1f1f1f;border-radius:2px;padding:0 1px}
 .viz-key .k-bar{width:10px;height:10px;border-radius:2px;background:var(--viz-1)}
 .viz-key .k-line{width:16px;height:2px;border-radius:1px;background:var(--viz-avg)}
 .viz-trend{color:var(--on-surface)}
-@media (max-width:720px){ .viz-head{flex-wrap:wrap} }
+@media (max-width:720px){ .viz-head>div:first-child{min-width:0;flex:1 1 0} .viz-head:has(#tlMode){flex-wrap:wrap} .viz-head:has(#tlMode)>div:first-child{flex-basis:100%} .viz-head:has(#tlMode) .viz-actions{width:100%;justify-content:flex-start} }
+
+/* ================== ASISTENTE DE RESPUESTAS ================== */
+dialog.wide{max-width:min(860px,calc(100vw - 32px))}
+.fcount{font-weight:600;margin-left:2px;font-variant-numeric:tabular-nums}
+.fcount:empty{display:none}
+.fchip .fcount{background:var(--surface-container-high,var(--surface-container));border-radius:10px;padding:1px 7px;font-size:12px}
+.assist-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px 10px 16px;border-radius:16px;border:1px solid var(--outline-variant);background:var(--surface);margin:0 0 12px}
+.assist-bar .ab-ic{color:var(--primary)}
+.ab-txt{display:flex;flex-direction:column;min-width:0;flex:1 1 220px;font-size:14px;line-height:20px}
+.ab-txt span{font-size:12px;color:var(--on-surface-variant)}
+.ab-acts{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ab-acts .btn .fcount{margin-left:4px}
+.team-list{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.team-list:empty::before{content:"Todavía no hay nadie en el equipo. Añade personas desde la lista de abajo o escribe su nombre.";font-size:13px;color:var(--on-surface-variant)}
+.tmember{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 4px 0 12px;border-radius:8px;background:var(--secondary-container);color:var(--on-secondary-container);font-size:13px;font-weight:500;max-width:100%}
+.tmember span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tmember button{display:inline-flex;border:0;background:none;color:inherit;cursor:pointer;border-radius:50%;padding:4px}
+.tmember button:hover{background:color-mix(in srgb,currentColor 12%,transparent)}
+.tmember .ms{font-size:18px}
+.team-add{gap:8px;flex-wrap:nowrap;margin-bottom:8px}
+.team-add .input{height:40px}
+.team-h{font-size:14px;font-weight:600;margin:20px 0 8px}
+.searchbar.sm{height:40px;margin-bottom:8px;background:var(--surface)}
+.team-people{display:flex;flex-direction:column;gap:2px;max-height:320px;overflow:auto;margin:0 -8px}
+.tperson{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:12px;padding:6px 8px;border-radius:10px}
+.tperson:hover{background:var(--surface-container-high,var(--surface))}
+.tperson .avatar{width:32px;height:32px;font-size:12px}
+.tperson .tp-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.tperson .tp-sub{font-size:12px;color:var(--on-surface-variant)}
+.tperson .btn{height:32px}
+.cat-list{display:flex;flex-direction:column;gap:8px}
+.cat-list:empty::before{content:"El catálogo está vacío. Crea tu primera respuesta.";font-size:13px;color:var(--on-surface-variant)}
+.cat-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;padding:12px 8px 12px 16px;border-radius:12px;background:var(--surface)}
+.cat-item b{font-size:14px}
+.cat-item p{grid-column:1;margin:0;font-size:13px;line-height:19px;color:var(--on-surface-variant);white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cat-item .ci-acts{grid-row:1/span 3;grid-column:2;display:flex;gap:2px;align-items:flex-start}
+.ci-tags{display:flex;gap:4px;flex-wrap:wrap}
+.ci-tag{font-size:11px;font-weight:500;padding:1px 8px;border-radius:6px;background:var(--surface-container);color:var(--on-surface-variant)}
+.cat-form{display:flex;flex-direction:column;gap:12px;margin-top:8px;padding:16px;border-radius:16px;border:1px solid var(--outline-variant)}
+.cat-form .input{height:44px}
+textarea.input.prose{font-family:var(--font);font-size:14px;line-height:21px;min-height:120px}
+.cat-tags{display:flex;gap:8px;flex-wrap:wrap}
+.rp-orig{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;padding:14px 16px;border-radius:16px;background:var(--surface);margin-bottom:16px}
+.rp-orig .avatar{width:40px;height:40px}
+.rp-orig .ro-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:13px;color:var(--on-surface-variant)}
+.rp-orig .ro-head b{font-size:14px;color:var(--on-surface)}
+.rp-orig .ro-text{margin:4px 0 0;font-size:14px;line-height:21px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:140px;overflow:auto}
+.rp-orig .ro-ctx{font-size:12px;color:var(--on-surface-variant);margin-top:6px}
+.rp-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px}
+.rp-cat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:14px}
+.rp-opts{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow:auto;padding:2px}
+.rp-opt{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--outline-variant);background:var(--surface);color:var(--on-surface);border-radius:12px;padding:10px 12px;cursor:pointer;font:inherit}
+.rp-opt:hover{background:color-mix(in srgb,var(--on-surface) 6%,var(--surface))}
+.rp-opt[aria-selected="true"]{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,var(--surface));box-shadow:inset 0 0 0 1px var(--primary)}
+.rp-opt:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.rp-opt .ro-t{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.rp-opt .ro-p{font-size:12px;line-height:17px;color:var(--on-surface-variant);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rp-opt .sug{font-size:11px;font-weight:500;color:var(--primary);display:inline-flex;align-items:center;gap:2px}
+.rp-opt .sug .ms{font-size:14px}
+.rp-edit textarea{min-height:190px}
+.rp-hint{text-align:right}
+.rp-via{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:19px;color:var(--on-surface-variant);margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--surface)}
+.rp-via .ms{font-size:18px;color:var(--primary);margin-top:1px}
+.rp-nav{margin-right:auto;display:flex;gap:4px}
+.rp-nav .btn .ms{margin:0}
+.cname-wrap{display:inline-flex;align-items:center;gap:6px;max-width:100%;vertical-align:baseline}
+.cname-wrap .cname{margin-right:0}
+.cteam{display:inline-flex;align-items:center;gap:3px;height:18px;padding:0 6px 0 4px;border-radius:9px;font-size:11px;font-weight:600;line-height:1;color:var(--on-secondary-container);background:var(--secondary-container);flex:none}
+.cteam .ms{font-size:13px;line-height:1}
+:root{--pend-bg:#ffe9c2;--pend-fg:#6d4400;--done-bg:#d6f5dc;--done-fg:#0d5a1f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--pend-bg:#4d3300;--pend-fg:#ffd591;--done-bg:#123d1d;--done-fg:#9ee6ad}}
+:root[data-theme="dark"]{--pend-bg:#4d3300;--pend-fg:#ffd591;--done-bg:#123d1d;--done-fg:#9ee6ad}
+.cmeta .cstate{display:inline-flex;align-items:center;gap:3px;height:20px;padding:0 8px 0 5px;border-radius:10px;font-size:11.5px;font-weight:600;line-height:1}
+.cmeta .cstate .ms{font-size:14px}
+.cmeta .cstate.pend{background:var(--pend-bg);color:var(--pend-fg)}
+.cmeta .cstate.done{background:var(--done-bg);color:var(--done-fg)}
+/* Fila de comentario pendiente: fondo ámbar suave + barra de acento */
+:root{--pend-row:color-mix(in srgb,#ffb300 12%,transparent);--pend-bar:#e69500;--pend-bubble:color-mix(in srgb,#ffb300 22%,var(--surface))}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--pend-row:color-mix(in srgb,#ffb300 10%,transparent);--pend-bar:#ffb74d;--pend-bubble:color-mix(in srgb,#ffb300 20%,var(--surface-container))}}
+:root[data-theme="dark"]{--pend-row:color-mix(in srgb,#ffb300 10%,transparent);--pend-bar:#ffb74d;--pend-bubble:color-mix(in srgb,#ffb300 20%,var(--surface-container))}
+/* el fondo cubre toda la fila: desde la columna de la casilla hasta el borde derecho, incluida la burbuja */
+.cnode.pend>.crow{--off:calc(var(--selcol) + min(var(--plvl),1) * (var(--m1) + var(--pad)) + max(var(--plvl) - 1, 0) * (var(--m2) + var(--pad)));
+  margin:0 0 0 calc(-1 * var(--off));padding:8px 0 8px var(--off);border-radius:0 14px 14px 0;background:var(--pend-row);box-shadow:inset 3px 0 0 var(--pend-bar)}
+.cnode.pend>.crow>.csel{margin-left:var(--off)}
+.cnode.pend>.crow .bubble{background:var(--pend-bubble)}
+.cnode.pend>.crow .bubble:hover{background:color-mix(in srgb,var(--on-surface) 6%,var(--pend-bubble))}
+.cnode.pend>.crow .creact{background:var(--pend-bubble)}
+tr.pend>td{background:var(--pend-row)}
+tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
+@media (max-width:720px){
+  tbody tr.pend{background:var(--pend-row);box-shadow:inset 3px 0 0 var(--pend-bar);border-color:color-mix(in srgb,var(--pend-bar) 45%,transparent)}
+  tbody tr.pend>td,tbody tr.pend>td:first-child{background:none;box-shadow:none}
+}
+.creply{flex:none;align-self:flex-start;margin-top:6px;margin-right:10px;color:var(--on-surface-variant)}
+.creply .ms{font-size:20px}
+.creply.pend{background:var(--pend-bg);color:var(--pend-fg)}
+.creply.pend:hover{background:color-mix(in srgb,var(--pend-fg) 18%,var(--pend-bg))}
+.cnode:not(:hover):not(:focus-within) .creply:not(.pend){opacity:.55}
+@media (hover:none){.cnode .creply{opacity:1!important}}
+@media (max-width:720px){
+  .rp-grid{grid-template-columns:1fr}
+  .rp-opts{max-height:200px}
+  .assist-bar{padding:10px 12px}
+  .ab-acts{width:100%}
+  .ab-acts #assistStart{margin-left:auto}
+  /* acciones del asistente en dos filas: navegación + marcar / copiar + publicar */
+  #replyDlg .dlg-actions{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:12px 16px 16px}
+  #replyDlg .rp-nav{display:contents}
+  #replyDlg .rp-nav.hidden #rpPrev,#replyDlg .rp-nav.hidden #rpSkip{display:none}
+  #rpPrev,#rpSkip,#rpMark{grid-column:span 2;padding:0 8px;justify-content:center}
+  #replyDlg .rp-nav.hidden~#rpMark{grid-column:1/-1}
+  #rpCopyOpen,#rpSend{grid-column:span 3;padding:0 12px;justify-content:center}
+  #rpCopyOpen.hidden~#rpSend,#replyDlg .dlg-actions:has(#rpSend.hidden) #rpCopyOpen{grid-column:1/-1}
+  #rpMark .l-long{display:none}
+}
+#rpMark .l-short{display:none}
+@media (max-width:720px){ #rpMark .l-short{display:inline} }
+
+/* Sugerencias con IA */
+.rp-cat-head span{display:flex;gap:2px}
+.rp-ai{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.rp-ai .small{flex:1 1 100%}
+.rp-opt.ai{border-style:dashed}
+.rp-opt .aitag{font-size:11px;font-weight:600;color:var(--primary);display:inline-flex;align-items:center;gap:2px}
+.rp-opt .aitag .ms{font-size:14px}
+.rp-opt.ai .ro-p{-webkit-line-clamp:4}
+.rp-save{margin-top:4px}
+.ai-form{display:flex;flex-direction:column;gap:14px}
+.ai-form .input{height:44px}
+.ai-form textarea.input{height:auto;min-height:84px}
+.ai-form .help-note{margin:0}
+.ai-skel{height:58px;border-radius:12px;background:linear-gradient(90deg,var(--surface) 0%,color-mix(in srgb,var(--on-surface) 7%,var(--surface)) 50%,var(--surface) 100%);background-size:200% 100%;animation:aiskel 1.2s linear infinite}
+@keyframes aiskel{from{background-position:200% 0}to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.ai-skel{animation:none}}
+
+.rp-session{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 16px;border-radius:16px;background:var(--error-container);color:var(--on-surface);margin-bottom:16px}
+.rp-session>.ms{color:var(--error);font-size:22px}
+.rp-session div{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13px;line-height:19px}
+.rp-session b{font-size:14px}
+.rp-session.checking{background:var(--surface)}
+.rp-session.checking>.ms{color:var(--primary);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (max-width:720px){.rp-session{flex-wrap:wrap}.rp-session .btn{margin-left:auto}}
+
+/* Selector de emojis */
+.ed-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
+.ed-tools .rp-hint{margin-left:auto}
+.lbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:-4px}
+[data-emoji-for][aria-expanded="true"]{background:var(--secondary-container);color:var(--on-secondary-container)}
+.emoji-pop{position:fixed;z-index:10;width:min(336px,calc(100vw - 24px));max-height:min(360px,calc(100vh - 24px));display:flex;flex-direction:column;border-radius:16px;background:var(--surface);color:var(--on-surface);box-shadow:var(--elev3);border:1px solid var(--outline-variant);overflow:hidden}
+.emoji-pop .ep-search{display:flex;align-items:center;gap:6px;margin:10px 10px 4px;height:36px;padding:0 10px;border-radius:18px;background:var(--surface-container)}
+.emoji-pop .ep-search .ms{font-size:18px;color:var(--on-surface-variant)}
+.emoji-pop .ep-search input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--on-surface);font:400 13px var(--font)}
+.emoji-pop .ep-tabs{display:flex;gap:2px;padding:0 8px;border-bottom:1px solid var(--outline-variant)}
+.emoji-pop .ep-tabs button{flex:1;height:34px;border:0;background:none;border-bottom:2px solid transparent;cursor:pointer;font-size:18px;line-height:1;border-radius:6px 6px 0 0}
+.emoji-pop .ep-tabs button:hover{background:var(--surface-container)}
+.emoji-pop .ep-tabs button[aria-selected="true"]{border-bottom-color:var(--primary)}
+.emoji-pop .ep-body{overflow:auto;padding:6px 8px 10px}
+.emoji-pop .ep-h{font-size:11px;font-weight:600;color:var(--on-surface-variant);margin:8px 4px 4px;text-transform:uppercase;letter-spacing:.4px}
+.emoji-pop .ep-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+.emoji-pop .ep-grid button{aspect-ratio:1;border:0;background:none;border-radius:8px;cursor:pointer;font-size:22px;line-height:1;padding:0;display:grid;place-items:center}
+.emoji-pop .ep-grid button:hover,.emoji-pop .ep-grid button:focus-visible{background:var(--surface-container);outline:none}
+.emoji-pop .ep-grid button:focus-visible{box-shadow:inset 0 0 0 2px var(--primary)}
+.emoji-pop .ep-empty{font-size:13px;color:var(--on-surface-variant);padding:16px 4px;text-align:center}
 </style>
 </head>
 <body>
@@ -1114,8 +1286,19 @@ mark.hl{background:#fde293;color:#1f1f1f;border-radius:2px;padding:0 1px}
             <button class="fchip" data-fg="extra" data-fv="react" aria-pressed="false"><span class="ms">check</span>Con reacciones</button>
             <button class="fchip" data-fg="extra" data-fv="att" aria-pressed="false"><span class="ms">check</span>Con adjuntos</button>
             <button class="fchip" data-fg="extra" data-fv="noreply" aria-pressed="false"><span class="ms">check</span>Sin responder</button>
+            <button class="fchip" data-fg="extra" data-fv="noteam" aria-pressed="false" id="fNoTeam" title="Comentarios que ninguna persona de tu equipo ha respondido"><span class="ms">check</span>Sin respuesta del equipo<b class="fcount" id="noTeamCount"></b></button>
             <button class="btn text sm hidden" id="fReset">Quitar filtros</button>
             <a class="hlp" href="#ayuda/filtrar"><span class="ms">help</span>Cómo buscar y filtrar</a>
+          </div>
+          <div class="assist-bar" id="assistBar">
+            <span class="ms ab-ic">support_agent</span>
+            <div class="ab-txt"><b id="abTitle">Asistente de respuestas</b><span id="abSub"></span></div>
+            <div class="ab-acts">
+              <button class="btn text sm" id="openTeam"><span class="ms">group</span>Equipo<b class="fcount" id="teamCount"></b></button>
+              <button class="btn text sm" id="openCatalog"><span class="ms">quickreply</span>Respuestas<b class="fcount" id="catCount"></b></button>
+              <button class="btn tonal sm" id="assistStart"><span class="ms">reply</span>Responder pendientes</button>
+              <a class="icon-btn sm hlp-ic" href="#ayuda/asistente" aria-label="Ayuda: asistente de respuestas" title="Ayuda: asistente de respuestas"><span class="ms">help</span></a>
+            </div>
           </div>
           <div class="selbar hidden" id="selbar">
             <button class="icon-btn sm" id="selNone" aria-label="Quitar selección"><span class="ms">close</span></button>
@@ -1230,6 +1413,7 @@ Si administras la página o la cuenta, **Conectar** da los datos más completos.
 - `pages_show_list`: ver la lista de páginas que administras.
 - `pages_read_engagement`: leer publicaciones y métricas.
 - `pages_read_user_content`: leer los comentarios de los usuarios.
+- `pages_manage_engagement`: solo si usas el [asistente de respuestas](#ayuda/as-publicar) para publicar respuestas; se pide en ese momento.
 
 > Mientras la app esté en **modo desarrollo**, solo pueden iniciar sesión sus administradores, desarrolladores y testers. Para que la use cualquier persona, Meta exige la *App Review*.
 
@@ -1394,6 +1578,62 @@ Los más usados de cada tipo. Pulsa cualquiera para ver los comentarios que lo c
 - **Tabla**: todos los campos en columnas; *Agrupar hilos* coloca cada respuesta bajo su comentario.
 - Haz doble clic en una fila o pulsa {ms:info} para ver todos sus datos.
 
+# Asistente de respuestas {#asistente icon=support_agent}
+
+Te ayuda a que **ningún comentario se quede sin respuesta de tu equipo**: identifica los pendientes, te propone una respuesta del catálogo, la editas y la publicas.
+
+1. **Inicia sesión con Facebook** (*Obtener › Conectar con Facebook*): es obligatorio para responder comentarios de Facebook e Instagram.
+2. Pulsa **Equipo** (en la pestaña *Comentarios*) y añade a las personas que responden en nombre de tu marca.
+3. Activa el filtro **Sin respuesta del equipo** o pulsa **Responder pendientes** para recorrerlos uno a uno.
+4. Elige una respuesta del catálogo (la app sugiere la más adecuada), edítala y pulsa **Publicar respuesta** o **Copiar y abrir**.
+
+## Sesión de Facebook obligatoria {#as-sesion}
+
+Antes de responder, el asistente comprueba que haya una **sesión de Facebook activa** en la app. Si no la hay, o ha caducado, muestra un aviso y desactiva **Publicar respuesta** y **Copiar y abrir** hasta que inicies sesión (botón **Iniciar sesión** del aviso). Puedes seguir eligiendo y editando la respuesta mientras tanto. No se exige para TikTok ni para los datos de ejemplo.
+
+## Equipo {#as-equipo}
+
+- Añade personas desde la lista *Personas en estos comentarios*, escribiendo su nombre, o desde el detalle de un comentario (**Añadir al equipo**).
+- Un comentario está **respondido** cuando alguien del equipo contesta en su hilo (o lo menciona en una respuesta posterior del mismo hilo). Sus mensajes llevan la insignia *Equipo*.
+- Por defecto, el **autor de la publicación** (tu página o cuenta) cuenta como equipo.
+- Son **pendientes** los comentarios principales y las respuestas dirigidas a tu equipo. Marca *Considerar pendientes también las respuestas entre usuarios* para incluir todas.
+
+## Catálogo de respuestas {#as-catalogo}
+
+- Crea, edita o elimina respuestas en **Respuestas**. Indica para qué tipo de comentario se sugiere cada una (positivos, negativos, neutrales o preguntas).
+- Usa variables que se rellenan solas: `{nombre}`, `{nombre_pila}`, `{usuario}` y `{pagina}`.
+- **Exportar** guarda el catálogo y el equipo en un archivo JSON para compartirlo con otras personas; **Importar** lo carga.
+
+## Sugerencias con IA {#as-ia}
+
+Pulsa **Sugerir con IA** en el asistente para recibir varias propuestas redactadas para ese comentario (aparecen primero, marcadas con *IA*). Elige una, edítala y publícala; con **Guardar en el catálogo** la conviertes en plantilla. Configura el modelo con {ms:tune}:
+
+| Proveedor | Coste | Privacidad |
+|---|---|---|
+| IA integrada de Chrome (Gemini Nano) | Gratis, sin clave | Local: nada sale de tu equipo |
+| Ollama / LM Studio | Gratis | Local, en tu equipo |
+| Google Gemini | Nivel gratuito con clave de AI Studio | Se envía el comentario a Google |
+| Groq | Nivel gratuito con clave | Se envía el comentario a Groq |
+| OpenRouter | Modelos “:free” con clave | Se envía el comentario al modelo elegido |
+
+- En *Indicaciones para la IA* describe tu negocio y lo que no debe prometer; también se usa el estilo de tu catálogo.
+- La IA puede equivocarse: **revisa siempre** el texto antes de publicarlo. Nunca se publica nada sin que pulses el botón.
+- La clave se guarda solo en este navegador. Para Ollama, permite el origen de la app con la variable `OLLAMA_ORIGINS`.
+
+## Publicar la respuesta {#as-publicar}
+
+| Origen de los datos | Cómo se responde |
+|---|---|
+| Conectar con Facebook | **Publicar respuesta**: se publica como la página con el permiso `pages_manage_engagement` (se pide la primera vez). |
+| Conectar con Instagram | **Publicar respuesta**: se publica como tu cuenta con el permiso `instagram_manage_comments`. |
+| Extractor, archivo o TikTok | **Copiar y abrir**: la respuesta se copia y se abre el comentario para pegarla y enviarla tú. |
+
+> La API de Meta publica en nombre de la **página o cuenta profesional**, no de una persona, y solo admite respuestas en el hilo del comentario principal. TikTok no permite publicar desde otras apps.
+
+- Tras publicar, la respuesta se añade a los datos y el comentario deja de estar pendiente. **Marcar como respondido** lo quita de pendientes sin publicar nada.
+- Pulsa {ms:add_reaction} para insertar **emojis** donde esté el cursor (con búsqueda y recientes; [[Mayús]] + clic inserta varios seguidos). También están en el editor del catálogo.
+- Atajo: [[Ctrl]] + [[Enter]] en el editor publica (o copia y abre).
+
 # Copiar y exportar {#exportar icon=ios_share}
 
 Se usan los comentarios **seleccionados** o, si no hay selección, **todos los filtrados**.
@@ -1490,16 +1730,159 @@ Cada comentario incluye su **plataforma**.
 <dialog id="detailDlg" aria-labelledby="dTitle">
   <div class="dlg-head">
     <h2 id="dTitle" style="font-size:20px">Detalle del comentario</h2>
-    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+    <span class="dlg-head-acts"><a class="icon-btn" href="#ayuda/analisis" aria-label="¿Qué significa cada dato?" title="¿Qué significa cada dato?"><span class="ms">help</span></a><button class="icon-btn" data-close aria-label="Cerrar" autofocus><span class="ms">close</span></button></span>
   </div>
   <div class="dlg-body" id="detailBody"></div>
   <div class="dlg-actions">
-    <span style="margin-right:auto"><a class="hlp" href="#ayuda/analisis"><span class="ms">help</span>¿Qué significa cada dato?</a></span>
+    <button class="btn text" id="dTeam" style="margin-right:auto"><span class="ms">person_add</span>Añadir al equipo</button>
+    <button class="btn text" id="dReply"><span class="ms">reply</span>Responder</button>
     <button class="btn text" id="dCopyJson"><span class="ms">data_object</span>Copiar JSON</button>
     <button class="btn tonal" id="dCopyTxt"><span class="ms">content_copy</span>Copiar texto</button>
   </div>
 </dialog>
 
+
+<!-- Equipo: personas cuyas respuestas cuentan como "respondido" -->
+<dialog id="teamDlg" aria-labelledby="teamTitle" class="wide">
+  <div class="dlg-head">
+    <h2 id="teamTitle" style="font-size:20px">Equipo que responde</h2>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <div class="dlg-body">
+    <p class="small muted" style="margin-top:0">Un comentario se considera <b>respondido</b> cuando alguien de esta lista contesta en su hilo. La lista se guarda en este navegador.</p>
+    <div class="team-list" id="teamList"></div>
+    <div class="row team-add">
+      <input class="input" id="teamName" placeholder="Añadir por nombre o usuario" aria-label="Nombre o usuario" autocomplete="off">
+      <button class="btn tonal" id="teamAddBtn"><span class="ms">person_add</span>Añadir</button>
+    </div>
+    <label class="check"><input type="checkbox" id="teamPostAuthor"> Contar al autor de la publicación (la página o cuenta) como equipo</label>
+    <label class="check"><input type="checkbox" id="teamAllReplies"> Considerar pendientes también las respuestas entre usuarios</label>
+    <h3 class="team-h">Personas en estos comentarios</h3>
+    <label class="searchbar sm"><span class="ms">search</span><input type="search" id="teamSearch" placeholder="Buscar persona" aria-label="Buscar persona" autocomplete="off"></label>
+    <div class="team-people" id="teamPeople"></div>
+  </div>
+  <div class="dlg-actions">
+    <span style="margin-right:auto"><a class="hlp" href="#ayuda/as-equipo"><span class="ms">help</span>¿Cómo funciona?</a></span>
+    <button class="btn filled" data-close>Listo</button>
+  </div>
+</dialog>
+
+<!-- Catálogo de respuestas -->
+<dialog id="catalogDlg" aria-labelledby="catTitle" class="wide">
+  <div class="dlg-head">
+    <h2 id="catTitle" style="font-size:20px">Catálogo de respuestas</h2>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <div class="dlg-body">
+    <div class="cat-list" id="catList"></div>
+    <form class="cat-form" id="catForm" autocomplete="off">
+      <h3 class="team-h" id="catFormTitle">Nueva respuesta</h3>
+      <input type="hidden" id="catId">
+      <div class="field"><label for="catName">Nombre</label><input class="input" id="catName" required maxlength="80" placeholder="Por ejemplo: Disculpa por retraso"></div>
+      <div class="field"><div class="lbl-row"><label for="catText">Texto</label><button type="button" class="icon-btn sm" data-emoji-for="catText" aria-label="Insertar emoji" title="Insertar emoji" aria-haspopup="dialog" aria-expanded="false"><span class="ms">add_reaction</span></button></div><textarea class="input prose" id="catText" required maxlength="8000" placeholder="Hola, {nombre_pila}. …"></textarea>
+        <span class="hint">Variables: <code>{nombre}</code> nombre completo · <code>{nombre_pila}</code> primer nombre · <code>{usuario}</code> @usuario · <code>{pagina}</code> tu página o cuenta</span></div>
+      <div class="field"><label>Sugerir para</label>
+        <div class="cat-tags" id="catTags">
+          <button type="button" class="fchip" data-tag="positivo" aria-pressed="false"><span class="ms">check</span>Positivos</button>
+          <button type="button" class="fchip" data-tag="neutral" aria-pressed="false"><span class="ms">check</span>Neutrales</button>
+          <button type="button" class="fchip" data-tag="negativo" aria-pressed="false"><span class="ms">check</span>Negativos</button>
+          <button type="button" class="fchip" data-tag="pregunta" aria-pressed="false"><span class="ms">check</span>Preguntas</button>
+        </div></div>
+      <div class="row" style="justify-content:flex-end;gap:8px">
+        <button type="button" class="btn text" id="catCancel">Cancelar</button>
+        <button type="submit" class="btn filled" id="catSave"><span class="ms">save</span>Guardar</button>
+      </div>
+    </form>
+  </div>
+  <div class="dlg-actions">
+    <span style="margin-right:auto;display:flex;gap:4px;flex-wrap:wrap">
+      <button class="btn text sm" id="catExport"><span class="ms">download</span>Exportar</button>
+      <label class="btn text sm" style="cursor:pointer"><span class="ms">upload</span>Importar<input type="file" id="catImport" accept=".json,application/json" hidden></label>
+      <button class="btn text sm" id="catDefaults"><span class="ms">restart_alt</span>Restaurar ejemplos</button>
+    </span>
+    <button class="btn filled" data-close>Listo</button>
+  </div>
+</dialog>
+
+<!-- Asistente: responder un comentario -->
+<dialog id="replyDlg" aria-labelledby="rpTitle" class="wide">
+  <div class="dlg-head">
+    <div><h2 id="rpTitle" style="font-size:20px">Responder</h2><p class="small muted" id="rpQueue" style="margin:2px 0 0"></p></div>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <div class="dlg-body">
+    <div class="rp-session hidden" id="rpSession" role="alert">
+      <span class="ms" id="rpSessionIc">error</span>
+      <div><b id="rpSessionTitle">No hay una sesión de Facebook activa</b><span id="rpSessionMsg"></span></div>
+      <button class="btn filled sm" id="rpLogin"><span class="ms">login</span>Iniciar sesión</button>
+    </div>
+    <div class="rp-orig" id="rpOrig"></div>
+    <div class="rp-grid">
+      <div class="rp-cat">
+        <div class="rp-cat-head"><b>Respuestas</b><span><button class="btn text sm" id="rpEditCat"><span class="ms">edit</span>Catálogo</button></span></div>
+        <div class="rp-ai"><button class="btn tonal sm" id="rpAi"><span class="ms">auto_awesome</span>Sugerir con IA</button><button class="icon-btn sm" id="rpAiCfg" aria-label="Configurar IA" title="Configurar IA"><span class="ms">tune</span></button><span class="small muted" id="rpAiState"></span></div>
+        <label class="searchbar sm"><span class="ms">search</span><input type="search" id="rpSearch" placeholder="Buscar respuesta" aria-label="Buscar respuesta" autocomplete="off"></label>
+        <div class="rp-opts" id="rpOpts" role="listbox" aria-label="Respuestas del catálogo"></div>
+      </div>
+      <div class="rp-edit">
+        <div class="field"><label for="rpText">Tu respuesta</label>
+          <textarea class="input prose" id="rpText" maxlength="8000" placeholder="Elige una respuesta del catálogo o escribe la tuya"></textarea>
+          <div class="ed-tools"><button type="button" class="icon-btn sm" data-emoji-for="rpText" aria-label="Insertar emoji" title="Insertar emoji" aria-haspopup="dialog" aria-expanded="false"><span class="ms">add_reaction</span></button><span class="hint rp-hint"><span id="rpChars">0</span> caracteres</span></div></div>
+        <button class="btn text sm rp-save" id="rpSaveCat" title="Guarda el texto actual como una respuesta del catálogo"><span class="ms">bookmark_add</span>Guardar en el catálogo</button>
+        <label class="check hidden" id="rpMentionWrap"><input type="checkbox" id="rpMention" checked> <span id="rpMentionLbl">Mencionar al autor</span></label>
+        <p class="rp-via" id="rpVia"></p>
+        <p class="status" id="rpStatus" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+  <div class="dlg-actions">
+    <span class="rp-nav">
+      <button class="btn text sm" id="rpPrev" aria-label="Pendiente anterior"><span class="ms">chevron_left</span>Anterior</button>
+      <button class="btn text sm" id="rpSkip">Omitir<span class="ms">chevron_right</span></button>
+    </span>
+    <button class="btn text" id="rpMark" title="No publica nada: solo lo quita de pendientes"><span class="ms">done</span><span class="l-long">Marcar como respondido</span><span class="l-short">Respondido</span></button>
+    <button class="btn tonal" id="rpCopyOpen"><span class="ms">open_in_new</span>Copiar y abrir</button>
+    <button class="btn filled" id="rpSend"><span class="ms">send</span>Publicar respuesta</button>
+  </div>
+</dialog>
+
+<!-- Configuración de la IA para sugerencias -->
+<dialog id="aiDlg" aria-labelledby="aiTitle">
+  <div class="dlg-head">
+    <h2 id="aiTitle" style="font-size:20px">Sugerencias con IA</h2>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <div class="dlg-body ai-form">
+    <p class="small muted" style="margin-top:0">La IA propone respuestas a partir del comentario, su contexto y el tono de tu catálogo. Siempre puedes editarlas antes de publicar.</p>
+    <div class="field"><label for="aiProv">Proveedor</label>
+      <select class="input" id="aiProv">
+        <option value="chrome">IA integrada de Chrome (Gemini Nano) · local, gratis, sin clave</option>
+        <option value="gemini">Google Gemini · nivel gratuito, requiere clave</option>
+        <option value="groq">Groq · nivel gratuito, requiere clave</option>
+        <option value="openrouter">OpenRouter · modelos gratuitos (:free), requiere clave</option>
+        <option value="custom">Ollama / LM Studio / compatible con OpenAI</option>
+      </select>
+      <span class="hint" id="aiProvHint"></span></div>
+    <div class="field" id="aiUrlF"><label for="aiUrl">URL del servidor</label><input class="input" id="aiUrl" placeholder="http://localhost:11434/v1"></div>
+    <div class="field" id="aiKeyF"><label for="aiKey">Clave de API</label><input class="input" id="aiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Pega aquí tu clave">
+      <span class="hint">Se guarda solo en este navegador. <a id="aiKeyLink" target="_blank" rel="noopener">Obtener una clave gratuita</a></span></div>
+    <div class="field" id="aiModelF"><label for="aiModel">Modelo</label><input class="input" id="aiModel" spellcheck="false"><span class="hint" id="aiModelHint"></span></div>
+    <div class="row" style="gap:12px;flex-wrap:wrap">
+      <div class="field" style="flex:1 1 180px"><label for="aiTone">Tono</label>
+        <select class="input" id="aiTone"><option value="cordial">Cordial y profesional</option><option value="cercano">Cercano e informal</option><option value="formal">Formal</option></select></div>
+      <div class="field" style="flex:1 1 180px"><label for="aiN">Sugerencias</label>
+        <select class="input" id="aiN"><option>2</option><option selected>3</option><option>4</option></select></div>
+    </div>
+    <div class="field"><label for="aiBrand">Indicaciones para la IA (opcional)</label><textarea class="input prose" id="aiBrand" maxlength="1500" placeholder="Por ejemplo: Somos una tienda online de alimentos con entrega a domicilio. No prometas plazos ni reembolsos; invita a escribir por mensaje privado."></textarea></div>
+    <div class="help-note" id="aiPrivacy"><span class="ms">shield</span><div></div></div>
+    <p class="status" id="aiStatus" aria-live="polite"></p>
+  </div>
+  <div class="dlg-actions">
+    <span style="margin-right:auto"><a class="hlp" href="#ayuda/as-ia"><span class="ms">help</span>Ayuda</a></span>
+    <button class="btn text" id="aiTest"><span class="ms">bolt</span>Probar</button>
+    <button class="btn filled" id="aiSave">Guardar</button>
+  </div>
+</dialog>
 <div class="snackbar" id="snackbar" role="status" aria-live="polite"><span class="msg" id="snackMsg"></span><button class="btn text hidden" id="snackAct"></button></div>
 
 <script>
@@ -2875,6 +3258,7 @@ function fbLogout(){
 
 /* ---------- filtrado / orden ---------- */
 function applyFilters(){
+  computeTeam(); renderAssistBar();
   let q = $('#q').value.trim().toLowerCase(), authorQ = null;
   const am = q.match(/autor:("([^"]+)"|(\S+))/);
   if(am){ authorQ = (am[2]||am[3]).toLowerCase(); q = q.replace(am[0],'').trim(); }
@@ -2886,6 +3270,7 @@ function applyFilters(){
     if(F.extra.has('q') && !c.isQuestion) return false;
     if(F.extra.has('react') && !c.reactions) return false;
     if(F.extra.has('noreply') && (c.type!=='comment' || c.repliesCount)) return false;
+    if(F.extra.has('noteam') && S.teamOn && !c.needsTeam) return false;
     if(authorQ && !c.authorName.toLowerCase().includes(authorQ)) return false;
     if(q && !(c.text.toLowerCase().includes(q) || c.authorName.toLowerCase().includes(q))) return false;
     return true;
@@ -3245,13 +3630,15 @@ function renderConv(slice, q){
     const img = c.attachments.find(a=>/imagen|gif|photo|sticker/.test(a.type) && a.url);
     const other = c.attachments.filter(a=>a!==img);
     const sc = c.sentiment==='positivo'?'var(--success)':c.sentiment==='negativo'?'var(--error)':'var(--outline)';
-    const nameHtml = c.authorUrl ? `<a class="cname" href="${esc(c.authorUrl)}" target="_blank" rel="noopener">${highlight(name,q)}</a>` : `<span class="cname">${highlight(name,q)}</span>`;
+    const nameHtml0 = c.authorUrl ? `<a class="cname" href="${esc(c.authorUrl)}" target="_blank" rel="noopener">${highlight(name,q)}</a>` : `<span class="cname">${highlight(name,q)}</span>`;
+    const nameHtml = c.isTeam ? `<span class="cname-wrap">${nameHtml0}<span class="cteam" title="Forma parte de tu equipo"><span class="ms fill">shield_person</span>Equipo</span></span>` : nameHtml0;
     const ig = c.platform==='instagram', tt = c.platform==='tiktok', flat = ig || tt;
     const verified = c.badges.includes('Verificado');
     const otherBadges = c.badges.filter(b=>b!=='Verificado');
     const textHtml = markMention(highlight(c.text,q), c)||'<span class="muted">(sin texto)</span>';
+
     const toggleLbl = `${esc(kids[0]?.authorName||'Alguien')} respondió · ${kids.length===1?'1 respuesta':kids.length+' respuestas'}`;
-    return `<div class="cnode${lvl===0?' cthread':''}${kids.length?' has-kids':''}${sel?' selected':''}${ig?' ig':''}${tt?' tt':''}" data-id="${esc(c.id)}">
+    return `<div style="--plvl:${lvl}" class="cnode${c.needsTeam?' pend':''}${lvl===0?' cthread':''}${kids.length?' has-kids':''}${sel?' selected':''}${ig?' ig':''}${tt?' tt':''}" data-id="${esc(c.id)}">
       ${lvl===0 && c.parentId ? `<div class="cctx"><span class="ms">subdirectory_arrow_right</span>En respuesta a ${esc(c.replyTo||'otro comentario')}</div>` : ''}
       <div class="crow">
         <div class="cav">${avatarHtml(c)}</div>
@@ -3279,12 +3666,15 @@ function renderConv(slice, q){
             ${ig && otherBadges.length ? `<span>${esc(otherBadges.join(' · '))}</span>` : ''}
             <span class="sdot" title="Sentimiento estimado"><i style="background:${sc}"></i>${cap(c.sentiment)}</span>
             ${c.edited?'<span>Editado</span>':''}
+            ${c.needsTeam?'<span class="cstate pend" title="Nadie de tu equipo ha respondido todavía"><span class="ms fill">schedule</span>Pendiente</span>':''}
+            ${S.teamOn && !c.isTeam && c.teamAnswered?'<span class="cstate done" title="Tu equipo ya respondió"><span class="ms">done_all</span>Respondido</span>':''}
             ${open?`<button data-toggle="${esc(c.id)}">Ocultar respuestas</button>`:''}
             <button data-act="copy">Copiar</button>
             <button data-act="info">Detalles</button>
             ${c.permalink?`<a href="${esc(c.permalink)}" target="_blank" rel="noopener">Ver en ${platName(c.platform)}</a>`:''}
           </div>
         </div>
+        ${!c.isTeam ? `<button class="icon-btn sm creply${c.needsTeam?' pend':''}" data-act="reply" aria-label="Responder a ${esc(name)}${c.needsTeam?' (pendiente)':''}" title="Responder${c.needsTeam?' · pendiente':''}"><span class="ms">reply</span></button>` : ''}
         ${flat ? `<span class="cheart${c.reactions?' on':''}" title="${fmtN(c.reactions)} me gusta"><span class="ms${c.reactions?' fill':''}">favorite</span>${tt && c.reactions ? `<b>${fmtN(c.reactions)}</b>` : ''}</span>` : ''}
         <label class="csel" style="--lvl:${lvl}" title="Seleccionar"><input type="checkbox" class="rowchk" ${sel?'checked':''} aria-label="Seleccionar comentario de ${esc(name)}"></label>
       </div>
@@ -3322,7 +3712,7 @@ function renderTable(){
   if(conv){ renderConv(slice, q); $('#tbody').innerHTML=''; }
   else $('#tbody').innerHTML = slice.length ? slice.map(c=>{
     const sel=S.selected.has(c.id);
-    return `<tr class="${c.type==='reply'&&S.threaded?'reply':''} ${sel?'selected':''}" data-id="${esc(c.id)}">
+    return `<tr class="${c.type==='reply'&&S.threaded?'reply':''} ${sel?'selected':''} ${c.needsTeam?'pend':''}" data-id="${esc(c.id)}">
       <td class="c-chk"><input type="checkbox" class="rowchk" ${sel?'checked':''} aria-label="Seleccionar comentario de ${esc(c.authorName)}"></td>
       <td class="c-idx muted small">${c.idx}</td>
       <td class="c-author"><div class="author">
@@ -3340,6 +3730,7 @@ function renderTable(){
       <td class="c-acts"><div class="rowacts">
         <button class="icon-btn sm" data-act="copy" aria-label="Copiar comentario" title="Copiar"><span class="ms">content_copy</span></button>
         <button class="icon-btn sm" data-act="info" aria-label="Ver detalles" title="Detalles"><span class="ms">info</span></button>
+        ${!c.isTeam?`<button class="icon-btn sm" data-act="reply" aria-label="Responder" title="Responder${c.needsTeam?' (pendiente)':''}"><span class="ms${c.needsTeam?' fill':''}">reply</span></button>`:'<span class="icon-btn sm" aria-hidden="true" style="visibility:hidden"></span>'}
         ${c.permalink?`<a class="icon-btn sm" href="${esc(c.permalink)}" target="_blank" rel="noopener" aria-label="Abrir en ${platName(c.platform)}" title="Abrir en ${platName(c.platform)}"><span class="ms">open_in_new</span></a>`:''}
       </div></td>
     </tr>`; }).join('') : `<tr><td colspan="9">${noRowsHtml()}</td></tr>`;
@@ -3357,19 +3748,730 @@ function renderTable(){
   });
   $('#chkPage').checked = slice.length>0 && slice.every(c=>S.selected.has(c.id));
   $('#chkPage').indeterminate = !$('#chkPage').checked && slice.some(c=>S.selected.has(c.id));
-  $$('.fchip').forEach(ch=>ch.setAttribute('aria-pressed', S.f[ch.dataset.fg].has(ch.dataset.fv)));
+  $$('.fchip[data-fg]').forEach(ch=>ch.setAttribute('aria-pressed', S.f[ch.dataset.fg].has(ch.dataset.fv)));
   $('#fReset').classList.toggle('hidden', !Object.values(S.f).some(s=>s.size));
   $('#qClear').classList.toggle('hidden', !$('#q').value);
 }
 let detailCurrent=null;
+
+/* =====================================================================
+   ASISTENTE DE RESPUESTAS
+   Equipo (quién responde) · catálogo de respuestas · pendientes · publicar
+   ===================================================================== */
+const normName = s => norm(String(s||'').toLowerCase().replace(/^@/,'').replace(/\s+/g,' ').trim());
+const jsonPref = (k, d) => { try{ const v = JSON.parse(PREF.get(k,'null')); return v ?? d; }catch(e){ return d; } };
+const TEAM = {
+  list(){ return jsonPref('team', []); },
+  save(l){ PREF.set('team', JSON.stringify(l)); },
+  has(name){ return this.list().some(m => normName(m.name) === normName(name)); },
+  add(name, extra){ name = String(name||'').trim(); if(!name || this.has(name)) return false; const l = this.list(); l.push({ name, ...(extra||{}) }); this.save(l); return true; },
+  remove(name){ this.save(this.list().filter(m => normName(m.name) !== normName(name))); },
+  postAuthor(){ return PREF.get('teamPostAuthor','1') === '1'; },
+  allReplies(){ return PREF.get('teamAllReplies','0') === '1'; }
+};
+// Comentarios ya atendidos desde la app (aunque no se vuelvan a descargar): { id: { at, via } }
+const ANSWERED = { all(){ return jsonPref('answered', {}); }, set(id, v){ const a = this.all(); if(v) a[id] = v; else delete a[id]; PREF.set('answered', JSON.stringify(a)); } };
+
+const DEFAULT_REPLIES = [
+  { id:'r1', title:'Agradecimiento', tags:['positivo'], text:'¡Muchas gracias, {nombre_pila}! Nos alegra mucho leer tu comentario. 😊' },
+  { id:'r2', title:'Disculpa por un problema', tags:['negativo'], text:'Hola, {nombre_pila}. Lamentamos mucho lo ocurrido. Escríbenos por mensaje privado con tu número de pedido y lo revisamos de inmediato.' },
+  { id:'r3', title:'Retraso en la entrega', tags:['negativo'], text:'Hola, {nombre_pila}. Sentimos la demora con tu pedido. Envíanos tu número de pedido por mensaje privado para darle seguimiento hoy mismo.' },
+  { id:'r4', title:'Respuesta a una pregunta', tags:['pregunta'], text:'Hola, {nombre_pila}. ¡Gracias por tu pregunta! Te escribimos por mensaje privado con todos los detalles.' },
+  { id:'r5', title:'Invitar a mensaje privado', tags:['neutral','pregunta'], text:'Hola, {nombre_pila}. Para ayudarte mejor, envíanos un mensaje privado y te atendemos enseguida.' },
+  { id:'r6', title:'Seguimiento', tags:['neutral'], text:'{nombre_pila}, ¿pudiste resolverlo? Quedamos atentos a lo que necesites.' }
+];
+const CATALOG = {
+  list(){ const l = jsonPref('replies', null); return Array.isArray(l) ? l : DEFAULT_REPLIES.map(r => ({ ...r })); },
+  save(l){ PREF.set('replies', JSON.stringify(l)); },
+  use(id){ const u = jsonPref('replyUse', {}); u[id] = (u[id]||0) + 1; PREF.set('replyUse', JSON.stringify(u)); },
+  uses(){ return jsonPref('replyUse', {}); }
+};
+
+/* ---------- ¿Quién es del equipo y qué está pendiente? ---------- */
+function teamKeys(){
+  const k = new Set();
+  TEAM.list().forEach(m => { k.add(normName(m.name)); if(m.id) k.add('id:' + m.id); });
+  return k;
+}
+function computeTeam(){
+  const K = teamKeys(), byId = new Map(S.comments.map(c => [c.id, c])), done = ANSWERED.all();
+  const pa = TEAM.postAuthor() && S.meta.postAuthor ? normName(S.meta.postAuthor) : null;
+  const rootOf = c => { let p = c, g = 0; while(p.parentId && byId.has(p.parentId) && g++ < 12) p = byId.get(p.parentId); return p; };
+  S.teamOn = K.size > 0 || !!pa;
+  S.comments.forEach(c => {
+    const n = normName(c.authorName);
+    c.isTeam = !!n && (K.has(n) || (c.authorId && K.has('id:' + c.authorId)) || (!!pa && (n === pa || c.badges.includes('Autor de la publicación'))));
+    c.teamAnswered = !!done[c.id];
+    c.root = rootOf(c).id;
+  });
+  // Una respuesta del equipo atiende: a sus antecesores y, en el mismo hilo, a los comentarios anteriores de las personas que menciona
+  const order = new Map(S.comments.map((c, i) => [c.id, i]));
+  S.comments.forEach(y => {
+    if(!y.isTeam) return;
+    let p = y, g = 0;
+    while(p.parentId && byId.has(p.parentId) && g++ < 12){ p = byId.get(p.parentId); p.teamAnswered = true; }
+    const named = new Set([y.replyTo, ...(y.mentions||[])].filter(Boolean).map(normName));
+    const yt = normName(y.text);
+    S.comments.forEach(x => {
+      if(x.root !== y.root || x === y || x.isTeam || order.get(x.id) > order.get(y.id)) return;
+      const xn = normName(x.authorName);
+      if(xn && (named.has(xn) || yt.startsWith(xn))) x.teamAnswered = true;
+    });
+  });
+  const all = TEAM.allReplies();
+  S.comments.forEach(c => {
+    const parent = c.parentId && byId.get(c.parentId);
+    const directed = !c.parentId || all || (parent && parent.isTeam) || [c.replyTo, ...(c.mentions||[])].some(n => n && (K.has(normName(n)) || (pa && normName(n) === pa)));
+    c.needsTeam = S.teamOn && !c.isTeam && !c.teamAnswered && !!directed;
+  });
+  S.pending = S.comments.filter(c => c.needsTeam);
+}
+function renderAssistBar(){
+  const t = TEAM.list().length, cat = CATALOG.list().length, n = (S.pending||[]).length;
+  $('#teamCount').textContent = t || ''; $('#catCount').textContent = cat || '';
+  $('#noTeamCount').textContent = S.teamOn ? fmtN(n) : '';
+  $('#abSub').textContent = !S.teamOn ? 'Define tu equipo para saber qué comentarios siguen sin respuesta.'
+    : n ? `${countTxt(n, 'comentario espera', 'comentarios esperan')} respuesta de tu equipo.` : 'Tu equipo ha respondido todos los comentarios. 🎉';
+  $('#assistStart').disabled = S.teamOn && !n;
+}
+
+/* ---------- Diálogo: equipo ---------- */
+function renderTeamDlg(){
+  const list = TEAM.list();
+  $('#teamList').innerHTML = list.map(m => `<span class="tmember"><span title="${esc(m.name)}">${esc(m.name)}</span><button data-rm="${esc(m.name)}" aria-label="Quitar a ${esc(m.name)} del equipo" title="Quitar"><span class="ms">close</span></button></span>`).join('');
+  $('#teamPostAuthor').checked = TEAM.postAuthor();
+  $('#teamAllReplies').checked = TEAM.allReplies();
+  const q = normName($('#teamSearch').value);
+  const people = new Map();
+  S.comments.forEach(c => {
+    const k = normName(c.authorName); if(!k) return;
+    const p = people.get(k) || { name:c.authorName, c, n:0, rep:0, author:false };
+    p.n++; if(c.type === 'reply') p.rep++; if(c.badges.includes('Autor de la publicación') || (S.meta.postAuthor && k === normName(S.meta.postAuthor))) p.author = true;
+    people.set(k, p);
+  });
+  const arr = [...people.values()].filter(p => !q || normName(p.name).includes(q))
+    .sort((a, b) => (b.author - a.author) || (b.rep - a.rep) || (b.n - a.n) || a.name.localeCompare(b.name, 'es'));
+  $('#teamPeople').innerHTML = arr.slice(0, 200).map(p => {
+    const inT = TEAM.has(p.name);
+    return `<div class="tperson">${avatarHtml(p.c)}<div style="min-width:0"><div class="tp-name">${esc(p.name)}</div><div class="tp-sub">${p.author ? 'Autor de la publicación · ' : ''}${countTxt(p.n, 'comentario', 'comentarios')}${p.rep ? ` · ${countTxt(p.rep, 'respuesta', 'respuestas')}` : ''}</div></div>`
+      + (inT ? `<button class="btn text sm" data-rm="${esc(p.name)}"><span class="ms">check</span>En el equipo</button>` : `<button class="btn tonal sm" data-add="${esc(p.name)}" data-aid="${esc(p.c.authorId||'')}"><span class="ms">person_add</span>Añadir</button>`) + '</div>';
+  }).join('') || '<p class="small muted" style="padding:0 8px">No hay personas que coincidan.</p>';
+}
+function openTeam(){ $('#teamSearch').value = ''; renderTeamDlg(); $('#teamDlg').showModal(); }
+function teamChanged(){ renderTeamDlg(); renderTable(); if($('#replyDlg').open) renderReply(); }
+
+/* ---------- Diálogo: catálogo ---------- */
+const TAG_NAME = { positivo:'Positivos', neutral:'Neutrales', negativo:'Negativos', pregunta:'Preguntas' };
+function renderCatalogDlg(){
+  $('#catList').innerHTML = CATALOG.list().map(r => `<div class="cat-item"><b>${esc(r.title)}</b>
+    <div class="ci-acts"><button class="icon-btn sm" data-edit="${esc(r.id)}" aria-label="Editar ${esc(r.title)}" title="Editar"><span class="ms">edit</span></button><button class="icon-btn sm" data-del="${esc(r.id)}" aria-label="Eliminar ${esc(r.title)}" title="Eliminar"><span class="ms">delete</span></button></div>
+    <p>${esc(r.text)}</p>${(r.tags||[]).length ? `<div class="ci-tags">${r.tags.map(t => `<span class="ci-tag">${esc(TAG_NAME[t]||t)}</span>`).join('')}</div>` : ''}</div>`).join('');
+}
+function editCatalogItem(r){
+  $('#catFormTitle').textContent = r ? 'Editar respuesta' : 'Nueva respuesta';
+  $('#catId').value = r?.id || ''; $('#catName').value = r?.title || ''; $('#catText').value = r?.text || '';
+  $$('#catTags [data-tag]').forEach(b => b.setAttribute('aria-pressed', !!r && (r.tags||[]).includes(b.dataset.tag)));
+  if(r) $('#catName').focus();
+}
+function openCatalog(){ renderCatalogDlg(); editCatalogItem(null); $('#catalogDlg').showModal(); }
+function catalogChanged(){ renderCatalogDlg(); renderAssistBar(); if($('#replyDlg').open) renderReplyOpts(); }
+
+/* ---------- Diálogo: responder ---------- */
+const RP = { queue:[], i:0, c:null, sel:null };
+function fillTemplate(t, c){
+  const name = String(c.authorName||'').replace(/^@/,'');
+  const first = c.platform === 'facebook' ? (name.split(/\s+/)[0] || name) : name;
+  const page = FBA.page?.name || (FBA.ig ? '@' + FBA.ig.username : '') || S.meta.postAuthor || '';
+  return t.replace(/\{nombre\}/g, name).replace(/\{nombre_pila\}/g, first).replace(/\{usuario\}/g, '@' + name).replace(/\{pagina\}/g, page);
+}
+function suggestScore(r, c){
+  const tags = r.tags || [];
+  return (tags.includes(c.sentiment) ? 3 : 0) + (c.isQuestion && tags.includes('pregunta') ? 4 : 0) + Math.min(2, (CATALOG.uses()[r.id] || 0) / 5);
+}
+// Cómo se publicará: por API (como la página / cuenta) o copiando y abriendo el comentario
+function replyRoute(c){
+  const token = $('#gToken').value.trim();
+  if(c.source === 'demo') return { api:true, demo:true, as:S.meta.postAuthor || 'tu página' };
+  const apiId = c.id && !/^(x-|local-)/.test(c.id);
+  if(c.platform === 'facebook' && token && apiId && (c.source === 'graph' || /^\d+(_\d+)?$/.test(c.id))) return { api:true, as:FBA.page?.name || 'la página del token' };
+  if(c.platform === 'instagram' && token && apiId && c.source === 'graph-instagram') return { api:true, as:FBA.ig ? '@' + FBA.ig.username : 'tu cuenta de Instagram' };
+  return { api:false };
+}
+function renderReplyOpts(){
+  const c = RP.c; if(!c) return;
+  const q = normName($('#rpSearch').value);
+  const items = CATALOG.list().map(r => ({ r, s:suggestScore(r, c) }))
+    .filter(x => !q || normName(x.r.title + ' ' + x.r.text).includes(q))
+    .sort((a, b) => b.s - a.s || a.r.title.localeCompare(b.r.title, 'es'));
+  const best = items.length && items[0].s >= 3 ? items[0].s : Infinity;
+  $('#rpOpts').innerHTML = aiOptsHtml() + items.map(({ r, s }) => `<button class="rp-opt" role="option" data-rid="${esc(r.id)}" aria-selected="${RP.sel === r.id}">
+      <span class="ro-t">${esc(r.title)}${s >= best ? '<span class="sug"><span class="ms fill">auto_awesome</span>Sugerida</span>' : ''}</span>
+      <span class="ro-p">${esc(fillTemplate(r.text, c))}</span></button>`).join('')
+    || `<p class="small muted">${q ? 'Ninguna respuesta coincide.' : 'El catálogo está vacío.'} <button class="btn text sm" data-newcat>Crear respuesta</button></p>`;
+}
+function renderReply(){
+  const c = RP.c; if(!c) return;
+  const pending = RP.queue.length > 1;
+  $('#rpTitle').textContent = 'Responder a ' + (c.authorName || 'este comentario');
+  $('#rpQueue').textContent = pending ? `Pendiente ${RP.i + 1} de ${RP.queue.length}` : (c.teamAnswered ? 'Este comentario ya tiene respuesta del equipo' : '');
+  $('#rpPrev').parentElement.classList.toggle('hidden', !pending);
+  $('#rpPrev').disabled = RP.i === 0;
+  const parent = c.parentId && S.comments.find(x => x.id === c.parentId);
+  $('#rpOrig').innerHTML = `${avatarHtml(c)}<div style="min-width:0"><div class="ro-head"><b>${esc(c.authorName||'(desconocido)')}</b><span>${esc(relTime(c))}</span><span class="sdot"><i style="background:${c.sentiment==='positivo'?'var(--success)':c.sentiment==='negativo'?'var(--error)':'var(--outline)'}"></i>${cap(c.sentiment)}</span>${c.permalink ? `<a href="${esc(c.permalink)}" target="_blank" rel="noopener">Ver en ${platName(c.platform)}</a>` : ''}</div>
+    <p class="ro-text">${esc(c.text) || '<span class="muted">(sin texto)</span>'}</p>${parent ? `<div class="ro-ctx"><span class="ms sm" style="vertical-align:-4px">subdirectory_arrow_right</span> En respuesta a ${esc(parent.authorName)}: “${esc(parent.text.slice(0, 120))}${parent.text.length > 120 ? '…' : ''}”</div>` : ''}</div>`;
+  const flat = c.platform !== 'facebook';
+  $('#rpMentionWrap').classList.toggle('hidden', !flat);
+  $('#rpMentionLbl').textContent = 'Empezar con @' + String(c.authorName||'').replace(/^@/,'');
+  const route = replyRoute(c);
+  $('#rpSend').classList.toggle('hidden', !route.api);
+  $('#rpCopyOpen').classList.toggle('filled', !route.api); $('#rpCopyOpen').classList.toggle('tonal', route.api);
+  RP.noLink = !c.permalink && !S.meta.url;
+  $('#rpCopyOpen').disabled = RP.noLink;
+  $('#rpVia').innerHTML = route.demo ? '<span class="ms">science</span><span>Datos de ejemplo: al publicar, la respuesta se añade solo en esta app.</span>'
+    : route.api ? `<span class="ms">verified_user</span><span>Se publicará como <b>${esc(route.as)}</b> mediante la API de ${platName(c.platform)}${c.parentId ? ', en el hilo del comentario principal' : ''}. La primera vez se pedirá el permiso para publicar.</span>`
+    : `<span class="ms">content_paste_go</span><span>${c.platform === 'tiktok' ? 'TikTok no permite publicar desde otras apps.' : 'Estos datos no vienen de la API de tu página, así que la app no puede publicar por ti.'} <b>Copiar y abrir</b> copia la respuesta y abre el comentario: pégala allí y envíala. Después se marcará como respondido.</span>`;
+  setStatus('#rpStatus', '');
+  RP.sel = null; $('#rpText').value = ''; $('#rpSearch').value = '';
+  if(RP.ai && RP.ai.for !== c.id){ aiAbort?.abort(); RP.ai = null; $('#rpAi').disabled = false; }
+  $('#rpAiState').textContent = aiConfigured() ? '' : 'Configura un modelo gratuito para recibir propuestas.';
+  renderReplyOpts();
+  const first = $('#rpOpts .rp-opt'); if(first && /Sugerida/.test(first.textContent)) pickReply(first.dataset.rid);
+  updateRpChars();
+  checkReplySession(c);
+}
+function pickReply(id){
+  const r = CATALOG.list().find(x => x.id === id); if(!r || !RP.c) return;
+  RP.sel = id; $('#rpText').value = fillTemplate(r.text, RP.c);
+  $$('#rpOpts .rp-opt').forEach(b => b.setAttribute('aria-selected', b.dataset.rid === id));
+  updateRpChars();
+}
+const graphemes = s => { try{ return [...new Intl.Segmenter('es', { granularity:'grapheme' }).segment(s)].length; }catch(e){ return [...s].length; } };
+function updateRpChars(){ $('#rpChars').textContent = fmtN(graphemes($('#rpText').value)); }
+function openReply(c, queue){
+  RP.queue = queue && queue.length ? queue.map(x => x.id) : [c.id];
+  RP.i = Math.max(0, RP.queue.indexOf(c.id)); RP.c = c;
+  renderReply(); if(!$('#replyDlg').open) $('#replyDlg').showModal();
+  setTimeout(() => $('#rpText').focus(), 50);
+}
+function startAssistant(){
+  computeTeam();
+  if(!S.teamOn){ openTeam(); toast('Primero añade a las personas de tu equipo'); return; }
+  applyFilters();
+  const q = S.rows.filter(c => c.needsTeam);
+  const list = q.length ? q : S.pending;
+  if(!list.length){ toast('No hay comentarios pendientes'); return; }
+  openReply(list[0], list);
+}
+function replyStep(d){
+  const ids = RP.queue; let i = RP.i + d;
+  while(i >= 0 && i < ids.length){ const c = S.comments.find(x => x.id === ids[i]); if(c){ RP.i = i; RP.c = c; renderReply(); return; } i += d; }
+  if(d > 0){ $('#replyDlg').close(); toast('No quedan más comentarios pendientes en la lista'); }
+}
+function finalText(){
+  let t = $('#rpText').value.trim(); const c = RP.c;
+  if(c.platform !== 'facebook' && $('#rpMention').checked){ const u = '@' + String(c.authorName||'').replace(/^@/,''); if(!t.startsWith(u)) t = u + ' ' + t; }
+  return t;
+}
+// Tras responder: se marca, se añade la respuesta a los datos (si se publicó) y se pasa al siguiente
+function afterReply(c, via, text, newId, asName, extra){
+  ANSWERED.set(c.id, { at:new Date().toISOString(), via });
+  if(RP.sel) CATALOG.use(RP.sel);
+  if(text && newId){
+    const root = S.comments.find(x => x.id === c.root) || c;
+    const author = asName || S.meta.postAuthor || 'Equipo';
+    if(!TEAM.has(author) && !(TEAM.postAuthor() && normName(author) === normName(S.meta.postAuthor))) TEAM.add(author);
+    S.comments = finalize(S.comments.concat([{ id:newId, parentId: c.platform === 'tiktok' ? c.id : root.id, authorName:author, text, createdAt:new Date().toISOString(), dateText:'', reactions:0,
+      replyTo: c.authorName, mentions: c.platform !== 'facebook' ? [String(c.authorName).replace(/^@/,'')] : [], source:'respuesta', platform:c.platform, badges:[],
+      permalink: extra?.permalink || '', verified: !!extra?.verified }]), S.meta);
+    try{ localStorage.setItem('fbca:' + STORE_KEY, JSON.stringify({ meta:S.meta, comments:S.comments })); }catch(e){}
+  }
+  renderAll();
+  replyStep(1);
+}
+async function gPost(path, params, token){
+  const body = new URLSearchParams({ ...params, access_token: token });
+  const r = await fetch(`https://graph.facebook.com/${apiVer()}/${path}`, { method:'POST', body });
+  const j = await r.json().catch(() => ({ error:{ message:'Respuesta no válida (' + r.status + ')' } }));
+  if(j.error){ const e = new Error(j.error.message + (j.error.code ? ` (código ${j.error.code})` : '')); e.code = j.error.code; throw e; }
+  return j;
+}
+// Permiso para publicar respuestas como la página (se pide solo cuando hace falta) y token de página renovado
+function ensureReplyPerm(platform){
+  const need = platform === 'instagram' ? 'instagram_manage_comments' : 'pages_manage_engagement';
+  if(!FBA.userToken || FBA.granted.has(need) || !window.FB) return Promise.resolve();
+  return new Promise((res, rej) => FB.login(async r => {
+    if(!r.authResponse) return rej(new Error('No se concedió el permiso para publicar respuestas.'));
+    try{
+      FBA.userToken = r.authResponse.accessToken;
+      const perms = await gReq(gUrl('me/permissions', {}, FBA.userToken, apiVer())).catch(() => ({ data:[] }));
+      FBA.granted = new Set((perms.data||[]).filter(p => p.status === 'granted').map(p => p.permission));
+      if(!FBA.granted.has(need)) return rej(new Error(`Falta el permiso ${need}. Vuelve a intentarlo y márcalo en la ventana de Facebook.`));
+      // el token de página hay que pedirlo de nuevo para que incluya el permiso recién concedido
+      const pid = FBA.page?.id || FBA.ig?.page?.id;
+      if(pid){ const pg = await gReq(gUrl(pid, { fields:'access_token' }, FBA.userToken, apiVer())); if(pg.access_token) $('#gToken').value = pg.access_token; }
+      res();
+    }catch(e){ rej(e); }
+  }, { scope: need, auth_type:'rerequest', return_scopes:true }));
+}
+async function sendReply(){
+  const c = RP.c, text = finalText();
+  if(!text){ setStatus('#rpStatus', 'Escribe o elige una respuesta.', true); $('#rpText').focus(); return; }
+  if(!sessionGuard(c)) return;
+  const route = replyRoute(c);
+  if(route.demo){ afterReply(c, 'demo', text, 'demo-r' + Date.now(), route.as); toast('Respuesta añadida (datos de ejemplo: no se publicó)'); return; }
+  const btn = $('#rpSend'); btn.disabled = true;
+  try{
+    setStatus('#rpStatus', 'Comprobando permisos…');
+    await ensureReplyPerm(c.platform);
+    setStatus('#rpStatus', 'Publicando…');
+    const token = $('#gToken').value.trim();
+    const target = (S.comments.find(x => x.id === c.root) || c).id;   // Facebook e Instagram solo admiten respuestas al comentario principal
+    const res = c.platform === 'instagram' ? await gPost(target + '/replies', { message:text }, token) : await gPost(target + '/comments', { message:text }, token);
+    if(!res.id) throw new Error(platName(c.platform) + ' no devolvió el identificador de la respuesta.');
+    // Comprobación real: se vuelve a leer la respuesta en la plataforma por su ID
+    setStatus('#rpStatus', 'Publicada. Comprobando en ' + platName(c.platform) + '…');
+    const v = await verifyReply(c.platform, res.id, target, text, token);
+    const name = v.from || route.as;
+    afterReply(c, v.ok ? 'api-verificada' : 'api', text, res.id, name, { permalink:v.permalink, verified:v.ok });
+    if(v.ok) toast(`Respuesta publicada y verificada en ${platName(c.platform)}`, v.permalink ? { label:'Ver', run:() => window.open(v.permalink, '_blank', 'noopener') } : null);
+    else toast(`Respuesta publicada (ID ${res.id}), pero no se pudo verificar: ${v.why}`);
+  }catch(e){
+    const hint = e.code === 200 || e.code === 10 ? ' — El token debe ser de la página que publicó el contenido y tener el permiso para publicar.' : e.code === 190 ? ' — El token caducó: vuelve a iniciar sesión.' : '';
+    setStatus('#rpStatus', 'No se pudo publicar: ' + e.message + hint + ' Puedes usar “Copiar y abrir”.', true, 'as-publicar');
+  }finally{ btn.disabled = false; }
+}
+// Lee la respuesta recién publicada y confirma que existe, que el texto coincide y que cuelga del comentario correcto
+async function verifyReply(platform, id, target, text, token, tries = 3){
+  const fields = platform === 'instagram' ? 'id,text,username,timestamp,parent_id' : 'id,message,from{id,name},parent{id},created_time,permalink_url';
+  const same = (a, b) => String(a||'').replace(/\s+/g, ' ').trim() === String(b||'').replace(/\s+/g, ' ').trim();
+  const tail = s => String(s||'').split('_').pop();
+  let last = 'no se encontró la respuesta';
+  for(let i = 0; i < tries; i++){
+    try{
+      const r = await gReq(gUrl(id, { fields }, token, apiVer()));
+      const msg = platform === 'instagram' ? r.text : r.message;
+      const parent = platform === 'instagram' ? r.parent_id : r.parent?.id;
+      if(!same(msg, text)){ last = 'el texto publicado no coincide'; }
+      else if(parent && tail(parent) !== tail(target)){ last = 'la respuesta no cuelga del comentario esperado'; }
+      else return { ok:true, from: platform === 'instagram' ? (r.username ? '@' + r.username : '') : r.from?.name || '', permalink: r.permalink_url || '' };
+    }catch(e){ last = e.message; }
+    if(i < tries - 1) await new Promise(res => setTimeout(res, 1500));
+  }
+  return { ok:false, why:last };
+}
+async function copyAndOpen(){
+  const c = RP.c, text = finalText();
+  if(!sessionGuard(c)) return;
+  if(!text){ setStatus('#rpStatus', 'Escribe o elige una respuesta.', true); $('#rpText').focus(); return; }
+  const url = c.permalink || S.meta.url;
+  window.open(url, '_blank', 'noopener');
+  await copyText(text, 'Respuesta copiada: pégala en ' + platName(c.platform));
+  const c0 = c;
+  toast('Respuesta copiada. ¿La publicaste?', { label:'Marcar respondido', run:() => { ANSWERED.set(c0.id, { at:new Date().toISOString(), via:'manual' }); if(RP.sel) CATALOG.use(RP.sel); renderAll(); if(RP.c === c0) replyStep(1); } });
+}
+
+/* ---------- Sugerencias con IA (modelos gratuitos) ---------- */
+const AI_PROV = {
+  chrome:{ name:'IA integrada de Chrome', key:false, hint:'Funciona sin conexión a servicios externos en Chrome de escritorio reciente con la IA integrada activada. La primera vez descarga el modelo (puede tardar).' },
+  gemini:{ name:'Google Gemini', key:true, model:'gemini-flash-latest', link:'https://aistudio.google.com/apikey', hint:'Nivel gratuito de Google AI Studio con límites diarios.', mhint:'Por ejemplo gemini-flash-latest o gemini-flash-lite-latest.' },
+  groq:{ name:'Groq', key:true, model:'llama-3.3-70b-versatile', link:'https://console.groq.com/keys', url:'https://api.groq.com/openai/v1', hint:'Nivel gratuito con límites por minuto; respuestas muy rápidas.', mhint:'Consulta los modelos disponibles en la consola de Groq.' },
+  openrouter:{ name:'OpenRouter', key:true, model:'', link:'https://openrouter.ai/settings/keys', url:'https://openrouter.ai/api/v1', hint:'Usa un modelo cuyo nombre termine en “:free” (sin coste, con límites diarios).', mhint:'Elige uno gratuito en openrouter.ai/models (filtro “Free”), p. ej. “…:free”.' },
+  custom:{ name:'Servidor compatible con OpenAI', key:false, model:'llama3.2', url:'http://localhost:11434/v1', hint:'Ollama o LM Studio en tu equipo (gratis y privado). En Ollama permite el origen de esta página con OLLAMA_ORIGINS.', mhint:'El nombre del modelo instalado, p. ej. llama3.2 o qwen2.5.' }
+};
+const AI = {
+  cfg(){ const c = jsonPref('ai', {}); return { prov:'chrome', tone:'cordial', n:3, brand:'', keys:{}, models:{}, url:'', ...c }; },
+  save(c){ PREF.set('ai', JSON.stringify(c)); },
+  chromeApi(){ return self.LanguageModel || null; }
+};
+function aiConfigured(c = AI.cfg()){
+  const P = AI_PROV[c.prov]; if(!P) return false;
+  if(c.prov === 'chrome') return !!AI.chromeApi();
+  if(P.key && !c.keys[c.prov]) return false;
+  if(!(c.models[c.prov] || P.model)) return false;
+  return true;
+}
+function aiPrompt(c, cfg){
+  const parent = c.parentId && S.comments.find(x => x.id === c.parentId);
+  const page = FBA.page?.name || (FBA.ig ? '@' + FBA.ig.username : '') || S.meta.postAuthor || 'la marca';
+  const examples = CATALOG.list().slice(0, 4).map(r => '- ' + r.text).join('\n');
+  const tone = { cordial:'cordial y profesional', cercano:'cercano e informal, sin perder el respeto', formal:'formal' }[cfg.tone] || 'cordial';
+  const sys = `Eres el community manager de "${page}" en ${platName(c.platform)}. Redactas respuestas públicas a comentarios de clientes.
+Reglas: tono ${tone}; responde en el mismo idioma del comentario; máximo 2 frases (unos 280 caracteres); dirígete a la persona por su nombre de pila;
+no inventes datos (precios, plazos, políticas, enlaces); ante una queja, discúlpate con empatía e invita a escribir por mensaje privado; ante una pregunta que no puedas responder con certeza, invita a mensaje privado;
+no uses hashtags; como mucho un emoji. Cada sugerencia debe ser distinta en enfoque.${cfg.brand ? '\nIndicaciones de la marca: ' + cfg.brand : ''}${examples ? '\nEjemplos del estilo habitual de la marca:\n' + examples : ''}
+Devuelve SOLO JSON con esta forma: {"respuestas": ["…", "…"]}`;
+  const user = `Publicación: ${S.meta.title ? '"' + String(S.meta.title).slice(0, 300) + '"' : '(sin texto)'}
+${parent ? `Comentario anterior en el hilo (de ${parent.authorName}): "${parent.text.slice(0, 500)}"\n` : ''}Comentario a responder (de ${c.authorName || 'un usuario'}, sentimiento estimado ${c.sentiment}): "${c.text.slice(0, 1500)}"
+Escribe ${cfg.n} respuestas sugeridas.`;
+  return { sys, user };
+}
+function aiParse(txt, n){
+  txt = String(txt || '').trim();
+  const m = txt.match(/\{[\s\S]*\}/);
+  if(m){ try{ const j = JSON.parse(m[0]); const a = j.respuestas || j.replies || j.suggestions || Object.values(j).find(Array.isArray); if(Array.isArray(a)) return a.map(String).map(s => s.trim()).filter(Boolean).slice(0, n); }catch(e){} }
+  const arr = txt.match(/\[[\s\S]*\]/); if(arr){ try{ const a = JSON.parse(arr[0]); if(Array.isArray(a)) return a.map(String).filter(Boolean).slice(0, n); }catch(e){} }
+  return txt.split(/\n+/).map(s => s.replace(/^\s*(\d+[.)]|[-*•])\s*/, '').replace(/^["“]|["”]$/g, '').trim()).filter(s => s.length > 8).slice(0, n);
+}
+async function aiRequest(cfg, sys, user, signal){
+  const P = AI_PROV[cfg.prov];
+  if(cfg.prov === 'chrome'){
+    const LM = AI.chromeApi();
+    if(!LM) throw new Error('Este navegador no tiene la IA integrada de Chrome. Usa Chrome de escritorio reciente o elige otro proveedor.');
+    const opts = { initialPrompts:[{ role:'system', content:sys }], expectedInputs:[{ type:'text', languages:['es','en'] }], expectedOutputs:[{ type:'text', languages:['es'] }] };
+    const av = await LM.availability(opts).catch(() => LM.availability());
+    if(av === 'unavailable') throw new Error('La IA integrada de Chrome no está disponible en este equipo (requisitos de hardware o idioma).');
+    const s = await LM.create({ ...opts, signal, monitor(m){ m.addEventListener('downloadprogress', e => $('#rpAiState').textContent = `Descargando el modelo de Chrome… ${Math.round(e.loaded * 100)} %`); } });
+    try{
+      const schema = { type:'object', properties:{ respuestas:{ type:'array', items:{ type:'string' } } }, required:['respuestas'] };
+      return await s.prompt(user, { signal, responseConstraint:schema }).catch(() => s.prompt(user, { signal }));
+    } finally { s.destroy?.(); }
+  }
+  const key = cfg.keys[cfg.prov] || '', model = cfg.models[cfg.prov] || P.model;
+  if(cfg.prov === 'gemini'){
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { method:'POST', signal,
+      headers:{ 'Content-Type':'application/json', 'x-goog-api-key':key },
+      body:JSON.stringify({ systemInstruction:{ parts:[{ text:sys }] }, contents:[{ role:'user', parts:[{ text:user }] }], generationConfig:{ temperature:.8, responseMimeType:'application/json' } }) });
+    const j = await r.json().catch(() => ({}));
+    if(!r.ok) throw new Error((j.error?.message || 'Error ' + r.status) + (r.status === 429 ? ' — Se alcanzó el límite gratuito; espera un poco.' : ''));
+    return (j.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+  }
+  const base = (cfg.prov === 'custom' ? (cfg.url || P.url) : P.url).replace(/\/+$/, '');
+  const headers = { 'Content-Type':'application/json' }; if(key) headers.Authorization = 'Bearer ' + key;
+  const r = await fetch(base + '/chat/completions', { method:'POST', signal, headers,
+    body:JSON.stringify({ model, temperature:.8, messages:[{ role:'system', content:sys }, { role:'user', content:user }] }) });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw new Error((j.error?.message || j.message || 'Error ' + r.status) + (r.status === 429 ? ' — Se alcanzó el límite gratuito; espera un poco.' : r.status === 401 ? ' — Revisa la clave.' : ''));
+  return j.choices?.[0]?.message?.content || '';
+}
+let aiAbort = null;
+async function aiSuggest(){
+  const c = RP.c, cfg = AI.cfg(); if(!c) return;
+  if(!aiConfigured(cfg)){ openAiCfg(); return; }
+  aiAbort?.abort(); aiAbort = new AbortController();
+  const forC = c;
+  RP.ai = { for:c.id, items:[], loading:true }; renderReplyOpts();
+  $('#rpAiState').textContent = 'Pensando con ' + AI_PROV[cfg.prov].name + '…'; $('#rpAi').disabled = true;
+  try{
+    const { sys, user } = aiPrompt(c, cfg);
+    const items = aiParse(await aiRequest(cfg, sys, user, aiAbort.signal), cfg.n);
+    if(RP.c !== forC) return;
+    if(!items.length) throw new Error('La IA no devolvió sugerencias. Inténtalo de nuevo.');
+    RP.ai = { for:c.id, items, loading:false };
+    $('#rpAiState').textContent = `${countTxt(items.length, 'sugerencia', 'sugerencias')} de ${AI_PROV[cfg.prov].name}. Revísalas antes de publicar.`;
+    renderReplyOpts(); pickAi(0);
+  }catch(e){
+    if(e.name === 'AbortError') return;
+    RP.ai = null; renderReplyOpts();
+    $('#rpAiState').textContent = '';
+    setStatus('#rpStatus', 'IA: ' + (e.message === 'Failed to fetch' ? 'no se pudo conectar con el servicio (revisa la URL, la conexión o los permisos CORS).' : e.message), true, 'as-ia');
+  }finally{ if(RP.c === forC) $('#rpAi').disabled = false; }
+}
+function pickAi(i){
+  const t = RP.ai?.items?.[i]; if(t == null) return;
+  RP.sel = null; $('#rpText').value = t;
+  $$('#rpOpts .rp-opt').forEach(b => b.setAttribute('aria-selected', b.dataset.ai === String(i)));
+  updateRpChars();
+}
+function aiOptsHtml(){
+  const a = RP.ai; if(!a || a.for !== RP.c?.id) return '';
+  if(a.loading) return '<div class="ai-skel" aria-hidden="true"></div><div class="ai-skel" aria-hidden="true"></div>';
+  return a.items.map((t, i) => `<button class="rp-opt ai" role="option" data-ai="${i}" aria-selected="false"><span class="ro-t"><span class="aitag"><span class="ms fill">auto_awesome</span>IA</span>Sugerencia ${i + 1}</span><span class="ro-p">${esc(t)}</span></button>`).join('');
+}
+function openAiCfg(){
+  const c = AI.cfg();
+  $('#aiProv').value = c.prov; $('#aiTone').value = c.tone; $('#aiN').value = String(c.n); $('#aiBrand').value = c.brand;
+  aiCfgSync(); setStatus('#aiStatus', ''); $('#aiDlg').showModal();
+}
+function aiCfgSync(){
+  const c = AI.cfg(), prov = $('#aiProv').value, P = AI_PROV[prov];
+  $('#aiProvHint').textContent = P.hint + (prov === 'chrome' && !AI.chromeApi() ? ' Este navegador no la tiene disponible.' : '');
+  $('#aiKeyF').classList.toggle('hidden', !P.key && prov !== 'custom');
+  $('#aiUrlF').classList.toggle('hidden', prov !== 'custom');
+  $('#aiModelF').classList.toggle('hidden', prov === 'chrome');
+  $('#aiKey').value = c.keys[prov] || ''; $('#aiModel').value = c.models[prov] || P.model || ''; $('#aiUrl').value = c.url || P.url || '';
+  $('#aiModel').placeholder = prov === 'openrouter' ? 'proveedor/modelo:free' : (P.model || '');
+  $('#aiModelHint').textContent = P.mhint || '';
+  const kl = $('#aiKeyLink'); kl.classList.toggle('hidden', !P.link); if(P.link) kl.href = P.link;
+  $('#aiKey').placeholder = prov === 'custom' ? 'Opcional' : 'Pega aquí tu clave';
+  $('#aiPrivacy div').innerHTML = prov === 'chrome' || prov === 'custom'
+    ? 'El texto del comentario <b>no sale de tu equipo</b>: el modelo se ejecuta en local.'
+    : `Para generar sugerencias se envían a <b>${esc(P.name)}</b> el texto del comentario, el nombre de su autor y el de la publicación. En los niveles gratuitos el proveedor puede usar esos datos para mejorar sus modelos: revisa sus condiciones.`;
+}
+function aiCfgRead(){
+  const c = AI.cfg(), prov = $('#aiProv').value;
+  c.prov = prov; c.tone = $('#aiTone').value; c.n = +$('#aiN').value || 3; c.brand = $('#aiBrand').value.trim();
+  c.keys = { ...c.keys, [prov]:$('#aiKey').value.trim() }; c.models = { ...c.models, [prov]:$('#aiModel').value.trim() };
+  if(prov === 'custom') c.url = $('#aiUrl').value.trim();
+  return c;
+}
+function initAi(){
+  $('#rpAi').onclick = aiSuggest;
+  $('#rpAiCfg').onclick = openAiCfg;
+  $('#aiProv').onchange = aiCfgSync;
+  $('#aiSave').onclick = () => { const c = aiCfgRead(); AI.save(c); $('#aiDlg').close(); toast('Configuración de IA guardada');
+    if($('#replyDlg').open && aiConfigured(c) && !RP.ai) aiSuggest(); };
+  $('#aiTest').onclick = async () => {
+    const c = aiCfgRead(); if(!aiConfigured(c)){ setStatus('#aiStatus', c.prov === 'chrome' ? 'La IA integrada no está disponible en este navegador.' : 'Completa la clave y el modelo.', true); return; }
+    setStatus('#aiStatus', 'Probando…');
+    try{ const t = await aiRequest(c, 'Responde solo con JSON: {"respuestas":["ok"]}', 'Prueba de conexión'); setStatus('#aiStatus', '✓ Conexión correcta' + (aiParse(t, 1)[0] ? '' : ' (respuesta inesperada, pero el servicio contestó)')); }
+    catch(e){ setStatus('#aiStatus', e.message === 'Failed to fetch' ? 'No se pudo conectar (revisa la URL, la conexión o CORS).' : e.message, true, 'as-ia'); }
+  };
+  $('#rpSaveCat').onclick = () => {
+    const c = RP.c, t = $('#rpText').value.trim(); if(!t){ setStatus('#rpStatus', 'No hay texto que guardar.', true); return; }
+    const name = String(c.authorName||'').replace(/^@/,''), first = c.platform === 'facebook' ? name.split(/\s+/)[0] : name;
+    let tpl = t; if(name) tpl = tpl.split('@' + name).join('{usuario}').split(name).join('{nombre}'); if(first && first !== name) tpl = tpl.split(first).join('{nombre_pila}');
+    openCatalog(); editCatalogItem(null); $('#catText').value = tpl; $('#catName').focus();
+    const tg = c.isQuestion ? 'pregunta' : c.sentiment; $$('#catTags [data-tag]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tag === tg));
+  };
+}
+
+
+/* ---------- Requisito: sesión de Facebook activa para responder ---------- */
+// Facebook e Instagram (que usa el inicio de sesión de Facebook). Los datos de ejemplo y TikTok no lo necesitan.
+const needsFbSession = c => !!c && c.source !== 'demo' && (c.platform === 'facebook' || c.platform === 'instagram');
+function fbSessionStatus(){
+  return new Promise(res => {
+    if(!window.FB || !FBA.appId || !FBA.userToken) return res({ ok:false, why:'nologin' });
+    let done = false;
+    const finish = v => { if(!done){ done = true; clearTimeout(t); res(v); } };
+    const t = setTimeout(() => finish({ ok:!FBA.expiresAt || FBA.expiresAt > Date.now(), why:'expired' }), 8000);
+    try{
+      FB.getLoginStatus(r => {
+        if(r && r.status === 'connected'){
+          FBA.userToken = r.authResponse.accessToken;
+          if(r.authResponse.expiresIn) FBA.expiresAt = Date.now() + r.authResponse.expiresIn * 1000;
+          finish({ ok:true });
+        } else finish({ ok:false, why:'expired' });
+      }, true);
+    }catch(e){ finish({ ok:false, why:'nologin' }); }
+  });
+}
+function showSession(state){
+  const box = $('#rpSession'), block = !!state && state !== 'checking';
+  box.classList.toggle('hidden', !state);
+  box.classList.toggle('checking', state === 'checking');
+  $('#rpSessionIc').textContent = state === 'checking' ? 'progress_activity' : 'error';
+  $('#rpSessionTitle').textContent = state === 'checking' ? 'Comprobando la sesión de Facebook…' : 'No hay una sesión de Facebook activa';
+  $('#rpSessionMsg').textContent = state === 'nologin' ? 'Para responder comentarios necesitas iniciar sesión con Facebook (Obtener › Conectar con Facebook).'
+    : state === 'expired' ? 'La sesión de Facebook caducó o se cerró. Vuelve a iniciar sesión para poder responder.' : '';
+  $('#rpLogin').classList.toggle('hidden', !block);
+  $('#rpSend').disabled = !!state;
+  $('#rpCopyOpen').disabled = !!state || RP.noLink;
+}
+async function checkReplySession(c){
+  if(!needsFbSession(c)){ RP.session = true; showSession(null); return true; }
+  RP.session = false; showSession('checking');
+  const s = await fbSessionStatus();
+  if(RP.c !== c) return s.ok;
+  RP.session = s.ok; RP.sessionWhy = s.why;
+  showSession(s.ok ? null : s.why);
+  return s.ok;
+}
+// Comprobación síncrona en el momento de responder (sin esperas, para no bloquear la ventana emergente de Facebook)
+function sessionGuard(c){
+  if(!needsFbSession(c)) return true;
+  const expired = FBA.expiresAt && FBA.expiresAt <= Date.now();
+  if(RP.session && FBA.userToken && !expired) return true;
+  const why = !FBA.userToken ? 'nologin' : 'expired';
+  showSession(why);
+  setStatus('#rpStatus', why === 'nologin' ? 'No se puede responder: no hay una sesión de Facebook activa. Inicia sesión con Facebook primero.' : 'No se puede responder: la sesión de Facebook caducó. Vuelve a iniciar sesión.', true, 'as-sesion');
+  return false;
+}
+function replyLogin(){
+  const c = RP.c, id = validAppId();
+  if(RP.sessionWhy === 'expired' && id && window.FB && FBA.appId === id){
+    FB.login(r => { if(r.authResponse){ FBA.userToken = r.authResponse.accessToken; FBA.expiresAt = r.authResponse.expiresIn ? Date.now() + r.authResponse.expiresIn * 1000 : null; checkReplySession(RP.c); toast('Sesión de Facebook iniciada'); } },
+      { scope:scopesFor(c.platform), return_scopes:true, auth_type:'rerequest' });
+    return;
+  }
+  $('#replyDlg').close();
+  setPlatform(c.platform === 'instagram' ? 'instagram' : 'facebook'); setMethod('fb'); go('obtener');
+  toast('Inicia sesión con Facebook y vuelve a Resultados para responder');
+}
+
+
+/* ---------- Selector de emojis (editor de respuestas y catálogo) ---------- */
+const EMOJI_SETS = [
+  { id:'caras', icon:'😊', name:'Caras', list:'😊 😀 😃 😄 😁 😆 😅 🤣 😂 🙂 😉 😍 🥰 😘 😋 😎 🤩 🥳 🤗 🤔 🤭 😌 😇 🙃 😏 😐 😶 🙄 😬 😔 😢 😭 😥 😓 😩 😤 😡 😱 😳 🥺 😴 🤤 🤒 🤯 😮 😯 🫡 🫶'.split(' '),
+    words:'sonrisa feliz alegre contento risa riendo carcajada guiño amor enamorado beso rico gafas genial estrellas fiesta abrazo pensando tapada tranquilo angel reves picaro neutral callado ojos mueca triste llorando lloro preocupado sudor cansado enfadado molesto enojado susto sorpresa sonrojado suplica dormido babeando enfermo explota asombro sorprendido saludo corazon manos' },
+  { id:'gestos', icon:'👍', name:'Gestos', list:'👍 👎 👏 🙌 🙏 🤝 👌 ✌️ 🤞 🤙 👋 💪 👊 ✊ 🫰 👉 👈 👆 👇 ☝️ ✋ 🤚 🖐️ 🙋 🙆 🙅 🤷 🤦 💁 🙇'.split(' '),
+    words:'bien ok pulgar arriba mal abajo aplauso celebrar gracias por favor rezar acuerdo trato perfecto paz suerte llamame hola adios fuerza fuerte puño puno chasquido derecha izquierda arriba abajo uno mano alto mano saludo levanta si no encogerse facepalm ayuda reverencia disculpa' },
+  { id:'corazones', icon:'❤️', name:'Corazones y símbolos', list:'❤️ 🧡 💛 💚 💙 💜 🤍 🖤 🤎 💖 💗 💕 💞 💓 💝 ❤️‍🩹 💯 ✨ ⭐ 🌟 🔥 💥 ✅ ☑️ ✔️ ❌ ⚠️ ❗ ❓ 💬 🆕 🆗 🔝 ➡️ ⬇️'.split(' '),
+    words:'corazon rojo naranja amarillo verde azul morado blanco negro marron brillante latido amor cariño regalo curado cien brillo estrella fuego explosion hecho listo correcto check error no aviso atencion importante pregunta mensaje chat nuevo ok top flecha' },
+  { id:'compras', icon:'🛍️', name:'Compras y entregas', list:'🛍️ 🛒 🎁 📦 🚚 🚛 🛵 🏍️ 🚗 📍 🗺️ 🏠 🏪 💳 💵 💰 🏷️ 🧾 📞 📱 💻 📧 ✉️ 📩 📅 ⏰ ⏳ ⌛ 🕐 📢 📣 🔔 🎉 🎊 🥇 🏆 🎯 🔍'.split(' '),
+    words:'bolsa compras carrito regalo paquete caja envio camion entrega moto auto coche ubicacion mapa casa tienda tarjeta pago dinero efectivo precio etiqueta factura recibo telefono llamada movil computadora correo email carta mensaje calendario fecha reloj alarma espera tiempo hora anuncio aviso campana notificacion fiesta celebracion ganador premio trofeo objetivo buscar' },
+  { id:'comida', icon:'🍕', name:'Comida y naturaleza', list:'🍕 🍔 🌮 🍗 🥩 🍖 🥓 🍳 🥗 🍝 🍚 🍞 🧀 🥚 🍎 🍌 🍓 🍇 🥑 🥕 🍅 🌶️ ☕ 🍺 🍷 🥤 🧃 🍰 🎂 🍫 🍦 🌸 🌹 🌻 🌴 🌞 🌈 ☀️ 🌧️ 🐶 🐱'.split(' '),
+    words:'pizza hamburguesa taco pollo carne res cerdo tocino huevo ensalada pasta arroz pan queso huevo manzana platano fresa uva aguacate zanahoria tomate picante chile cafe cerveza vino refresco jugo pastel torta cumpleaños chocolate helado flor rosa girasol palmera sol arcoiris lluvia perro gato' }
+];
+const EMOJI = {
+  recent(){ return jsonPref('emojiRecent', []); },
+  remember(e){ const r = this.recent().filter(x => x !== e); r.unshift(e); PREF.set('emojiRecent', JSON.stringify(r.slice(0, 16))); },
+  pop:null, target:null, btn:null, tab:'caras'
+};
+function emojiInsert(ta, e){
+  ta.focus();
+  const s = ta.selectionStart ?? ta.value.length, en = ta.selectionEnd ?? s;
+  ta.setRangeText(e, s, en, 'end');
+  ta.dispatchEvent(new Event('input', { bubbles:true }));
+  EMOJI.remember(e);
+}
+function renderEmojiPop(){
+  const pop = EMOJI.pop; if(!pop) return;
+  const q = normName(pop.querySelector('input').value);
+  const rec = EMOJI.recent();
+  const grid = l => `<div class="ep-grid">${l.map(e => `<button type="button" data-e="${e}" aria-label="${e}">${e}</button>`).join('')}</div>`;
+  let html = '';
+  if(q){
+    const hits = EMOJI_SETS.filter(s => normName(s.name + ' ' + s.words).includes(q)).flatMap(s => s.list);
+    html = hits.length ? grid([...new Set(hits)]) : '<p class="ep-empty">No se encontraron emojis.</p>';
+  } else {
+    if(rec.length) html += `<div class="ep-h">Recientes</div>${grid(rec)}`;
+    EMOJI_SETS.forEach(s => html += `<div class="ep-h" id="ep-${s.id}">${s.name}</div>${grid(s.list)}`);
+  }
+  pop.querySelector('.ep-body').innerHTML = html;
+}
+function placeEmojiPop(){
+  const pop = EMOJI.pop, b = EMOJI.btn?.getBoundingClientRect(); if(!pop || !b) return;
+  const w = pop.offsetWidth, ht = pop.offsetHeight, vw = innerWidth, vh = innerHeight;
+  let left = Math.min(Math.max(12, b.left), vw - w - 12);
+  let top = b.bottom + 6; if(top + ht > vh - 12) top = Math.max(12, b.top - ht - 6);
+  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+}
+function closeEmojiPop(focusBack){
+  if(!EMOJI.pop) return;
+  EMOJI.pop.remove(); EMOJI.btn?.setAttribute('aria-expanded', 'false');
+  if(focusBack) EMOJI.target?.focus();
+  EMOJI.pop = null;
+}
+function openEmojiPop(btn){
+  const ta = document.getElementById(btn.dataset.emojiFor); if(!ta) return;
+  if(EMOJI.pop && EMOJI.btn === btn){ closeEmojiPop(true); return; }
+  closeEmojiPop();
+  const pop = document.createElement('div');
+  pop.className = 'emoji-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Insertar emoji');
+  pop.innerHTML = `<label class="ep-search"><span class="ms">search</span><input type="search" placeholder="Buscar emoji (corazón, gracias, envío…)" aria-label="Buscar emoji" autocomplete="off"></label>
+    <div class="ep-tabs" role="tablist">${EMOJI_SETS.map(s => `<button type="button" role="tab" data-tab="${s.id}" aria-selected="false" title="${s.name}" aria-label="${s.name}">${s.icon}</button>`).join('')}</div>
+    <div class="ep-body"></div>`;
+  // dentro del diálogo (capa superior) para que se vea por encima del fondo modal
+  (btn.closest('dialog') || document.body).appendChild(pop);
+  EMOJI.pop = pop; EMOJI.target = ta; EMOJI.btn = btn; btn.setAttribute('aria-expanded', 'true');
+  renderEmojiPop(); placeEmojiPop();
+  const input = pop.querySelector('input');
+  input.oninput = renderEmojiPop;
+  pop.addEventListener('click', e => {
+    const b = e.target.closest('[data-e]');
+    if(b){ emojiInsert(ta, b.dataset.e); if(!e.shiftKey) closeEmojiPop(); else renderEmojiPop(); return; }
+    const t = e.target.closest('[data-tab]');
+    if(t){ input.value = ''; renderEmojiPop(); const h = pop.querySelector('#ep-' + t.dataset.tab); if(h) pop.querySelector('.ep-body').scrollTop = h.offsetTop - 4;
+      pop.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', x === t)); }
+  });
+  pop.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeEmojiPop(true); return; }
+    const bs = [...pop.querySelectorAll('.ep-grid button')], i = bs.indexOf(document.activeElement);
+    const step = { ArrowRight:1, ArrowLeft:-1, ArrowDown:8, ArrowUp:-8 }[e.key];
+    if(step && (i >= 0 || (e.key === 'ArrowDown' && document.activeElement === input))){ e.preventDefault(); const n = bs[i < 0 ? 0 : Math.max(0, Math.min(bs.length - 1, i + step))]; n?.focus(); }
+  });
+  setTimeout(() => input.focus(), 0);
+}
+function initEmoji(){
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-emoji-for]'); if(b){ e.preventDefault(); openEmojiPop(b); return; }
+    if(EMOJI.pop && !e.target.closest('.emoji-pop')) closeEmojiPop();
+  });
+  // Escape con el selector abierto cierra solo el selector, no el diálogo
+  $$('dialog').forEach(d => d.addEventListener('cancel', e => { if(EMOJI.pop && d.contains(EMOJI.pop)){ e.preventDefault(); closeEmojiPop(true); } }));
+  $$('dialog').forEach(d => d.addEventListener('close', () => closeEmojiPop()));
+  addEventListener('resize', placeEmojiPop);
+  $$('.dlg-body').forEach(b => b.addEventListener('scroll', placeEmojiPop, { passive:true }));
+}
+
+function initAssistant(){
+  $('#openTeam').onclick = openTeam;
+  $('#openCatalog').onclick = openCatalog;
+  $('#assistStart').onclick = startAssistant;
+  $('#fNoTeam').addEventListener('click', () => { if(!S.teamOn) setTimeout(() => { openTeam(); toast('Añade a tu equipo para usar este filtro'); }, 0); });
+  const addTyped = () => { const v = $('#teamName').value.trim(); if(!v) return; if(TEAM.add(v)) toast(v + ' añadido al equipo'); $('#teamName').value = ''; teamChanged(); };
+  $('#teamAddBtn').onclick = addTyped;
+  $('#teamName').onkeydown = e => { if(e.key === 'Enter'){ e.preventDefault(); addTyped(); } };
+  $('#teamSearch').oninput = renderTeamDlg;
+  $('#teamPostAuthor').onchange = e => { PREF.set('teamPostAuthor', e.target.checked ? '1' : '0'); teamChanged(); };
+  $('#teamAllReplies').onchange = e => { PREF.set('teamAllReplies', e.target.checked ? '1' : '0'); teamChanged(); };
+  $('#teamDlg').addEventListener('click', e => {
+    const a = e.target.closest('[data-add]'), r = e.target.closest('[data-rm]');
+    if(a){ TEAM.add(a.dataset.add, a.dataset.aid ? { id:a.dataset.aid } : null); teamChanged(); }
+    if(r){ TEAM.remove(r.dataset.rm); teamChanged(); }
+  });
+  // catálogo
+  $('#catTags').addEventListener('click', e => { const b = e.target.closest('[data-tag]'); if(b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
+  $('#catForm').onsubmit = e => {
+    e.preventDefault();
+    const l = CATALOG.list(), id = $('#catId').value || 'r' + Date.now().toString(36);
+    const item = { id, title:$('#catName').value.trim(), text:$('#catText').value.trim(), tags:$$('#catTags [aria-pressed="true"]').map(b => b.dataset.tag) };
+    if(!item.title || !item.text) return;
+    const i = l.findIndex(x => x.id === id); i >= 0 ? (l[i] = item) : l.push(item);
+    CATALOG.save(l); editCatalogItem(null); catalogChanged(); toast('Respuesta guardada');
+  };
+  $('#catCancel').onclick = () => editCatalogItem(null);
+  $('#catList').addEventListener('click', e => {
+    const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
+    if(ed){ editCatalogItem(CATALOG.list().find(x => x.id === ed.dataset.edit)); $('#catForm').scrollIntoView({ block:'nearest', behavior:'smooth' }); }
+    if(del){ const l = CATALOG.list(), it = l.find(x => x.id === del.dataset.del); CATALOG.save(l.filter(x => x !== it)); catalogChanged();
+      toast('Respuesta eliminada', { label:'Deshacer', run:() => { CATALOG.save(CATALOG.list().concat([it])); catalogChanged(); } }); }
+  });
+  $('#catExport').onclick = () => download('respuestas-' + fileStamp() + '.json', JSON.stringify({ type:'social-comments-replies', version:1, replies:CATALOG.list(), team:TEAM.list() }, null, 2), 'application/json');
+  $('#catImport').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+    try{
+      const j = JSON.parse(await f.text()); const arr = Array.isArray(j) ? j : j.replies;
+      if(!Array.isArray(arr)) throw new Error('El archivo no contiene respuestas.');
+      const l = CATALOG.list(), keys = new Set(l.map(r => normName(r.title)));
+      let n = 0; arr.forEach(r => { if(r && r.title && r.text && !keys.has(normName(r.title))){ l.push({ id:'r' + Date.now().toString(36) + n, title:String(r.title), text:String(r.text), tags:Array.isArray(r.tags) ? r.tags.filter(t => TAG_NAME[t]) : [] }); n++; } });
+      CATALOG.save(l);
+      let t = 0; if(Array.isArray(j.team)) j.team.forEach(m => { if(m && m.name && TEAM.add(m.name, m.id ? { id:m.id } : null)) t++; });
+      catalogChanged(); if(t) teamChanged();
+      toast(`${countTxt(n, 'respuesta importada', 'respuestas importadas')}${t ? ` · ${countTxt(t, 'persona', 'personas')} en el equipo` : ''}`);
+    }catch(err){ toast('No se pudo importar: ' + err.message); }
+  };
+  $('#catDefaults').onclick = () => {
+    const l = CATALOG.list(), keys = new Set(l.map(r => normName(r.title)));
+    const add = DEFAULT_REPLIES.filter(r => !keys.has(normName(r.title))).map(r => ({ ...r, id:r.id + '-' + Date.now().toString(36) }));
+    CATALOG.save(l.concat(add)); catalogChanged(); toast(add.length ? countTxt(add.length, 'ejemplo restaurado', 'ejemplos restaurados') : 'Los ejemplos ya están en el catálogo');
+  };
+  // responder
+  $('#rpOpts').addEventListener('click', e => { const o = e.target.closest('[data-rid]'); if(o) pickReply(o.dataset.rid); const a = e.target.closest('[data-ai]'); if(a) pickAi(+a.dataset.ai); if(e.target.closest('[data-newcat]')) openCatalog(); });
+  $('#rpOpts').addEventListener('keydown', e => {
+    if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return; e.preventDefault();
+    const os = $$('#rpOpts .rp-opt'), i = os.indexOf(document.activeElement), n = os[Math.max(0, Math.min(os.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))];
+    if(n){ n.focus(); n.dataset.ai != null ? pickAi(+n.dataset.ai) : pickReply(n.dataset.rid); }
+  });
+  $('#rpSearch').oninput = renderReplyOpts;
+  $('#rpText').oninput = updateRpChars;
+  $('#rpText').onkeydown = e => { if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); (replyRoute(RP.c).api ? sendReply : copyAndOpen)(); } };
+  $('#rpEditCat').onclick = openCatalog;
+  $('#rpSend').onclick = sendReply;
+  $('#rpLogin').onclick = replyLogin;
+  $('#rpCopyOpen').onclick = copyAndOpen;
+  $('#rpMark').onclick = () => { const c = RP.c; ANSWERED.set(c.id, { at:new Date().toISOString(), via:'manual' }); renderAll(); toast('Marcado como respondido', { label:'Deshacer', run:() => { ANSWERED.set(c.id, null); renderAll(); } }); replyStep(1); };
+  $('#rpSkip').onclick = () => replyStep(1);
+  $('#rpPrev').onclick = () => replyStep(-1);
+  initAi();
+  initEmoji();
+}
+
 function showDetail(c){
   if(!c) return; detailCurrent=c;
+  const inTeam = TEAM.has(c.authorName);
+  $('#dTeam').innerHTML = inTeam ? '<span class="ms">person_remove</span>Quitar del equipo' : '<span class="ms">person_add</span>Añadir al equipo';
+  $('#dTeam').classList.toggle('hidden', !c.authorName);
+  $('#dReply').classList.toggle('hidden', !!c.isTeam);
   const rows = [
     ['Autor', c.authorName], ['Perfil', c.authorUrl], ['ID del autor', c.authorId], ['Insignias', c.badges.join(', ')],
     ['Tipo', c.type==='reply'?`Respuesta (nivel ${c.depth})`:'Comentario principal'], ['Responde a', c.replyTo],
     ['Fecha', c.createdAt ? fmtDate(c.createdAt)+(c.dateApprox?' (aproximada)':'') : ''], ['Fecha original', c.dateText],
     ['Plataforma', platName(c.platform)], [c.platform!=='facebook'?'Me gusta':'Reacciones', c.reactions], ...(c.platform!=='facebook'?[]:[['Me gusta', c.likes]]), ['Respuestas', c.repliesCount],
-    ['Sentimiento', `${c.sentiment} (puntuación ${c.sentimentScore}${c.sentimentFrom ? ` · por ${c.sentimentFrom}` : ''})`], ['Caracteres / palabras', `${c.length} / ${c.words}`],
+    ['Sentimiento', `${c.sentiment} (puntuación ${c.sentimentScore}${c.sentimentFrom ? ` · por ${c.sentimentFrom}` : ''})`],
+    ['Publicación', c.source === 'respuesta' ? (c.verified ? 'Publicada desde la app y verificada en ' + platName(c.platform) : 'Publicada desde la app') : ''],
+    ['Equipo', c.isTeam ? 'Forma parte de tu equipo' : !S.teamOn ? '' : c.teamAnswered ? 'Respondido por tu equipo' + (ANSWERED.all()[c.id] ? ' (marcado en esta app)' : '') : c.needsTeam ? 'Pendiente de respuesta' : 'No requiere respuesta'], ['Caracteres / palabras', `${c.length} / ${c.words}`],
     ['Hashtags', c.hashtags.join(' ')], ['Menciones', c.mentions.join(', ')], ['Emojis', c.emojis.join(' ')], ['Enlaces', c.urls.join('\n')],
     ['Adjuntos', c.attachments.map(a=>`${a.type}${a.url?': '+a.url:''}`).join('\n')], ['Editado', c.edited?'Sí':''], ['Oculto', c.hidden?'Sí':''],
     ['ID', c.id], ['ID del comentario padre', c.parentId], ['Enlace', c.permalink], ['Fuente', c.source]
@@ -3893,7 +4995,7 @@ function filterHelp(raw){
   };
   let qt; $('#q').oninput = ()=>{ clearTimeout(qt); qt=setTimeout(()=>{ S.page=1; renderTable(); },150); };
   $('#qClear').onclick = ()=>{ $('#q').value=''; S.page=1; renderTable(); $('#q').focus(); };
-  $$('.fchip').forEach(ch=>ch.onclick=()=>{ const set=S.f[ch.dataset.fg]; set.has(ch.dataset.fv)?set.delete(ch.dataset.fv):set.add(ch.dataset.fv); S.page=1; renderTable(); });
+  $$('.fchip[data-fg]').forEach(ch=>ch.onclick=()=>{ const set=S.f[ch.dataset.fg]; set.has(ch.dataset.fv)?set.delete(ch.dataset.fv):set.add(ch.dataset.fv); S.page=1; renderTable(); });
   $('#fReset').onclick = ()=>{ Object.values(S.f).forEach(s=>s.clear()); S.page=1; renderTable(); };
   $('#threaded').onchange = e=>{ S.threaded=e.target.checked; renderTable(); };
   $('#pageSize').onchange = e=>{ S.pageSize=+e.target.value; S.page=1; renderTable(); };
@@ -3909,6 +5011,7 @@ function filterHelp(raw){
     const act = e.target.closest('[data-act]')?.dataset.act;
     if(act==='copy') copyText(`${c.authorName} (${c.createdAt?fmtDate(c.createdAt):c.dateText}):\n${c.text}`, 'Comentario copiado');
     if(act==='info') showDetail(c);
+    if(act==='reply') openReply(c, c.needsTeam ? S.rows.filter(x => x.needsTeam) : null);
   });
   // vista conversación
   $$('.seg [data-lv]').forEach(b=>b.onclick=()=>setListView(b.dataset.lv));
@@ -3936,6 +5039,7 @@ function filterHelp(raw){
     const act = e.target.closest('[data-act]')?.dataset.act;
     if(act==='copy'){ copyText(`${c.authorName} (${c.createdAt?fmtDate(c.createdAt):c.dateText}):\n${c.text}`, 'Comentario copiado'); return; }
     if(act==='info'){ showDetail(c); return; }
+    if(act==='reply'){ openReply(c, c.needsTeam ? S.rows.filter(x => x.needsTeam) : null); return; }
     if(e.target.closest('.bubble') && !e.target.closest('a,button')) showDetail(c);
   });
   $('#conv').addEventListener('keydown', e=>{
@@ -3948,6 +5052,11 @@ function filterHelp(raw){
 
   // diálogos
   $$('dialog [data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+  initAssistant();
+  $('#dTeam').onclick = () => { const c = detailCurrent; if(!c) return; const was = TEAM.has(c.authorName);
+    was ? TEAM.remove(c.authorName) : TEAM.add(c.authorName, c.authorId ? { id:c.authorId } : null);
+    toast(was ? c.authorName + ' ya no está en el equipo' : c.authorName + ' añadido al equipo'); renderTable(); showDetail(S.comments.find(x => x.id === c.id)); };
+  $('#dReply').onclick = () => { const c = detailCurrent; $('#detailDlg').close(); if(c) openReply(c, c.needsTeam ? S.rows.filter(x => x.needsTeam) : null); };
   $$('dialog').forEach(d=>d.addEventListener('click', e=>{ if(e.target===d && d.id!=='onboarding') d.close(); }));
   $('#dCopyJson').onclick = ()=>detailCurrent && copyText(JSON.stringify(exportRow(detailCurrent),null,2),'JSON copiado');
   $('#dCopyTxt').onclick = ()=>detailCurrent && copyText(detailCurrent.text,'Texto copiado');

@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test · Responder comentarios</title>
+<style>
+  :root{color-scheme:light dark;font-family:system-ui,sans-serif}
+  body{margin:24px;max-width:960px}
+  h1{font-size:20px;margin:0 0 4px}
+  p.sub{margin:0 0 16px;color:#666;font-size:14px}
+  #sum{font-weight:600;margin:12px 0}
+  .ok{color:#137333}.ko{color:#c5221f}
+  ol{padding-left:20px}
+  li{margin:6px 0;font-size:14px}
+  li small{display:block;color:#666;font-size:12px;white-space:pre-wrap}
+  iframe{width:1280px;height:900px;border:1px solid #ccc;margin-top:16px;transform:scale(.5);transform-origin:0 0}
+  .frame{height:470px;overflow:hidden}
+</style>
+</head>
+<body>
+<h1>Test de integración: responder comentarios</h1>
+<p class="sub">Carga la app en un iframe, simula la Graph API de Meta (mismas rutas y respuestas que Facebook/Instagram) y comprueba que la respuesta se publica en el comentario correcto y se verifica después.
+Ábrelo con un servidor local (<code>python3 -m http.server</code> → <code>http://localhost:8000/tests/responder.test.html</code>) o en Chrome con <code>--allow-file-access-from-files</code>.</p>
+<div id="sum">Ejecutando…</div>
+<ol id="out"></ol>
+<div class="frame"><iframe id="app" title="App bajo prueba"></iframe></div>
+<script>
+const out = document.getElementById('out');
+const results = [];
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function until(fn, ms = 8000, step = 50){ const t = Date.now(); while(Date.now() - t < ms){ try{ const v = fn(); if(v) return v; }catch(e){} await wait(step); } throw new Error('Tiempo de espera agotado'); }
+function check(name, cond, detail = ''){
+  results.push(!!cond);
+  const li = document.createElement('li');
+  li.className = cond ? 'ok' : 'ko';
+  li.textContent = (cond ? '✔ ' : '✘ ') + name;
+  if(detail){ const s = document.createElement('small'); s.textContent = detail; li.append(s); }
+  out.append(li);
+}
+
+/* ---------- Graph API simulada ---------- */
+function fakeGraph(){
+  const G = {
+    calls:[], posts:[], store:{}, n:0,
+    granted:['pages_show_list','pages_read_engagement','pages_read_user_content','pages_manage_engagement','instagram_basic','instagram_manage_comments'],
+    pageTokens:{ PAGE1:'PAGE_TOKEN_NEW' },
+    failPost:null,      // { status, code, message }
+    alterText:false,    // la plataforma devuelve otro texto al verificar
+    async fetch(url, opts = {}){
+      const u = new URL(url);
+      const path = u.pathname.replace(/^\/v[\d.]+\//, '');
+      const method = (opts.method || 'GET').toUpperCase();
+      const params = method === 'POST' ? Object.fromEntries(new URLSearchParams(opts.body)) : Object.fromEntries(u.searchParams);
+      G.calls.push({ method, path, params });
+      const json = (status, body) => ({ ok: status < 400, status, json: async () => body });
+      if(method === 'GET' && path === 'me/permissions') return json(200, { data: G.granted.map(p => ({ permission:p, status:'granted' })) });
+      if(method === 'GET' && G.pageTokens[path] && params.fields === 'access_token') return json(200, { id:path, access_token:G.pageTokens[path] });
+      const m = path.match(/^(.+)\/(comments|replies)$/);
+      if(method === 'POST' && m){
+        if(G.failPost) return json(G.failPost.status, { error:{ message:G.failPost.message, code:G.failPost.code } });
+        const id = (m[2] === 'replies' ? '1789' : 'P_') + (9000 + (++G.n));
+        G.posts.push({ target:m[1], edge:m[2], message:params.message, token:params.access_token, id });
+        G.store[id] = { id, message:params.message, text:params.message, parent:{ id:m[1] }, parent_id:m[1], from:{ id:'PAGE1', name:'Tienda Test' }, username:'tiendatest',
+          created_time:new Date().toISOString(), timestamp:new Date().toISOString(), permalink_url:'https://www.facebook.com/PAGE1/posts/1?comment_id=' + id };
+        return json(200, { id });
+      }
+      if(method === 'GET' && G.store[path]){
+        const r = { ...G.store[path] };
+        if(G.alterText){ r.message = r.text = 'Otro texto distinto'; }
+        return json(200, r);
+      }
+      return json(404, { error:{ message:'Unsupported get request: ' + path, code:100 } });
+    }
+  };
+  return G;
+}
+
+/* ---------- Utilidades sobre la app ---------- */
+let w, d, G;
+async function boot(){
+  const app = document.getElementById('app');
+  await new Promise(r => { app.onload = r; app.src = '../index.html'; });
+  w = app.contentWindow; w.localStorage.clear(); w.localStorage.setItem('fbca:onboarding', 'done');
+  await new Promise(r => { app.onload = r; w.location.reload(); });
+  w = app.contentWindow; d = w.document;
+  await until(() => typeof w.loadData === 'function' && d.getElementById('assistStart'));
+}
+function session({ connected = true, granted } = {}){
+  G = fakeGraph(); if(granted) G.granted = granted;
+  w.localStorage.removeItem('fbca:answered');   // cada caso empieza sin comentarios marcados como respondidos
+  w.fetch = (url, opts) => G.fetch(url, opts);
+  w.FB = {
+    getLoginStatus(cb){ cb(connected ? { status:'connected', authResponse:{ accessToken:'USER_TOKEN', expiresIn:3600 } } : { status:'unknown' }); },
+    login(cb, opts){ G.calls.push({ method:'LOGIN', path:'FB.login', params:opts || {} }); if(!G.granted.includes('pages_manage_engagement')) G.granted.push('pages_manage_engagement'); cb({ authResponse:{ accessToken:'USER_TOKEN_2', expiresIn:3600 } }); }
+  };
+  w.eval(`FBA.appId='1234567890'; FBA.userToken=${connected ? "'USER_TOKEN'" : 'null'}; FBA.expiresAt=Date.now()+3600e3;
+          FBA.granted=new Set(${JSON.stringify(G.granted)}); FBA.page={id:'PAGE1',name:'Tienda Test'}; FBA.ig=null;`);
+  d.getElementById('gToken').value = 'PAGE_TOKEN';
+}
+async function loadFacebook(){
+  const t = Date.now(), iso = h => new Date(t - h * 36e5).toISOString();
+  const items = [
+    { id:'P_1001', message:'¿Hacen envíos a Holguín?', created_time:iso(30), from:{ id:'U1', name:'Ana López' } },
+    { id:'P_1002', message:'Los mejores', created_time:iso(29), from:{ id:'U2', name:'Sandra Parron' } },
+    { id:'P_1003', message:'Sandra Parron gracias por considerarnos los mejores', created_time:iso(20), from:{ id:'U3', name:'Yaimara Salinas Goite' }, parent:{ id:'P_1002' }, message_tags:[{ name:'Sandra Parron' }] },
+    { id:'P_1004', message:'Yaimara Salinas Goite ¿y cuánto tarda?', created_time:iso(10), from:{ id:'U2', name:'Sandra Parron' }, parent:{ id:'P_1002' }, message_tags:[{ name:'Yaimara Salinas Goite' }] }
+  ];
+  w.eval(`TEAM.save([{name:'Yaimara Salinas Goite'}])`);
+  w.loadData(w.fromGraph(items, { postId:'P', url:'https://www.facebook.com/PAGE1/posts/1', title:'Publicación de prueba', postAuthor:'Tienda Test', platform:'facebook' }), { silent:true });
+  w.go('resultados'); w.selectTab('list');
+  await wait(300);   // deja terminar la navegación (cambiar de vista cierra los diálogos)
+}
+const S = () => w.eval('S');
+const comment = id => S().comments.find(c => c.id === id);
+async function openReplyFor(id){
+  d.getElementById('replyDlg').open && d.getElementById('replyDlg').close();
+  w.openReply(comment(id), null);
+  await until(() => d.getElementById('replyDlg').open && !d.getElementById('rpSession').classList.contains('checking'));
+}
+async function send(text){
+  d.getElementById('rpText').value = text;
+  d.getElementById('rpSend').click();
+}
+
+/* ---------- Casos ---------- */
+(async () => {
+  try{
+    await boot();
+
+    // 1. Facebook: publicar y verificar
+    session(); await loadFacebook();
+    check('Antes de responder, el comentario de Ana está pendiente', comment('P_1001').needsTeam);
+    await openReplyFor('P_1001');
+    check('Con sesión activa no hay aviso y “Publicar respuesta” está habilitado', d.getElementById('rpSession').classList.contains('hidden') && !d.getElementById('rpSend').disabled);
+    const TXT = 'Hola, Ana. Sí, enviamos a Holguín 🚚 ¡Gracias por escribir!';
+    await send(TXT);
+    await until(() => G.posts.length === 1 && S().comments.some(c => c.source === 'respuesta'));
+    const p1 = G.posts[0];
+    check('Se envía POST a /P_1001/comments (el comentario de Ana)', p1.target === 'P_1001' && p1.edge === 'comments', JSON.stringify(p1));
+    check('El mensaje enviado es exactamente el texto editado (con emojis)', p1.message === TXT, p1.message);
+    check('Se publica con el token de la página', p1.token === 'PAGE_TOKEN', p1.token);
+    const ver = G.calls.find(c => c.method === 'GET' && c.path === p1.id);
+    check('Tras publicar, la app vuelve a leer la respuesta por su ID en Facebook', !!ver, ver ? ver.path + ' ? fields=' + ver.params.fields : 'sin lectura');
+    const r1 = S().comments.find(c => c.id === p1.id);
+    check('La respuesta aparece en los datos, como hija del comentario y verificada', r1 && r1.parentId === 'P_1001' && r1.verified && r1.text === TXT, r1 && JSON.stringify({ id:r1.id, parentId:r1.parentId, verified:r1.verified, author:r1.authorName }));
+    check('El autor de la respuesta es la página (cuenta como equipo)', r1 && r1.authorName === 'Tienda Test' && r1.isTeam);
+    check('El comentario de Ana deja de estar pendiente', !comment('P_1001').needsTeam && comment('P_1001').teamAnswered);
+    check('Queda registrado como respondido por API verificada', w.eval(`ANSWERED.all()['P_1001']?.via`) === 'api-verificada');
+    check('Se muestra el aviso “publicada y verificada”', /verificada/.test(d.getElementById('snackMsg').textContent), d.getElementById('snackMsg').textContent);
+
+    // 2. Respuesta a una respuesta: se publica en el hilo del comentario principal
+    session(); await loadFacebook();
+    check('La repregunta de Sandra a Yaimara está pendiente', comment('P_1004').needsTeam);
+    await openReplyFor('P_1004');
+    await send('Sandra, unas 48 horas.');
+    await until(() => G.posts.length === 1);
+    check('Responder a una respuesta publica en el comentario principal (P_1002)', G.posts[0].target === 'P_1002', JSON.stringify(G.posts[0]));
+    await until(() => !comment('P_1004').needsTeam);
+    check('La repregunta queda atendida', comment('P_1004').teamAnswered);
+
+    // 3. Falta el permiso de publicar: se pide y se renueva el token de página
+    session({ granted:['pages_show_list','pages_read_engagement','pages_read_user_content'] }); await loadFacebook();
+    await openReplyFor('P_1001');
+    await send('Hola, Ana. Te escribimos por privado.');
+    await until(() => G.posts.length === 1);
+    const login = G.calls.find(c => c.method === 'LOGIN');
+    check('Se pide el permiso pages_manage_engagement con FB.login', login && login.params.scope === 'pages_manage_engagement', login && JSON.stringify(login.params));
+    check('Se renueva el token de la página antes de publicar', G.calls.some(c => c.path === 'PAGE1' && c.params.fields === 'access_token'));
+    check('La publicación usa el token de página renovado', G.posts[0].token === 'PAGE_TOKEN_NEW', G.posts[0].token);
+
+    // 4. Error de permisos de la Graph API: no se marca como respondido
+    session(); await loadFacebook();
+    G.failPost = { status:403, code:200, message:'(#200) Permissions error' };
+    await openReplyFor('P_1001');
+    await send('Hola, Ana.');
+    await until(() => d.getElementById('rpStatus').classList.contains('err'));
+    check('Si Facebook rechaza la publicación, se muestra el error', /No se pudo publicar/.test(d.getElementById('rpStatus').textContent), d.getElementById('rpStatus').textContent);
+    check('…y el comentario sigue pendiente, sin respuesta añadida', comment('P_1001').needsTeam && !S().comments.some(c => c.source === 'respuesta'));
+
+    // 5. La verificación no coincide: se avisa y no se marca como verificada
+    session(); await loadFacebook();
+    G.alterText = true;
+    await openReplyFor('P_1001');
+    await send('Hola, Ana. Gracias.');
+    await until(() => S().comments.some(c => c.source === 'respuesta'), 12000);
+    const r5 = S().comments.find(c => c.source === 'respuesta');
+    check('Si el texto leído no coincide, la respuesta no se marca como verificada', r5 && !r5.verified);
+    check('…y se avisa de que no se pudo verificar', /no se pudo verificar/.test(d.getElementById('snackMsg').textContent), d.getElementById('snackMsg').textContent);
+
+    // 6. Sin sesión de Facebook no se publica nada
+    session({ connected:false }); await loadFacebook();
+    await openReplyFor('P_1001');
+    check('Sin sesión se muestra el aviso y se desactiva “Publicar”', !d.getElementById('rpSession').classList.contains('hidden') && d.getElementById('rpSend').disabled);
+    d.getElementById('rpText').value = 'Hola'; w.eval('sendReply()'); await wait(300);
+    check('…y no se envía ninguna petición a Facebook', G.posts.length === 0 && !G.calls.some(c => c.method === 'POST'));
+
+    // 7. Instagram: /replies y verificación con campos de Instagram
+    session();
+    w.eval(`TEAM.save([])`);
+    w.loadData(w.fromInstagramGraph([{ id:'17841001', text:'¿Tienen talla M?', username:'ana.lopez', timestamp:new Date().toISOString() }],
+      { url:'https://www.instagram.com/p/ABC/', title:'Post IG', postAuthor:'@tiendatest' }), { silent:true });
+    w.eval(`FBA.ig={id:'IG1',username:'tiendatest',page:{id:'PAGE1'}}`);
+    await openReplyFor('17841001');
+    d.getElementById('rpMention').checked = true;
+    await send('Sí, tenemos talla M 👍');
+    await until(() => G.posts.length === 1 && S().comments.some(c => c.source === 'respuesta'));
+    check('Instagram: POST a /17841001/replies', G.posts[0].target === '17841001' && G.posts[0].edge === 'replies', JSON.stringify(G.posts[0]));
+    check('Instagram: el texto empieza con la mención @ana.lopez', G.posts[0].message === '@ana.lopez Sí, tenemos talla M 👍', G.posts[0].message);
+    const igv = G.calls.find(c => c.method === 'GET' && c.path === G.posts[0].id);
+    check('Instagram: se verifica leyendo text, username y parent_id', igv && /text/.test(igv.params.fields) && /parent_id/.test(igv.params.fields), igv && igv.params.fields);
+    check('Instagram: respuesta verificada y comentario atendido', S().comments.find(c => c.source === 'respuesta').verified && comment('17841001').teamAnswered);
+  }catch(e){ check('Excepción durante la prueba', false, e.stack || String(e)); }
+  const ok = results.filter(Boolean).length, all = results.length;
+  const sum = document.getElementById('sum');
+  sum.textContent = ok === all ? `✔ ${ok}/${all} comprobaciones superadas` : `✘ ${all - ok} de ${all} comprobaciones fallaron`;
+  sum.className = ok === all ? 'ok' : 'ko';
+  document.title = (ok === all ? 'PASS ' : 'FAIL ') + ok + '/' + all;
+})();
+</script>
+</body>
+</html>
