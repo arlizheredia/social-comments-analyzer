@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test · Seguimiento de publicaciones</title>
+<style>
+  :root{color-scheme:light dark;font-family:system-ui,sans-serif}
+  body{margin:24px;max-width:960px}
+  h1{font-size:20px;margin:0 0 4px}
+  p.sub{margin:0 0 16px;color:#666;font-size:14px}
+  #sum{font-weight:600;margin:12px 0}
+  .ok{color:#137333}.ko{color:#c5221f}
+  li{margin:6px 0;font-size:14px}
+  li small{display:block;color:#666;font-size:12px;white-space:pre-wrap}
+  iframe{width:1280px;height:900px;border:1px solid #ccc;margin-top:16px;transform:scale(.5);transform-origin:0 0}
+  .frame{height:470px;overflow:hidden}
+</style>
+</head>
+<body>
+<h1>Test de integración: seguimiento, historial e informes</h1>
+<p class="sub">Simula la extensión de Chrome (mismos mensajes que <code>extension/bridge.js</code> y <code>sw.js</code>) y comprueba la lista de publicaciones, los seguimientos con progreso, detener y continuar, el modo manual, el historial, el informe y sus exportaciones, y la búsqueda por significado.
+Ábrelo con <code>python3 -m http.server</code> → <code>http://localhost:8000/tests/seguimiento.test.html</code>.</p>
+<div id="sum">Ejecutando…</div>
+<ol id="out"></ol>
+<div class="frame"><iframe id="app" title="App bajo prueba"></iframe></div>
+<script>
+const out = document.getElementById('out'); const results = [];
+const wait = ms => new Promise(r => setTimeout(r, ms));
+// Espera generosa: en Chrome sin interfaz con tiempo virtual, IndexedDB tarda tiempo real mientras el reloj virtual avanza rápido
+async function until(fn, ms = 20000, step = 50){ const t = Date.now(); while(Date.now() - t < ms){ try{ const v = await fn(); if(v) return v; }catch(e){} await wait(step); } throw new Error('Tiempo de espera agotado'); }
+function check(name, cond, detail = ''){ results.push(!!cond); const li = document.createElement('li'); li.className = cond ? 'ok' : 'ko'; li.textContent = (cond ? '✔ ' : '✘ ') + name; if(detail){ const s = document.createElement('small'); s.textContent = detail; li.append(s); } out.append(li); }
+
+let w, d;
+const POSTS = {
+  fb:'https://www.facebook.com/kanasta24/posts/pfbid0abc123?__cft__=xyz&comment_id=9',
+  ig:'https://www.instagram.com/p/DfaXWVRCDZs/?igsh=abc',
+  tt:'https://www.tiktok.com/@kanasta24/video/7705915815522012436?q=promo'
+};
+// Comentarios de ejemplo por red (formato del extractor)
+function extractorData(url, n, extra = []){
+  const plat = /instagram/.test(url) ? 'instagram' : /tiktok/.test(url) ? 'tiktok' : 'facebook';
+  const base = [
+    { id:plat + '1', authorName:'Ana López', text:'¿Hacen envíos a Holguín?', dateText:'2 h' },
+    { id:plat + '2', authorName:'Dinna Ramírez', text:'Mi experiencia con Kanasta24 ha sido desagradable: 5 días de tardanza y carne maloliente', dateText:'3 h', reactions:7 },
+    { id:plat + '3', authorName:'Luis Pérez', text:'Excelente servicio, muy rápido. Los recomiendo 👍', dateText:'5 h', reactions:3 },
+    { id:plat + '4', authorName:'Marta Gil', text:'Precio por favor', dateText:'1 d' },
+    { id:plat + '5', authorName:'Ana López', text:'Gracias, todo perfecto con mi pedido de Kanasta 24', dateText:'1 d' }
+  ].slice(0, n).concat(extra);
+  return { source:'social-dom-extractor', platform:plat, version:3, url, title:'Publicación ' + plat, postAuthor:plat === 'facebook' ? 'Kanasta24' : 'kanasta24', extractedAt:new Date().toISOString(), comments:base.map((c, i) => ({ ...c, order:i })) };
+}
+// Extensión simulada: responde a {source:'sca-app'} como el puente real
+const FAKE = { delay:60, pending:new Map(), stopped:new Set(), calls:[], hold:false, perUrl:{} };
+function installFakeExtension(){
+  w.document.documentElement.dataset.scaExt = '1.0.0';
+  w.addEventListener('message', async e => {
+    const m = e.data; if(!m || m.source !== 'sca-app') return;
+    // se envía desde la propia ventana de la app, como hace el puente real (la app solo acepta mensajes de su ventana)
+    const reply = x => w.Function('m', 'window.postMessage(m, "*")')(Object.assign({ source:'sca-ext' }, x));
+    if(m.type === 'ping') return reply({ type:'pong', version:'1.0.0' });
+    if(m.type === 'stop'){ FAKE.stopped.add(m.jobId); return; }
+    if(m.type !== 'extract') return;
+    FAKE.calls.push(m);
+    reply({ type:'progress', jobId:m.jobId, phase:'opening' });
+    for(let r = 1; r <= 4; r++){
+      await wait(FAKE.delay);
+      while(r > 1 && FAKE.hold && !FAKE.stopped.has(m.jobId)) await wait(30);   // retiene tras el primer progreso
+      if(FAKE.stopped.has(m.jobId)){ reply({ type:'result', jobId:m.jobId, data:extractorData(m.url, 2), stopped:true, reason:'stopped' }); return; }
+      reply({ type:'progress', jobId:m.jobId, phase:'extracting', count:r, total:5, round:r });
+    }
+    const n = FAKE.perUrl[m.url] || 5;
+    reply({ type:'result', jobId:m.jobId, data:extractorData(m.url, n, n > 5 ? [{ id:'new1', authorName:'Pedro Ruiz', text:'Pésimo, nunca llegó mi pedido de Kanasta24', dateText:'1 h', reactions:12 }] : []) });
+  });
+}
+async function boot(){
+  const app = document.getElementById('app');
+  await new Promise(r => { app.onload = r; app.src = '../index.html'; });
+  w = app.contentWindow;
+  w.localStorage.clear(); w.localStorage.setItem('fbca:onboarding', 'done'); w.localStorage.setItem('fbca:eoGap', '0');
+  await new Promise(r => { app.onload = r; w.location.reload(); });
+  w = app.contentWindow; d = w.document;
+  await until(() => typeof w.initTracking === 'function' && d.getElementById('postList'));
+  // datos limpios: se vacían los almacenes de la app (sin borrar la base de datos, que está abierta)
+  await w.eval(`(async () => { for(const s of ['posts', 'trackings', 'results']) await DB.tx(s, 'readwrite', st => st.clear()); await loadTR(); })()`);
+  installFakeExtension();
+  w.go('seguimiento'); await wait(300); w.extDetect(); await wait(200);
+}
+const TR = () => w.eval('TR');
+
+(async () => {
+  try{
+    await boot();
+    check('La extensión simulada se detecta como conectada', /conectada/.test(d.getElementById('extTxt').textContent), d.getElementById('extTxt').textContent);
+
+    // 1. Lista de publicaciones
+    d.getElementById('addPostUrl').value = POSTS.fb; d.getElementById('addPostName').value = 'Promo FB';
+    d.getElementById('addPostForm').requestSubmit(); await until(() => TR().posts.length === 1);
+    await w.addPosts([POSTS.ig, POSTS.tt, POSTS.fb.replace('__cft__=xyz', '__cft__=other'), 'https://example.com/no']);
+    const ps = TR().posts;
+    check('Se añaden 3 publicaciones y se detecta su red', ps.length === 3 && ['facebook', 'instagram', 'tiktok'].every(p => ps.some(x => x.platform === p)), ps.map(p => p.platform + ' ' + p.url).join('\n'));
+    check('El enlace se guarda sin parámetros de rastreo', ps.find(p => p.platform === 'facebook').url === 'https://www.facebook.com/kanasta24/posts/pfbid0abc123', ps.find(p => p.platform === 'facebook').url);
+    check('Los duplicados y enlaces no reconocidos no se añaden', /ya estaba en la lista/.test(d.getElementById('snackMsg').textContent) && /no reconocido/.test(d.getElementById('snackMsg').textContent), d.getElementById('snackMsg').textContent);
+    check('La lista muestra las 3 filas', d.querySelectorAll('#postList .prow').length === 3);
+
+    // 2. Crear seguimiento y ejecutarlo con la extensión
+    d.getElementById('postAll').click();
+    check('La barra de selección aparece con 3 seleccionadas', !d.getElementById('postSelbar').classList.contains('hidden') && /3 publicaciones/.test(d.getElementById('postSelCount').textContent));
+    d.getElementById('newTrackBtn').click(); await wait(100);
+    check('El diálogo muestra las publicaciones y el método (extensión)', d.querySelectorAll('#trackPosts .titem').length === 3 && d.querySelectorAll('#trackPosts .mchip.extension').length === 3);
+    d.getElementById('trackDate').value = '2026-11-15'; d.getElementById('trackName').value = 'Lunes';
+    FAKE.hold = true;
+    d.getElementById('trackStart').click();
+    await until(() => d.querySelector('#runDetail .ritem .ri-ic.running'));
+    await until(() => /Extrayendo/.test(d.getElementById('runDetail').textContent));
+    const pctTxt = d.querySelector('#runDetail .pct').textContent;
+    check('Durante la extracción se ve el progreso en porcentaje', /\d+ %/.test(pctTxt) && !!d.querySelector('#runDetail .ritem .pbar'), pctTxt + ' · ' + d.querySelector('#runDetail .ritem .ri-s').textContent);
+    check('El botón cambia a “Detener” mientras extrae', !!d.querySelector('[data-ract="stop"]'));
+
+    // 3. Detener y continuar
+    d.querySelector('[data-ract="stop"]').click();
+    await until(() => !TR().running);
+    let t1 = TR().tracks.find(t => t.name === 'Lunes');
+    check('Al detener, el seguimiento queda en pausa', t1.status === 'paused', t1.status);
+    check('La publicación interrumpida vuelve a pendiente (no se guarda a medias)', Object.values(t1.items).every(i => i.status === 'pending'), JSON.stringify(Object.values(t1.items).map(i => i.status)));
+    FAKE.hold = false; FAKE.stopped.clear();
+    d.querySelector('[data-ract="start"]').click();
+    await until(() => TR().tracks.find(t => t.name === 'Lunes').status === 'done', 30000);
+    t1 = TR().tracks.find(t => t.name === 'Lunes');
+    check('Al continuar, termina y pasa al historial', t1.status === 'done' && Object.values(t1.items).every(i => i.status === 'done' && i.count === 5), JSON.stringify(Object.values(t1.items).map(i => [i.status, i.count])));
+    const stored = await w.eval('DB').resultsOf(t1.id);
+    check('Los comentarios de cada publicación quedan guardados en IndexedDB', stored.length === 3 && stored.every(r => r.comments.length === 5));
+    check('La lista aprende el autor de la publicación', TR().posts.every(p => /kanasta24/i.test(p.author)), TR().posts.map(p => p.author).join(', '));
+    check('El historial muestra el seguimiento', d.querySelectorAll('#histList .hrow').length === 1 && /Lunes/.test(d.getElementById('histList').textContent));
+
+    // 4. Sin extensión no se puede iniciar un seguimiento automático (el marcador no se usa en los seguimientos)
+    const fbId = TR().posts.find(p => p.platform === 'facebook').id, ttId = TR().posts.find(p => p.platform === 'tiktok').id;
+    const ttPost = TR().posts.find(p => p.id === ttId);
+    const saved = d.documentElement.dataset.scaExt; delete d.documentElement.dataset.scaExt; w.eval('EXT.version = null'); w.renderExt();
+    w.openTrackDlg([fbId, ttId]);
+    check('Sin extensión, el diálogo avisa y no deja iniciar', d.getElementById('trackStart').disabled && /no está instalada/.test(d.getElementById('trackMethods').textContent), d.getElementById('trackMethods').textContent.slice(0, 160));
+    check('Sin extensión no hay modo manual en el seguimiento', !d.querySelector('#trackPosts .mchip.manual') && !/marcador/i.test(d.getElementById('trackMethods').textContent));
+    check('Sin extensión aparece el botón “Descargar extensión”', !d.getElementById('extDl').classList.contains('hidden'));
+    d.getElementById('trackDlg').close();
+    d.documentElement.dataset.scaExt = saved; w.extDetect(); await wait(100);
+
+    // Segundo seguimiento con la extensión: Facebook con un comentario nuevo + TikTok
+    FAKE.perUrl[TR().posts.find(p => p.platform === 'facebook').url] = 6;
+    FAKE.perUrl[ttPost.url] = 3;
+    w.openTrackDlg([fbId, ttId]); d.getElementById('trackDate').value = '2026-11-16'; d.getElementById('trackName').value = 'Martes';
+    check('Con la extensión, ambas publicaciones usan “Extensión” y se puede iniciar', d.querySelectorAll('#trackPosts .mchip.extension').length === 2 && !d.getElementById('trackStart').disabled);
+    d.getElementById('trackStart').click();
+    await until(() => TR().tracks.find(t => t.name === 'Martes') && TR().tracks.find(t => t.name === 'Martes').status === 'done', 30000);
+    const t2 = TR().tracks.find(t => t.name === 'Martes');
+    check('El segundo seguimiento termina con la extensión', t2.items[ttId].status === 'done' && t2.items[ttId].count === 3 && t2.items[ttId].method === 'extension', JSON.stringify(t2.items[ttId]));
+
+    // 5. Ver comentarios de una publicación y responder (se guarda en el seguimiento)
+    await w.viewResult(t2.id, fbId); await wait(200);
+    check('“Ver comentarios” abre la publicación en Resultados', location && w.location.hash === '#resultados' && w.eval('S.comments.length') === 6 && w.eval('S.meta.ref.tid') === t2.id);
+
+    // 6. Informe con dos seguimientos
+    d.getElementById('qMode') && 0;
+    w.localStorage.setItem('fbca:repTerms', 'Kanasta24, envío');
+    w.openReport([t1.id, t2.id]);
+    await until(() => w.eval('REP.model') && d.getElementById('reportDoc'), 30000);
+    const m = w.eval('REP.model');
+    check('El informe combina sin duplicar: 5+5+5 del lunes y 1 nuevo del martes = 16', m.list.length === 16, 'comentarios únicos: ' + m.list.length);
+    check('Evolución por fecha: el martes 9 comentarios (6 de Facebook + 3 de TikTok) y solo 1 nuevo (los de TikTok ya estaban el lunes)', m.byDate.length === 2 && m.byDate[1].total === 9 && m.byDate[1].nw === 1, JSON.stringify(m.byDate.map(x => ({ total:x.total, nuevos:x.nw }))));
+    check('Indicadores clave presentes (8)', d.querySelectorAll('#reportDoc .kpi').length === 8);
+    check('Índice neto de sentimiento calculado', typeof m.nss === 'number' && /Índice neto/.test(d.getElementById('reportDoc').textContent), 'NSS ' + m.nss);
+    const kan = m.watch.find(x => x.term === 'Kanasta24');
+    check('Temas vigilados: “Kanasta24” se cuenta en sus menciones', kan && kan.n >= 4, kan && JSON.stringify({ n:kan.n, pct:kan.pct, nss:kan.nss }));
+    check('Quién más comenta: Ana López encabeza la lista', m.topAuthors[0].name === 'Ana López', m.topAuthors.slice(0, 3).map(a => a.name + ' ' + a.n).join(', '));
+    check('Hay resumen ejecutivo y recomendaciones', m.summary.length >= 3 && m.recs.length >= 2);
+    check('El gráfico de evolución por seguimiento se dibuja', !!d.querySelector('#repChartDates svg'));
+
+    // 7. Exportaciones
+    const txt = w.reportText(m);
+    check('Copiar texto: incluye resumen, indicadores, publicaciones y recomendaciones', /RESUMEN EJECUTIVO/.test(txt) && /INDICADORES CLAVE/.test(txt) && /PUBLICACIONES/.test(txt) && /RECOMENDACIONES/.test(txt), txt.slice(0, 200));
+    const files = []; w.download = (name, content) => files.push({ name, content });
+    await w.reportExport('word');
+    const doc = files.find(f => /\.doc$/.test(f.name));
+    let wordHtml = ''; if(doc) wordHtml = await doc.content.text();
+    check('Word: se descarga un .doc con el informe', !!doc && /urn:schemas-microsoft-com:office:word/.test(wordHtml) && /Resumen ejecutivo/.test(wordHtml), doc ? doc.name + ' · ' + Math.round(wordHtml.length / 1024) + ' KB' : 'sin archivo');
+    check('Word: el gráfico se incluye como imagen PNG', /<img[^>]+data:image\/png/.test(wordHtml));
+    await w.reportExport('html');
+    check('HTML: se descarga un informe autónomo', files.some(f => /\.html$/.test(f.name) && /<table/.test(f.content)));
+    const pdfLoaded = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js').then(() => typeof w.html2pdf === 'function', () => false);
+    check('PDF: la librería de PDF carga desde cdnjs', pdfLoaded);
+
+    // 8. Ver comentarios del informe y búsqueda por significado (modelo simulado: bolsa de palabras)
+    await w.viewTrackingsComments([t1.id, t2.id]); w.selectTab('list'); await wait(200);
+    check('Ver varios seguimientos juntos en Resultados', w.eval('S.comments.length') === 16 && w.eval('S.meta.multi') === true);
+    const VOC = ['kanasta', 'kanasta24', 'pedido', 'envio', 'envios', 'entrega', 'tardanza', 'llego', 'servicio', 'precio'];
+    const normName = w.eval('normName');
+    w.semEmbed = async (texts, kind) => texts.map(t => { const n = normName(t); let v = VOC.map(k => n.includes(k) ? 1 : 0); if(/kanasta/.test(n)) v[0] = v[1] = 1; const s = Math.hypot(...v) || 1; return v.map(x => x / s); });
+    d.getElementById('qMode').value = 'sem'; d.getElementById('qMode').dispatchEvent(new Event('change'));
+    d.getElementById('q').value = 'Kanasta24';
+    d.getElementById('q').dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));
+    await until(() => w.eval('S.sem && S.sem.scores.size'));
+    const semRows = w.eval('S.filtered').map(c => c.text);
+    check('Búsqueda por significado: devuelve solo los relacionados con Kanasta24', semRows.length > 0 && semRows.every(t => /kanasta/i.test(t)), semRows.join(' | '));
+    d.querySelector('.fchip[data-fg="sent"][data-fv="negativo"]').click(); await wait(50);
+    const negRows = w.eval('S.filtered');
+    check('Se combina con el filtro de polaridad negativa', negRows.length > 0 && negRows.every(c => c.sentiment === 'negativo' && /kanasta/i.test(c.text)), negRows.map(c => c.text).join(' | '));
+    check('La barra de búsqueda indica el número de relacionados', /relacionado/.test(d.getElementById('semTxt').textContent), d.getElementById('semTxt').textContent);
+
+    // 9. Copia de seguridad
+    files.length = 0; await w.dbExport();
+    const bk = files[0] && JSON.parse(files[0].content);
+    check('Copia de seguridad con publicaciones, seguimientos y resultados', bk && bk.posts.length === 3 && bk.trackings.length === 2 && bk.results.length === 5, bk && `${bk.posts.length} / ${bk.trackings.length} / ${bk.results.length}`);
+
+    // 10. Ayuda sincronizada
+    ['seguimiento', 'extension', 'ext-instalar', 'informes', 'busqueda-ia'].forEach(id => check('Centro de ayuda: sección “' + id + '”', !!d.getElementById('h-' + id)));
+    // 11. Descarga de la extensión comprimida
+    const dl = d.getElementById('extDl');
+    check('Botón “Descargar extensión” apunta al ZIP', dl && /downloads\/social-comments-analyzer-extension\.zip$/.test(dl.getAttribute('href')) && dl.hasAttribute('download'));
+    check('La ayuda incluye el botón de descarga del ZIP', !!d.querySelector('#h-extension ~ * a[href$="social-comments-analyzer-extension.zip"], .help-article#h-extension a[href$="social-comments-analyzer-extension.zip"]'));
+    const zip = await fetch('../downloads/social-comments-analyzer-extension.zip').then(r => r.ok ? r.arrayBuffer() : null).catch(() => null);
+    check('El ZIP de la extensión existe y es un ZIP válido', zip && new Uint8Array(zip.slice(0, 2)).join(',') === '80,75', zip ? Math.round(zip.byteLength / 1024) + ' KB' : 'no encontrado (con file:// el navegador puede bloquear fetch)');
+  }catch(e){ check('Excepción durante la prueba', false, e.stack || String(e)); }
+  const ok = results.filter(Boolean).length, all = results.length, sum = document.getElementById('sum');
+  sum.textContent = ok === all ? `✔ ${ok}/${all} comprobaciones superadas` : `✘ ${all - ok} de ${all} comprobaciones fallaron`;
+  sum.className = ok === all ? 'ok' : 'ko';
+  document.title = (ok === all ? 'PASS ' : 'FAIL ') + ok + '/' + all;
+})();
+</script>
+</body>
+</html>

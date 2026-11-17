@@ -5,6 +5,10 @@ Aplicación web en un único archivo HTML para obtener, analizar, copiar y expor
 ## Características
 
 - **Facebook, Instagram y TikTok**: la red social se detecta automáticamente al pegar un enlace.
+- **Seguimiento diario de varias publicaciones**: lista de publicaciones, seguimientos con fecha que extraen todos los comentarios con progreso en porcentaje, se pueden detener y continuar, e **historial** guardado en el navegador (IndexedDB) con copia de seguridad.
+- **Extensión de Chrome** (descargable desde la app como ZIP), imprescindible para los seguimientos: abre cada publicación en una ventana de trabajo (pequeña o minimizada, sin interrumpirte), abre su sección de comentarios y los extrae sin paneles. Para tus páginas también sirve la API de Meta. El marcador queda como auxiliar para extraer una publicación puntual desde *Obtener*.
+- **Informes profesionales** a partir de varios seguimientos: resumen ejecutivo, KPI (índice neto de sentimiento, tasa y tiempo de respuesta), evolución entre fechas, publicaciones y redes, audiencia (quién más comenta, embajadores, detractores, influyentes), marcas y temas vigilados, alertas y recomendaciones. Exportación a **Word, PDF**, HTML y Excel, y **copiar texto** con formato.
+- **Búsqueda por significado con IA gratuita**: modelo multilingüe que se ejecuta en el navegador (Transformers.js) o clasificación con el proveedor gratuito configurado, combinable con los filtros de polaridad.
 - **Tres formas de obtener comentarios**
   - **Conectar con la API** (inicio de sesión de Facebook): páginas de Facebook que administras y sus cuentas profesionales de Instagram vinculadas; fechas exactas, reacciones o me gusta y respuestas.
   - **Extractor de navegador** (marcador *Social Comments Analyzer*): para cualquier publicación visible con tu sesión. El mismo marcador funciona en Facebook, Instagram y TikTok.
@@ -38,13 +42,20 @@ Necesitas el **App ID** de una app de Meta con estos permisos:
 
 La guía completa está en la sección **Ayuda** de la aplicación.
 
+## Extensión de Chrome
+
+- Código en `extension/`; el extractor (`extension/extractor.js`) se genera desde `index.html` para que haya una sola fuente.
+- `python3 tools/build_extension.py` regenera el extractor y el ZIP descargable `downloads/social-comments-analyzer-extension.zip`; con `--check` comprueba que todo está al día (también la versión `EXT_LATEST` de la app).
+- Instalación: descargar el ZIP desde *Seguimiento*, descomprimirlo y cargarlo en `chrome://extensions` › *Modo de desarrollador* › *Cargar descomprimida* (detallado en el Centro de ayuda).
+
 ## Pruebas
 
-`tests/responder.test.html` comprueba de extremo a extremo la publicación de respuestas con una Graph API simulada: endpoint y token usados, respuesta en el hilo correcto, petición de permisos, verificación posterior, errores, requisito de sesión e Instagram.
+- `tests/responder.test.html`: publicación de respuestas con una Graph API simulada (endpoint, token, hilo, permisos, verificación, errores, sesión, Instagram, regla del equipo).
+- `tests/seguimiento.test.html`: lista de publicaciones, seguimientos con la extensión simulada (progreso, detener y continuar), modo manual, historial, informe y exportaciones a Word/HTML, búsqueda por significado y copia de seguridad.
 
 ```bash
-python3 -m http.server 8000
-# abre http://localhost:8000/tests/responder.test.html
+node tools/run-tests.mjs            # ejecuta todos los tests en Chrome sin interfaz (Node 22+)
+# o en el navegador: python3 -m http.server 8000 → http://localhost:8000/tests/
 ```
 
 ## Limitaciones

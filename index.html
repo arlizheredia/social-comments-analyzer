@@ -861,6 +861,7 @@ textarea.input.prose{font-family:var(--font);font-size:14px;line-height:21px;min
   margin:0 0 0 calc(-1 * var(--off));padding:8px 0 8px var(--off);border-radius:0 14px 14px 0;background:var(--pend-row);box-shadow:inset 3px 0 0 var(--pend-bar)}
 .cnode.pend>.crow>.csel{margin-left:var(--off)}
 .cnode.pend>.crow .bubble{background:var(--pend-bubble)}
+.cnode.ig.pend>.crow .bubble,.cnode.tt.pend>.crow .bubble{background:transparent}
 .cnode.pend>.crow .bubble:hover{background:color-mix(in srgb,var(--on-surface) 6%,var(--pend-bubble))}
 .cnode.pend>.crow .creact{background:var(--pend-bubble)}
 tr.pend>td{background:var(--pend-row)}
@@ -940,6 +941,171 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 .emoji-pop .ep-grid button:hover,.emoji-pop .ep-grid button:focus-visible{background:var(--surface-container);outline:none}
 .emoji-pop .ep-grid button:focus-visible{box-shadow:inset 0 0 0 2px var(--primary)}
 .emoji-pop .ep-empty{font-size:13px;color:var(--on-surface-variant);padding:16px 4px;text-align:center}
+
+/* ================== SEGUIMIENTO ================== */
+.head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.head-acts{display:flex;align-items:center;gap:8px;position:relative}
+.count-badge{font-size:11px;font-weight:600;background:var(--surface-container-high,var(--surface-container));color:var(--on-surface-variant);border-radius:10px;padding:1px 7px;min-width:20px;text-align:center}
+.ext-chip{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--outline-variant);font-size:13px;color:var(--on-surface-variant);white-space:nowrap}
+.ext-chip i{width:8px;height:8px;border-radius:50%;background:var(--outline)}
+.ext-chip.on{border-color:transparent;background:var(--done-bg);color:var(--done-fg)}
+.ext-chip.on i{background:currentColor}
+.ext-chip.old{background:var(--pend-bg);color:var(--pend-fg)}
+.menu a[role=menuitem]{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.menu .menu-file{display:flex;align-items:center;gap:12px;cursor:pointer}
+.menu hr{border:0;border-top:1px solid var(--outline-variant);margin:4px 0}
+.card.add-post{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;padding:16px;margin-bottom:16px}
+.card.add-post .field .lbl,.field .lbl{font-size:12px;font-weight:500;color:var(--on-surface-variant)}
+.card.add-post .input{height:44px}
+.add-acts{display:flex;gap:4px;flex-wrap:wrap}
+.add-many textarea{min-height:110px}
+.list-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.list-tools .searchbar.sm{flex:1 1 240px;margin:0;max-width:420px;background:var(--surface-container)}
+.list-tools .filters{margin:0}
+.list-tools .sel-all{padding:0 4px 0 12px}
+.list-tools .sel-all input{width:18px;height:18px}
+.field-inline{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--on-surface-variant)}
+.input.sm{height:36px;width:auto;padding:0 10px}
+.spacer{flex:1}
+.plist,.hlist,.runlist{display:flex;flex-direction:column;gap:8px}
+.prow{display:grid;grid-template-columns:auto 36px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:10px 8px 10px 12px;border-radius:14px;border:1px solid var(--outline-variant);background:var(--surface)}
+.prow.sel{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+.prow .pico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--surface-container)}
+.prow .pico .pdot{width:16px;height:16px}
+.prow .pmain{min-width:0}
+.prow .pt{font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .ps{font-size:12px;color:var(--on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .pstat{font-size:12px;color:var(--on-surface-variant);text-align:right;white-space:nowrap}
+.prow .pstat b{display:block;font-size:14px;color:var(--on-surface)}
+.prow .pacts{display:flex;gap:2px}
+.prow input[type=checkbox]{width:18px;height:18px}
+.empty-mini{padding:40px 16px;text-align:center;color:var(--on-surface-variant);border:1px dashed var(--outline-variant);border-radius:16px}
+.empty-mini .ms{font-size:40px;display:block;margin:0 auto 8px;color:var(--primary)}
+.tlist{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto}
+.titem{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:12px;background:var(--surface)}
+.titem .pdot{width:14px;height:14px}
+.titem .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.mchip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--surface-container);color:var(--on-surface-variant);white-space:nowrap}
+.mchip.api{background:var(--primary-container);color:var(--on-primary-container)}
+.mchip.extension{background:var(--done-bg);color:var(--done-fg)}
+/* Tarjetas de seguimiento */
+.rcard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;align-items:center;padding:14px 16px;border-radius:16px;border:1px solid var(--outline-variant);background:var(--surface);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.rcard:hover{background:color-mix(in srgb,var(--on-surface) 4%,var(--surface))}
+.rcard.open{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+.rcard .rt{font-weight:600;font-size:15px}
+.rcard .rs{font-size:12px;color:var(--on-surface-variant)}
+.rcard .pbar{grid-column:1/-1}
+.stchip{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 10px;border-radius:12px;font-size:12px;font-weight:600;white-space:nowrap}
+.stchip .ms{font-size:16px}
+.stchip.draft{background:var(--surface-container);color:var(--on-surface-variant)}
+.stchip.running{background:var(--primary-container);color:var(--on-primary-container)}
+.stchip.paused{background:var(--pend-bg);color:var(--pend-fg)}
+.stchip.done{background:var(--done-bg);color:var(--done-fg)}
+.pbar{height:8px;border-radius:4px;background:var(--surface-container);overflow:hidden;position:relative}
+.pbar>i{position:absolute;inset:0 auto 0 0;background:var(--primary);border-radius:4px;transition:width .4s ease}
+.pbar.indet>i{width:30%!important;animation:indet 1.4s ease-in-out infinite}
+@keyframes indet{0%{left:-30%}100%{left:100%}}
+@media (prefers-reduced-motion:reduce){.pbar.indet>i{animation:none;width:100%!important;opacity:.5}}
+.rdetail{margin-top:16px;padding:20px;border-radius:20px;border:1px solid var(--outline-variant);background:var(--surface)}
+.rd-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.rd-head h2{font-size:20px;margin:0}
+.rd-acts{display:flex;gap:8px;flex-wrap:wrap}
+.rd-prog{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;margin:8px 0 16px}
+.rd-prog .pbar{height:10px;border-radius:5px}
+.rd-prog .pct{font-size:24px;font-weight:500;font-variant-numeric:tabular-nums}
+.rd-prog .pctsub{grid-column:1/-1;font-size:13px;color:var(--on-surface-variant);margin-top:-6px}
+.ritem{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--outline-variant)}
+.ritem .ri-ic{font-size:22px}
+.ritem .ri-ic.done{color:var(--success)} .ritem .ri-ic.error{color:var(--error)} .ritem .ri-ic.running{color:var(--primary);animation:spin 1.2s linear infinite}
+.ritem .ri-ic.pending,.ritem .ri-ic.skipped{color:var(--outline)}
+.ritem .ri-t{font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.ritem .ri-s{font-size:12px;color:var(--on-surface-variant)}
+.ritem .ri-s.err{color:var(--error)}
+.ritem .ri-acts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.ritem .pbar{grid-column:2/-1;height:6px}
+/* Historial */
+.hrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 8px 12px 12px;border-radius:14px;border:1px solid var(--outline-variant);background:var(--surface)}
+.hrow.sel{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+.hrow input[type=checkbox]{width:18px;height:18px}
+.hrow .ht{font-weight:600;font-size:14px}
+.hrow .hs{font-size:12px;color:var(--on-surface-variant)}
+.hrow .hsent{width:140px}
+.hrow .hsent small{display:block;font-size:11px;color:var(--on-surface-variant);margin-top:4px;text-align:right}
+@media (max-width:720px){
+  .prow{grid-template-columns:auto 32px minmax(0,1fr) auto;padding:10px 8px}
+  .prow .pstat{display:none}
+  .hrow{grid-template-columns:auto minmax(0,1fr) auto}
+  .hrow .hsent{display:none}
+  .ritem{grid-template-columns:24px minmax(0,1fr)}
+  .ritem .ri-acts{grid-column:2;justify-content:flex-start}
+  .rd-acts{width:100%}
+  .head-acts{width:100%;justify-content:flex-start;flex-wrap:wrap}
+  .head-acts .icon-btn[data-menu]{margin-left:auto}
+  #view-seguimiento .tab .ms,#view-informes .tab .ms{display:none}
+  #view-seguimiento .tab{padding:0 10px;gap:6px}
+  #postSelbar,#histSelbar{flex-wrap:wrap}
+  #postSelbar .btn.filled,#histSelbar .btn.filled{margin-left:auto}
+  .prow .pacts [data-pact="edit"]{display:none}
+  #repActs{flex-wrap:wrap}
+}
+
+/* Búsqueda por significado */
+select.input.qmode{width:auto;max-width:230px;height:48px;border-radius:24px;padding:0 40px 0 16px;flex:none;background-color:var(--surface-container);border-color:transparent;background-position:calc(100% - 20px) 21px,calc(100% - 15px) 21px}
+.sem-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 8px 8px 14px;border-radius:12px;background:var(--primary-container);color:var(--on-primary-container);margin:0 0 12px;font-size:13px}
+.sem-bar .sem-txt{flex:1;min-width:160px}
+.sem-bar .input.sm{height:32px;background-color:var(--surface);padding:0 32px 0 12px;background-position:calc(100% - 17px) 13px,calc(100% - 12px) 13px}
+.sem-bar .ms{font-size:20px}
+.sem-bar.busy .ms{animation:spin 1.4s linear infinite}
+.cscore{font-size:11px;font-weight:600;color:var(--primary);border:1px solid currentColor;border-radius:6px;padding:0 6px}
+@media (max-width:720px){ select.input.qmode{height:40px;max-width:none;flex:1 1 140px} }
+/* ================== INFORMES ================== */
+.rp-pick{padding:20px;margin-bottom:16px}
+.rp-pick h3{font-size:16px;margin:0 0 4px}
+.rp-pick .hlist{max-height:340px;overflow:auto;margin:12px 0}
+.rp-presets{display:flex;gap:8px;flex-wrap:wrap}
+.rp-cfg{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:8px}
+.rp-cfg .field{flex:1 1 280px}
+.rp-cfg .input{height:44px}
+.report{display:flex;flex-direction:column;gap:16px}
+.rep-cover{padding:24px;border-radius:24px;background:var(--primary-container);color:var(--on-primary-container)}
+.rep-cover h2{font-size:26px;margin:0 0 4px;font-weight:500}
+.rep-cover p{margin:0;font-size:14px;opacity:.9}
+.rep-sec{padding:20px}
+.rep-sec>h3{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:600;margin:0 0 4px}
+.rep-sec>h3 .ms{color:var(--primary);font-size:22px}
+.rep-sec>.sub{margin:0 0 14px;font-size:13px;color:var(--on-surface-variant)}
+.rep-sum{margin:0;padding-left:20px;font-size:14px;line-height:22px}
+.rep-sum li{margin:4px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.kpi{padding:14px;border-radius:14px;background:var(--surface-container)}
+.kpi .k{font-size:12px;color:var(--on-surface-variant)}
+.kpi .v{font-size:26px;font-weight:500;margin:2px 0;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12px;color:var(--on-surface-variant)}
+.kpi .d.up{color:var(--success)} .kpi .d.down{color:var(--error)}
+.rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.rtable-wrap{overflow:auto;border:1px solid var(--outline-variant);border-radius:12px}
+table.rtable{width:100%;border-collapse:collapse;font-size:13px}
+table.rtable th{text-align:left;font-weight:600;color:var(--on-surface-variant);background:var(--surface-container);padding:8px 10px;white-space:nowrap}
+table.rtable td{padding:8px 10px;border-top:1px solid var(--outline-variant);vertical-align:top}
+table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rep-alert{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;margin:6px 0;font-size:14px;line-height:20px}
+.rep-alert .ms{font-size:20px;margin-top:1px}
+.rep-alert.high{background:var(--error-container)} .rep-alert.high .ms{color:var(--error)}
+.rep-alert.mid{background:var(--pend-bg);color:var(--pend-fg)}
+.rep-alert.ok{background:var(--done-bg);color:var(--done-fg)}
+.qlist{display:flex;flex-direction:column;gap:8px}
+.qitem{padding:10px 12px;border-radius:12px;background:var(--surface-container);font-size:13px;line-height:19px}
+.qitem b{font-weight:600}
+.qitem .qm{font-size:12px;color:var(--on-surface-variant);margin-top:2px}
+.rep-ai{white-space:pre-wrap;font-size:14px;line-height:22px}
+.mini-seg{display:flex;gap:2px;height:8px;min-width:90px}
+.mini-seg i{border-radius:3px;min-width:2px}
+@media print{
+  body{background:#fff!important}
+  .topbar,.rail,.head-acts,#repPicker,.no-print,.snackbar{display:none!important}
+  .main,.content,.view{padding:0!important;margin:0!important;max-width:none!important}
+  .rep-sec,.rep-cover,.kpi{break-inside:avoid}
+}
 </style>
 </head>
 <body>
@@ -971,6 +1137,8 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 
 <div class="layout">
   <nav class="rail" aria-label="Navegación principal">
+    <a class="nav-item" href="#seguimiento" data-view="seguimiento"><span class="pill"><span class="ms">track_changes</span><span class="nav-badge hidden" id="navTrackBadge"></span></span>Seguimiento</a>
+    <a class="nav-item" href="#informes" data-view="informes"><span class="pill"><span class="ms">analytics</span></span>Informes</a>
     <a class="nav-item" href="#obtener" data-view="obtener"><span class="pill"><span class="ms">add_comment</span></span>Obtener</a>
     <a class="nav-item" href="#resultados" data-view="resultados"><span class="pill"><span class="ms">insights</span><span class="nav-badge hidden" id="navBadge"></span></span>Resultados</a>
     <a class="nav-item" href="#ayuda" data-view="ayuda"><span class="pill"><span class="ms">menu_book</span></span>Ayuda</a>
@@ -978,6 +1146,103 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 
   <main id="main" tabindex="-1">
     <!-- ======================= OBTENER ======================= -->
+
+    <!-- ================= SEGUIMIENTO ================= -->
+    <section class="view" id="view-seguimiento" aria-labelledby="h-seg">
+      <div class="page-head head-row">
+        <div>
+          <h1 id="h-seg">Seguimiento</h1>
+          <p>Tu lista de publicaciones, los seguimientos de cada día y su historial.</p>
+          <div class="head-links"><a class="hlp" href="#ayuda/seguimiento"><span class="ms">help</span>Cómo funciona</a><a class="hlp" href="#ayuda/extension"><span class="ms">help</span>Extensión de Chrome</a></div>
+        </div>
+        <div class="head-acts">
+          <span class="ext-chip" id="extChip" title="Estado de la extensión de Chrome"><i></i><span id="extTxt">Extensión no detectada</span></span>
+          <a class="btn tonal sm" id="extDl" href="downloads/social-comments-analyzer-extension.zip" download><span class="ms">download</span><span id="extDlTxt">Descargar extensión</span></a>
+          <button class="icon-btn" data-menu="segMenu" aria-haspopup="menu" aria-expanded="false" aria-label="Más opciones" title="Más opciones"><span class="ms">more_vert</span></button>
+          <div class="menu" id="segMenu" role="menu">
+            <button role="menuitem" id="dbExport"><span class="ms">download</span>Exportar copia de seguridad</button>
+            <label role="menuitem" class="menu-file"><span class="ms">upload</span>Importar copia de seguridad<input type="file" id="dbImport" accept=".json,application/json" hidden></label>
+            <hr>
+            <button role="menuitem" id="segOpts"><span class="ms">tune</span>Opciones de extracción</button>
+            <a role="menuitem" href="downloads/social-comments-analyzer-extension.zip" download><span class="ms">extension</span>Descargar extensión (.zip)</a>
+            <a role="menuitem" href="#ayuda/ext-instalar"><span class="ms">help</span>Cómo instalar la extensión</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Secciones de seguimiento">
+        <button class="tab" role="tab" id="stab-posts" aria-controls="sp-posts" aria-selected="true"><span class="ms">list_alt</span>Publicaciones<span class="count-badge" id="postsCount">0</span></button>
+        <button class="tab" role="tab" id="stab-runs" aria-controls="sp-runs" aria-selected="false" tabindex="-1"><span class="ms">play_circle</span>Seguimientos<span class="count-badge" id="runsCount">0</span></button>
+        <button class="tab" role="tab" id="stab-hist" aria-controls="sp-hist" aria-selected="false" tabindex="-1"><span class="ms">history</span>Historial<span class="count-badge" id="histCount">0</span></button>
+      </div>
+
+      <!-- Publicaciones -->
+      <div class="tabpanel active" id="sp-posts" role="tabpanel" aria-labelledby="stab-posts">
+        <form class="card add-post" id="addPostForm" autocomplete="off">
+          <label class="field" style="flex:1 1 320px"><span class="lbl">Añadir publicación</span>
+            <input class="input" id="addPostUrl" placeholder="Pega el enlace de una publicación de Facebook, Instagram o TikTok" aria-describedby="addPostHint"></label>
+          <label class="field" style="flex:0 1 220px"><span class="lbl">Nombre (opcional)</span><input class="input" id="addPostName" maxlength="120" placeholder="Ej.: Promo Black Friday"></label>
+          <div class="add-acts"><button class="btn filled" type="submit"><span class="ms">add</span>Añadir</button><button class="btn text" type="button" id="addManyBtn"><span class="ms">playlist_add</span>Añadir varias</button></div>
+          <p class="hint small muted" id="addPostHint" style="flex-basis:100%;margin:0">La red se detecta sola. Las publicaciones repetidas no se duplican.</p>
+          <div class="add-many hidden" id="addMany" style="flex-basis:100%">
+            <textarea class="input" id="addManyTxt" placeholder="Un enlace por línea"></textarea>
+            <div class="row" style="justify-content:flex-end;gap:8px;margin-top:8px"><button class="btn text" type="button" id="addManyCancel">Cancelar</button><button class="btn tonal" type="button" id="addManyGo"><span class="ms">playlist_add_check</span>Añadir todas</button></div>
+          </div>
+        </form>
+        <div class="list-tools">
+          <label class="check sel-all" title="Seleccionar todas las publicaciones visibles"><input type="checkbox" id="postAll" aria-label="Seleccionar todas las publicaciones visibles"></label>
+          <label class="searchbar sm"><span class="ms">search</span><input type="search" id="postQ" placeholder="Buscar publicación" aria-label="Buscar publicación"></label>
+          <div class="filters" role="group" aria-label="Filtrar por red">
+            <button class="fchip" data-pf="facebook" aria-pressed="false"><span class="ms">check</span><i class="pdot fb"></i>Facebook</button>
+            <button class="fchip" data-pf="instagram" aria-pressed="false"><span class="ms">check</span><i class="pdot ig"></i>Instagram</button>
+            <button class="fchip" data-pf="tiktok" aria-pressed="false"><span class="ms">check</span><i class="pdot tt"></i>TikTok</button>
+          </div>
+        </div>
+        <div class="selbar hidden" id="postSelbar">
+          <button class="icon-btn sm" id="postSelNone" aria-label="Quitar selección"><span class="ms">close</span></button>
+          <b id="postSelCount"></b><span class="spacer"></span>
+          <button class="btn text sm" id="postDelSel"><span class="ms">delete</span><span class="lbl">Eliminar</span></button>
+          <button class="btn filled sm" id="newTrackBtn"><span class="ms">add_task</span>Crear seguimiento</button>
+        </div>
+        <div class="plist" id="postList"></div>
+      </div>
+
+      <!-- Seguimientos activos -->
+      <div class="tabpanel" id="sp-runs" role="tabpanel" aria-labelledby="stab-runs">
+        <div id="runList" class="runlist"></div>
+        <div id="runDetail"></div>
+      </div>
+
+      <!-- Historial -->
+      <div class="tabpanel" id="sp-hist" role="tabpanel" aria-labelledby="stab-hist">
+        <div class="list-tools">
+          <label class="field-inline">Desde <input class="input sm" type="date" id="histFrom"></label>
+          <label class="field-inline">Hasta <input class="input sm" type="date" id="histTo"></label>
+          <span class="spacer"></span>
+        </div>
+        <div class="selbar hidden" id="histSelbar">
+          <button class="icon-btn sm" id="histSelNone" aria-label="Quitar selección"><span class="ms">close</span></button>
+          <b id="histSelCount"></b><span class="spacer"></span>
+          <button class="btn text sm" id="histViewSel"><span class="ms">forum</span><span class="lbl">Ver comentarios</span></button>
+          <button class="btn filled sm" id="histReport"><span class="ms">analytics</span>Crear informe</button>
+        </div>
+        <div class="hlist" id="histList"></div>
+      </div>
+    </section>
+
+    <!-- ================= INFORMES ================= -->
+    <section class="view" id="view-informes" aria-labelledby="h-inf">
+      <div class="page-head head-row">
+        <div>
+          <h1 id="h-inf">Informes</h1>
+          <p>Análisis profesional de los seguimientos que elijas del historial.</p>
+          <div class="head-links"><a class="hlp" href="#ayuda/informes"><span class="ms">help</span>Cómo leer el informe</a></div>
+        </div>
+        <div class="head-acts" id="repActs"></div>
+      </div>
+      <div id="repPicker"></div>
+      <div id="repOut"></div>
+    </section>
     <section class="view" id="view-obtener" aria-labelledby="h-obtener">
       <div class="page-head">
         <h1 id="h-obtener">Obtén los comentarios</h1>
@@ -1100,7 +1365,7 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
         <ol class="steps">
           <li class="step">
             <h3 id="exStep1Title">Abre la publicación en Facebook</h3>
-            <div class="desc" id="exStep1Desc">En el selector de orden de comentarios elige <b>“Todos los comentarios”</b> para no perder ninguno. <a href="#ayuda/ex-consejos">Consejos</a></div>
+            <div class="desc" id="exStep1Desc">El extractor abre la sección de comentarios (también en los reels) y elige <b>“Todos los comentarios”</b>. Si no lo consigue, ábrela tú con el icono de comentarios antes de pulsar el marcador. <a href="#ayuda/ex-consejos">Consejos</a></div>
             <div class="row" style="align-items:flex-end">
               <div class="field grow">
                 <label for="exUrl">URL de la publicación</label>
@@ -1269,10 +1534,22 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
               <input type="search" id="q" placeholder="Buscar en comentarios o autores" aria-label="Buscar comentarios" autocomplete="off">
               <button class="icon-btn sm hidden" id="qClear" aria-label="Borrar búsqueda"><span class="ms">close</span></button>
             </label>
+            <select class="input qmode" id="qMode" aria-label="Tipo de búsqueda" title="Tipo de búsqueda">
+              <option value="terms">Términos</option>
+              <option value="sem">Por significado (IA local)</option>
+              <option value="ai">Clasificar con IA</option>
+            </select>
             <div class="seg" role="radiogroup" aria-label="Tipo de vista">
               <button role="radio" data-lv="conv" aria-checked="true"><span class="ms">forum</span>Conversación</button>
               <button role="radio" data-lv="table" aria-checked="false"><span class="ms">table_rows</span>Tabla</button>
             </div>
+          </div>
+          <div class="sem-bar hidden" id="semBar" role="status" aria-live="polite">
+            <span class="ms" id="semIc">psychology</span><span class="sem-txt" id="semTxt"></span>
+            <select class="input sm hidden" id="semLevel" aria-label="Precisión de la búsqueda" title="Precisión">
+              <option value="0.80">Amplia</option><option value="0.825" selected>Media</option><option value="0.85">Estricta</option>
+            </select>
+            <button class="btn text sm" id="semClear"><span class="ms">close</span>Quitar</button>
           </div>
           <div class="filters" role="group" aria-label="Filtros">
             <button class="fchip" data-fg="type" data-fv="comment" aria-pressed="false"><span class="ms">check</span>Comentarios</button>
@@ -1383,6 +1660,7 @@ Social Comments Analyzer obtiene los comentarios de una publicación de **Facebo
 3. **Revisa el resumen**: indicadores, actividad en el tiempo, sentimiento, autores, palabras y emojis.
 4. **Explora los comentarios** en la vista de conversación o de tabla, con búsqueda y filtros.
 5. **Copia o exporta** a Excel, CSV, JSON, texto, Markdown o informe HTML.
+6. Para revisar varias publicaciones cada día, usa [Seguimiento](#ayuda/seguimiento): lista de publicaciones, seguimientos con fecha, historial e [informes](#ayuda/informes).
 
 <p><button class="btn tonal sm" data-action="tour"><span class="ms">school</span>Ver de nuevo el tutorial</button></p>
 
@@ -1523,7 +1801,8 @@ El JSON incluye un apartado `diag` con recuentos y la estructura de la página *
 ## Consejos {#ex-consejos}
 
 - Abre la publicación en su propia página o ventana, no desde el feed.
-- En Facebook elige **“Todos los comentarios”** en lugar de “Más relevantes”.
+- **Sección de comentarios**: en los reels y vídeos (Facebook, Instagram y TikTok) los comentarios están ocultos hasta pulsar su icono {ms:chat_bubble}. El extractor lo pulsa solo y espera a que carguen; si la red cambió su diseño y no lo consigue, ábrela tú y vuelve a pulsar el marcador.
+- En Facebook el extractor cambia el orden a **“Todos los comentarios”** (en lugar de “Más relevantes”); si ves que no lo hizo, elígelo tú.
 - Las publicaciones con miles de comentarios pueden tardar varios minutos.
 - El extractor necesita un ordenador: las versiones móviles de las redes no lo admiten.
 
@@ -1565,6 +1844,115 @@ Las 10 más usadas en barras y las siguientes como etiquetas, excluyendo palabra
 ## Emojis, hashtags y menciones {#an-etiquetas}
 
 Los más usados de cada tipo. Pulsa cualquiera para ver los comentarios que lo contienen. **Comentarios con más reacciones** lista los cinco destacados; pulsa uno para ver todos sus datos.
+
+# Seguimiento de publicaciones {#seguimiento icon=track_changes}
+
+Da seguimiento diario a varias publicaciones de Facebook, Instagram y TikTok: guarda la lista, extrae todos sus comentarios con un clic y compáralos en el tiempo.
+
+1. **Publicaciones**: pega el enlace de cada publicación (o varias con *Añadir varias*). La red se detecta sola y no se duplican.
+2. **Crear seguimiento**: marca las publicaciones que quieras revisar hoy, pulsa **Crear seguimiento**, ponle nombre y fecha.
+3. **Iniciar**: la app extrae los comentarios de cada publicación y muestra el progreso por publicación y el **porcentaje total**.
+4. **Detener y continuar**: puedes detenerlo en cualquier momento; lo ya extraído se guarda y **Continuar** sigue con las pendientes, incluso otro día.
+5. Al terminar, el seguimiento pasa al **Historial**. Desde ahí creas **informes** o vuelves a ver sus comentarios.
+
+## Cómo se extrae cada publicación {#seg-metodos}
+
+| Método | Cuándo se usa | Qué necesitas |
+|---|---|---|
+| **API** de Meta | Publicaciones de páginas o cuentas de Instagram que administras | Iniciar sesión con Facebook en *Obtener* |
+| **Extensión** de Chrome | Cualquier publicación visible, incluido TikTok | La [extensión instalada](#ayuda/extension) y la sesión abierta en esa red |
+
+En *Automático* (por defecto) se prueba la API si iniciaste sesión; si la publicación no es tuya, se usa la extensión. Puedes fijar el método de una publicación con {ms:edit}.
+
+> El seguimiento automático **depende de la extensión**: sin ella no se puede iniciar (salvo que todas las publicaciones sean de tus páginas y uses la API). El **marcador** es un auxiliar para extraer una publicación puntual desde [Obtener](#ayuda/extractor); no se usa en los seguimientos.
+
+## Ver y responder comentarios {#seg-ver}
+
+- Pulsa **Ver comentarios** en una publicación de un seguimiento para abrirla en *Resultados*, con la conversación, los filtros y el asistente de respuestas de siempre.
+- En el historial, marca varios seguimientos y pulsa **Ver comentarios** para verlos juntos (sin duplicar los de una misma publicación).
+- Las respuestas publicadas desde ahí se guardan también en el seguimiento.
+
+## Historial y copia de seguridad {#seg-historial}
+
+- Filtra el historial por fechas y marca los seguimientos que quieras comparar.
+- Todo se guarda **en este navegador** (IndexedDB). Usa {ms:more_vert} › **Exportar copia de seguridad** para guardarlo en un archivo o pasarlo a otro equipo, e **Importar** para recuperarlo.
+
+> Si borras los datos de navegación del sitio, se pierde la lista y el historial: haz copias de seguridad periódicas.
+
+# Extensión de Chrome {#extension icon=extension}
+
+La extensión **Social Comments Analyzer – Extractor** abre cada publicación del seguimiento en una ventana de trabajo, abre su sección de comentarios, los extrae sin mostrar ningún panel y los devuelve a la app, sin copiar ni pegar. Es imprescindible para los seguimientos automáticos.
+
+## Instalarla {#ext-instalar}
+
+<p><a class="btn filled" href="downloads/social-comments-analyzer-extension.zip" download><span class="ms">download</span>Descargar la extensión (.zip)</a></p>
+
+1. **Descarga** el archivo `social-comments-analyzer-extension.zip` con el botón de arriba (también está en *Seguimiento*).
+2. **Descomprímelo**: clic derecho › *Extraer todo* (Windows), doble clic (Mac) o `unzip` (Linux). Obtendrás la carpeta `social-comments-analyzer-extension`. Guárdala en un sitio fijo: Chrome la usa desde ahí.
+3. En Chrome abre `chrome://extensions` (cópialo en la barra de direcciones) y activa el **Modo de desarrollador**, arriba a la derecha.
+4. Pulsa **Cargar descomprimida** y elige la carpeta `social-comments-analyzer-extension`.
+5. Opcional: fíjala con {ms:extension} › {ms:push_pin} para ver su icono.
+6. **Recarga esta página**: en *Seguimiento* verás **Extensión conectada**.
+
+> Chrome solo instala extensiones comprimidas desde la Chrome Web Store; por eso el ZIP se descomprime y se carga como carpeta. Es el procedimiento oficial para extensiones propias.
+
+## Actualizarla {#ext-actualizar}
+
+Cuando haya una versión nueva, *Seguimiento* mostrará **Actualizar extensión**. Descarga el ZIP, sustituye el contenido de la carpeta y pulsa {ms:refresh} en la tarjeta de la extensión en `chrome://extensions`.
+
+> Funciona con la app publicada en GitHub Pages, en `http://localhost` y abriendo el archivo directamente (para esto último activa *Permitir acceso a URLs de archivo* en los detalles de la extensión).
+
+## Seguir trabajando mientras extrae {#ext-segundo-plano}
+
+La extracción **no te bloquea el ordenador**: inicia el seguimiento y sigue con otras tareas.
+
+- Por defecto, la ventana de trabajo se abre **pequeña, en una esquina y sin quitarte el foco**: puedes seguir escribiendo en otra aplicación o pestaña.
+- Puedes **minimizarla** o dejarla detrás de otras ventanas: la extensión mide los tiempos desde su propio proceso para que Chrome no frene la extracción, y simula el desplazamiento para que la red siga cargando comentarios. Elige *Minimizada* en las opciones si prefieres que empiece así.
+- La pestaña de la app también puede quedar en segundo plano. Al volver verás el progreso actualizado; si cierras la app, el seguimiento queda **en pausa** y lo continúas cuando quieras.
+- No cierres la ventana de trabajo ni el navegador mientras extrae.
+
+> Minimizada, algunas publicaciones muy largas pueden tardar algo más, porque las redes cargan más despacio cuando la página no está a la vista.
+
+## Uso y consejos {#ext-consejos}
+
+- Mantén **abierta la sesión** de Facebook, Instagram o TikTok en ese mismo navegador.
+- En {ms:more_vert} › **Opciones de extracción** elige cómo es la ventana de trabajo, el tiempo máximo por publicación y la pausa entre publicaciones.
+- No cierres la ventana de trabajo mientras extrae; si lo haces, esa publicación quedará con error y podrás reintentarla.
+- Permisos: abrir pestañas y leer las páginas de facebook.com, instagram.com y tiktok.com. No envía datos a ningún servidor: los comentarios van directamente a la app.
+
+# Informes {#informes icon=analytics}
+
+Crea un informe profesional a partir de uno o varios seguimientos del historial: en *Historial* marca los seguimientos y pulsa **Crear informe**, o elígelos en *Informes*.
+
+## Qué incluye {#inf-contenido}
+
+- **Resumen ejecutivo** automático y, opcionalmente, **Resumen con IA** (usa el modelo gratuito que configures).
+- **Indicadores clave**: comentarios únicos, personas, interacciones, **índice neto de sentimiento** (% positivos − % negativos), negativos y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
+- **Alertas**: publicaciones con muchos negativos, subida de negativos entre fechas y comentarios negativos o preguntas sin responder.
+- **Evolución por seguimiento**: comentarios por fecha y comentarios **nuevos** respecto a los seguimientos anteriores.
+- **Publicaciones** y **redes** comparadas; **quién más comenta**, **embajadores**, **detractores** y **más influyentes**.
+- **Marcas y temas vigilados**: escribe los términos (p. ej. *Kanasta24, envío, precio*) para medir sus menciones y su sentimiento.
+- Comentarios positivos y negativos destacados, preguntas pendientes y **recomendaciones**.
+
+## Exportar y compartir {#inf-exportar}
+
+| Opción | Resultado |
+|---|---|
+| **Copiar texto** | Copia el informe con formato (al pegar en Word, Google Docs o un correo) y como texto plano |
+| **Word (.doc)** | Documento editable con tablas y gráficos |
+| **PDF** | Archivo PDF en tamaño A4 listo para enviar |
+| **Página web (.html)** | Informe autónomo para abrir en cualquier navegador |
+| **Comentarios en Excel** | Todos los comentarios del informe con sus campos |
+
+## Buscar por significado {#busqueda-ia}
+
+En *Resultados › Comentarios*, junto al buscador, elige el tipo de búsqueda:
+
+- **Términos**: coincidencia de palabras, como siempre.
+- **Por significado (IA local)**: describe el tema (por ejemplo *“se refieren a la empresa Kanasta24 o están relacionados”* o *“quejas por demoras”*) y pulsa [[Intro]]. Usa un modelo multilingüe gratuito que se ejecuta **en tu navegador** (la primera vez descarga unos 120 MB; después funciona sin conexión con los modelos ya guardados). Ajusta la **precisión** (amplia, media o estricta); cada comentario muestra su relevancia.
+- **Clasificar con IA**: el modelo gratuito que configuraste en el asistente (Chrome, Ollama, Gemini, Groq u OpenRouter) decide qué comentarios cumplen el criterio. Más fino para criterios complejos; más lento.
+
+Se combina con los filtros de **polaridad** (positivos, neutrales, negativos) y con el resto de chips.
 
 # Buscar y filtrar {#filtrar icon=filter_list}
 
@@ -1884,6 +2272,74 @@ Cada comentario incluye su **plataforma**.
     <button class="btn filled" id="aiSave">Guardar</button>
   </div>
 </dialog>
+
+<!-- Nuevo seguimiento -->
+<dialog id="trackDlg" aria-labelledby="trackTitle" class="wide">
+  <div class="dlg-head">
+    <h2 id="trackTitle" style="font-size:20px">Nuevo seguimiento</h2>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <div class="dlg-body">
+    <div class="row" style="gap:12px;flex-wrap:wrap">
+      <label class="field" style="flex:2 1 260px"><span class="lbl">Nombre</span><input class="input" id="trackName" maxlength="120"></label>
+      <label class="field" style="flex:1 1 160px"><span class="lbl">Fecha</span><input class="input" type="date" id="trackDate"></label>
+    </div>
+    <h3 class="team-h">Publicaciones <span class="muted" id="trackN"></span></h3>
+    <div class="tlist" id="trackPosts"></div>
+    <div class="help-note" id="trackMethods"><span class="ms">info</span><div></div></div>
+  </div>
+  <div class="dlg-actions">
+    <span style="margin-right:auto"><a class="hlp" href="#ayuda/seguimiento"><span class="ms">help</span>Ayuda</a></span>
+    <button class="btn text" data-close>Cancelar</button>
+    <button class="btn tonal" id="trackSave"><span class="ms">save</span>Guardar</button>
+    <button class="btn filled" id="trackStart"><span class="ms">play_arrow</span>Guardar e iniciar</button>
+  </div>
+</dialog>
+
+<!-- Editar publicación -->
+<dialog id="postDlg" aria-labelledby="postDlgTitle">
+  <div class="dlg-head">
+    <h2 id="postDlgTitle" style="font-size:20px">Editar publicación</h2>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <form class="dlg-body" id="postForm" style="display:flex;flex-direction:column;gap:12px">
+    <input type="hidden" id="pfId">
+    <label class="field"><span class="lbl">Nombre</span><input class="input" id="pfName" maxlength="120"></label>
+    <label class="field"><span class="lbl">Enlace</span><input class="input" id="pfUrl" readonly></label>
+    <label class="field"><span class="lbl">Método de extracción</span>
+      <select class="input" id="pfMethod">
+        <option value="auto">Automático (API si es tuya; si no, extensión)</option>
+        <option value="api">API de Meta (páginas o cuentas que administras)</option>
+        <option value="extension">Extensión de Chrome</option>
+      </select></label>
+    <label class="field"><span class="lbl">Notas</span><textarea class="input prose" id="pfNotes" maxlength="1000" style="min-height:80px"></textarea></label>
+  </form>
+  <div class="dlg-actions">
+    <button class="btn text" data-close>Cancelar</button>
+    <button class="btn filled" id="pfSave">Guardar</button>
+  </div>
+</dialog>
+
+<!-- Opciones de extracción -->
+<dialog id="extOptsDlg" aria-labelledby="extOptsTitle">
+  <div class="dlg-head">
+    <h2 id="extOptsTitle" style="font-size:20px">Opciones de extracción</h2>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <div class="dlg-body" style="display:flex;flex-direction:column;gap:10px">
+    <label class="field"><span class="lbl">Ventana de trabajo</span>
+      <select class="input" id="eoWin">
+        <option value="small">Pequeña, en una esquina, sin quitarte el foco (recomendada)</option>
+        <option value="minimized">Minimizada (sigue trabajando; algo más lenta)</option>
+        <option value="normal">Normal, a la vista</option>
+      </select>
+      <span class="hint">Puedes seguir usando el ordenador mientras extrae. Si minimizas la ventana de trabajo, la extracción continúa.</span></label>
+    <label class="check"><input type="checkbox" id="eoKeep"> Dejar abiertas las pestañas al terminar</label>
+    <label class="field"><span class="lbl">Tiempo máximo por publicación (minutos)</span><input class="input" type="number" id="eoMax" min="2" max="90"></label>
+    <label class="field"><span class="lbl">Pausa entre publicaciones (segundos)</span><input class="input" type="number" id="eoGap" min="0" max="120"></label>
+  </div>
+  <div class="dlg-actions"><button class="btn filled" id="eoSave">Guardar</button></div>
+</dialog>
 <div class="snackbar" id="snackbar" role="status" aria-live="polite"><span class="msg" id="snackMsg"></span><button class="btn text hidden" id="snackAct"></button></div>
 
 <script>
@@ -1892,9 +2348,12 @@ Cada comentario incluye su **plataforma**.
    Autocontenido: no depende de nada del resto de esta página.
    ===================================================================== */
 function fbExtractor(){
-  if (window.__fbcx) { alert('El extractor ya se está ejecutando en esta pestaña.'); return; }
+  // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
+  var AUTO = window.__scaAuto || null;
+  if (window.__fbcx) { if (AUTO) AUTO.emit({ type: 'error', error: 'El extractor ya se está ejecutando en esta pestaña.' }); else alert('El extractor ya se está ejecutando en esta pestaña.'); return; }
   window.__fbcx = true;
-  var sleep = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+  // En modo automático las esperas las mide el service worker de la extensión: así no se frenan aunque la ventana esté minimizada
+  var sleep = (AUTO && AUTO.sleep) || function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
   var stop = false;
   var pressed = [];
   var collected = [], byKey = {}, meta = {}, startKey = '', useCollectedOnly = false;
@@ -1926,7 +2385,8 @@ function fbExtractor(){
   var bRestart = el('button', btnCss + ';display:none;background:#c2e7ff;color:#001d35', 'Empezar con esta publicación');
   var out = el('textarea','display:none;width:100%;height:90px;margin-top:10px;background:#f0f4f9;color:#1f1f1f;border:0;border-radius:8px;padding:8px;font:11px monospace');
   var bRestartAll = el('button', btnCss + ';background:transparent;color:#0b57d0;box-shadow:inset 0 0 0 1px #c4c7c5', 'Reiniciar captura');
-  bar.append(bStop, bResume, bUse, bRestart, bCopy, bDl, bRestartAll, bClose); ui.append(ttl, st, bar, out); document.body.appendChild(ui);
+  bar.append(bStop, bResume, bUse, bRestart, bCopy, bDl, bRestartAll, bClose); ui.append(ttl, st, bar, out);
+  if (!AUTO) document.body.appendChild(ui);   // con la extensión trabaja sin panel: el progreso se ve en la app
   // oneLine: el progreso nunca se parte en dos líneas (si no cabe, se recorta con …)
   function status(t, oneLine){ st.textContent = t; st.title = oneLine ? t : ''; st.style.whiteSpace = oneLine ? 'nowrap' : 'normal'; st.style.overflow = 'hidden'; st.style.textOverflow = 'ellipsis'; }
   bStop.onclick = function(){ stop = true; status('Deteniendo…'); };
@@ -1972,6 +2432,8 @@ function fbExtractor(){
       }
     });
     window.scrollTo(0, document.documentElement.scrollHeight);
+    // Con la página oculta (ventana minimizada o en segundo plano) el navegador no genera eventos de desplazamiento: se envían a mano
+    if (document.hidden){ seen.forEach(function(p){ try { p.dispatchEvent(new Event('scroll')); } catch(e){} }); try { window.dispatchEvent(new Event('scroll')); document.dispatchEvent(new Event('scroll')); } catch(e){} }
   }
   function txt(node){
     var c = node.cloneNode(true);
@@ -2374,6 +2836,47 @@ function fbExtractor(){
     return 'fb:' + pth + '|' + (q.get('story_fbid') || '') + '|' + (q.get('fbid') || '') + '|' + (q.get('v') || '');
   }
   function keyOf(c){ return c.id || (c.authorName + '|' + c.text); }
+  // ---- Antes de empezar: abrir la sección de comentarios (reels de Facebook/Instagram, vídeos de TikTok) ----
+  var OPEN_RE = /^(comentar|comment|comentarios|comments|ver comentarios|view comments|ver los comentarios|comentários|commentaires|commenter|kommentieren|kommentare|commenta|commenti)$/i;
+  function visibleCount(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; }
+  function loadingVisible(){ return !!document.querySelector('[aria-busy="true"],[data-visualcompletion="loading-state"],[role="progressbar"]'); }
+  function commentButtons(){
+    var list = [];
+    if (TT) list = Array.prototype.slice.call(document.querySelectorAll('[data-e2e="comment-icon"],[data-e2e="browse-comment-icon"],[data-e2e="comment-count"],button[aria-label*="omment"],button[aria-label*="omentario"]'));
+    else list = Array.prototype.slice.call(document.querySelectorAll('[aria-label]')).filter(function(el){
+      var l = (el.getAttribute('aria-label') || '').trim().replace(/\s*[·:]?\s*\d[\d.,]*\s*[kKmM]?$/, '');   // "Comentar 25" → "Comentar"
+      return OPEN_RE.test(l);
+    });
+    return list.map(function(el){ return el.closest('button,[role="button"],a') || el; }).filter(function(el, i, a){
+      return a.indexOf(el) === i && el.offsetParent && el.getAttribute('role') !== 'textbox' && !el.isContentEditable && !el.closest('[contenteditable="true"],form');
+    });
+  }
+  async function openComments(){
+    if (visibleCount() > 0) return;
+    var btns = commentButtons(); if (!btns.length) return;
+    status('Abriendo la sección de comentarios…', true);
+    if (AUTO) AUTO.emit({ type: 'progress', round: 0, count: 0, note: 'abriendo comentarios' });
+    for (var i = 0; i < Math.min(btns.length, 3) && !stop; i++){
+      try { btns[i].scrollIntoView({ block: 'center' }); btns[i].click(); } catch(e){}
+      // esperar a que aparezcan los comentarios y desaparezcan los marcadores de carga (máx. ~12 s)
+      for (var t = 0; t < 48 && !stop; t++){ await sleep(250); var n = visibleCount(); if (n > 0 && (!loadingVisible() || t > 16)) { await sleep(600); return; } }
+    }
+  }
+  // ---- Facebook: cambiar "Más relevantes" por "Todos los comentarios" para no perder ninguno ----
+  var SORT_RE = /^(más relevantes|most relevant|los más relevantes|top comments|comentarios destacados|plus pertinents|mais relevantes|newest|más recientes)$/i;
+  var ALL_RE = /^(todos los comentarios|all comments|tous les commentaires|todos os comentários|alle kommentare|tutti i commenti)/i;
+  async function fbAllComments(){
+    var r = root();
+    var sortBtn = Array.prototype.slice.call(r.querySelectorAll('div[role="button"],span[role="button"]')).filter(function(b){ return b.offsetParent && SORT_RE.test((b.innerText || '').trim()); })[0];
+    if (!sortBtn) return;
+    try { sortBtn.click(); } catch(e){ return; }
+    for (var t = 0; t < 12; t++){
+      await sleep(250);
+      var item = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
+      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); await sleep(1500); return; }
+    }
+    try { document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); } catch(e){}
+  }
   function platformExtract(onlyNew){
     if (TT) return ttExtractAll(onlyNew);
     if (IG) return igExtractAll();
@@ -2439,11 +2942,12 @@ function fbExtractor(){
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
     if (data.diag) data.diag.pulsados = pressed.filter(function(v, i, a){ return a.indexOf(v) === i; });
+    if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'done', data: data }); return; }
     var json = JSON.stringify(data, null, 2);
     out.value = json; out.style.display = 'block';
     bStop.style.display = 'none'; bCopy.style.display = ''; bDl.style.display = '';
     status(comments.length ? '✓ ' + comments.length + ' comentarios extraídos' + (onOriginal ? '' : ' de la publicación original (no se mezclaron con la nueva)') + '. Copia el JSON y pégalo en el analizador.'
-      : '⚠ No se encontraron comentarios. Abre la publicación en su propia página y vuelve a intentarlo. Si sigue fallando, envía el JSON: incluye un diagnóstico sin textos ni nombres.');
+      : '⚠ No se encontraron comentarios. Abre la sección de comentarios de la publicación (icono de comentarios) y vuelve a pulsar el marcador. Si sigue fallando, envía el JSON: incluye un diagnóstico sin textos ni nombres.');
     bCopy.onclick = function(){
       var ok = function(){ bCopy.textContent = '¡Copiado!'; setTimeout(function(){ bCopy.textContent = 'Copiar JSON'; }, 1500); };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json).then(ok, function(){ out.select(); document.execCommand('copy'); ok(); });
@@ -2460,10 +2964,14 @@ function fbExtractor(){
   (async function(){
     var clicks = new Map(), idle = 0, round = 0;
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
+    await openComments();
+    if (!TT && !IG) await fbAllComments();
     startKey = postKey(); snapshot();
     while (!stop && round < 600){
       round++;
+      if (AUTO && AUTO.stopRequested){ stop = true; break; }
       if (postKey() !== startKey){
+        if (AUTO){ useCollectedOnly = true; break; }   // sin usuario delante: se conserva solo lo de la publicación original
         var dec = await waitDecision();
         if (dec === 'use'){ useCollectedOnly = true; break; }
         if (dec === 'restart'){ collected = []; byKey = {}; meta = {}; startKey = postKey(); clicks = new Map(); idle = 0; round = 0; pressed = []; snapshot(); }
@@ -2508,6 +3016,7 @@ function fbExtractor(){
       snapshot();   // recoger en cada ronda mientras se sigue en la publicación original
       var tot = TT ? ttTotal() : 0;
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
+      if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });
     }
     finish();
   })();
@@ -2534,21 +3043,21 @@ const PLATFORMS = {
     exDesc:'Cualquier publicación que puedas ver con tu sesión de Facebook.',
     stepPage:'Elige la página y la publicación', accountLabel:'Página',
     loginDesc:'Se pedirá permiso para leer las páginas que administras y sus comentarios.',
-    exStep1:'Abre la publicación en Facebook', exStep1Desc:'En el selector de orden de comentarios elige <b>“Todos los comentarios”</b> para no perder ninguno.',
+    exStep1:'Abre la publicación en Facebook', exStep1Desc:'El extractor abre la sección de comentarios (también en los reels) y elige <b>“Todos los comentarios”</b>. Si no lo consigue, ábrela tú con el icono de comentarios antes de pulsar el marcador.',
     help:'facebook', permHelp:'fb-permisos', exHelp:'extractor', exTips:'ex-consejos' },
   instagram: { name:'Instagram', reactLabel:'Me gusta', urlPh:'https://www.instagram.com/p/…', exPh:'https://www.instagram.com/p/…',
     mTitle:'Conectar con Instagram', mDesc:'Para cuentas profesionales vinculadas a tus páginas. Fechas exactas, me gusta y respuestas.',
     exDesc:'Cualquier publicación que puedas ver con tu sesión de Instagram.',
     stepPage:'Elige la cuenta y la publicación', accountLabel:'Cuenta de Instagram',
     loginDesc:'La API de Instagram usa el inicio de sesión de Facebook: se pedirá permiso para leer tus cuentas profesionales y sus comentarios.',
-    exStep1:'Abre la publicación en Instagram', exStep1Desc:'Ábrela en su propia página (<b>instagram.com/p/…</b> o <b>/reel/…</b>), no desde el feed, para que se carguen todos los comentarios.',
+    exStep1:'Abre la publicación en Instagram', exStep1Desc:'Ábrela en su propia página (<b>instagram.com/p/…</b> o <b>/reel/…</b>), no desde el feed. En los reels, el extractor abre los comentarios si están cerrados.',
     help:'instagram', permHelp:'ig-requisitos', exHelp:'ig-extractor', exTips:'ig-extractor' },
   // TikTok no ofrece una API pública de comentarios: solo extractor e importación
   tiktok: { name:'TikTok', reactLabel:'Me gusta', noApi:true, urlPh:'https://www.tiktok.com/@usuario/video/…', exPh:'https://www.tiktok.com/@usuario/video/…',
     mTitle:'API de TikTok', mDesc:'TikTok no ofrece una API pública de comentarios.',
     exDesc:'Cualquier vídeo que puedas ver en TikTok. Es el método disponible para TikTok.',
     stepPage:'Elige la página y la publicación', accountLabel:'Página', loginDesc:'',
-    exStep1:'Abre el vídeo en TikTok', exStep1Desc:'Ábrelo en su propia página (<b>tiktok.com/@usuario/video/…</b>) y, si no ves los comentarios, pulsa el icono de comentarios.',
+    exStep1:'Abre el vídeo en TikTok', exStep1Desc:'Ábrelo en su propia página (<b>tiktok.com/@usuario/video/…</b>). El extractor pulsa el icono de comentarios si el panel está cerrado.',
     help:'tiktok', permHelp:'tiktok', exHelp:'tt-extractor', exTips:'tt-extractor' }
 };
 const curPlatform = () => { const v = PREF.get('platform','facebook'); return PLATFORMS[v] ? v : 'facebook'; };
@@ -2915,7 +3424,7 @@ function loadData(parsed, {silent=false}={}){
   S.comments = finalize(parsed.comments, S.meta);
   if(!S.meta.platform){ const n = {}; S.comments.forEach(c=>n[c.platform]=(n[c.platform]||0)+1); S.meta.platform = Object.keys(n).sort((a,b)=>n[b]-n[a])[0] || 'facebook'; }
   S.selected.clear(); S.page=1; S.sort={key:'idx',dir:'asc'}; S.expanded.clear(); S.collapsed.clear();
-  Object.values(S.f).forEach(s=>s.clear()); $('#q').value='';
+  Object.values(S.f).forEach(s=>s.clear()); $('#q').value=''; S.sem = null; $('#semBar')?.classList.add('hidden');
   try{ localStorage.setItem('fbca:'+STORE_KEY, JSON.stringify({meta:S.meta, comments:S.comments})); }catch(e){}
   setStatus('#globalStatus','');
   renderAll();
@@ -2971,15 +3480,8 @@ async function findPfbid(pageId, pfbid, token, ver, log){
   }
   throw new Error('No se encontró la publicación entre las 1500 más recientes de la página.');
 }
-async function graphFetch(){
-  const input=$('#gUrl').value, token=$('#gToken').value.trim(), ver=apiVer();
-  if(!input.trim()){ setStatus('#gStatus','Indica la URL o el ID de la publicación, o elige una de la lista.',true); $('#gUrl').focus(); return; }
-  if(!token){ setStatus('#gStatus','Primero inicia sesión con Facebook (o pega un token en Opciones avanzadas).',true,'facebook'); return; }
-  try{ $('#gRemember').checked ? sessionStorage.setItem('fbca:token',token) : sessionStorage.removeItem('fbca:token'); }catch(e){}
-  gAbort = new AbortController();
-  const log = m => setStatus('#gStatus', m);
-  $('#gFetch').disabled=true; $('#gStop').classList.remove('hidden'); $('#gProg').classList.remove('hidden');
-  try{
+// Descarga los comentarios de una publicación de Facebook y devuelve los datos normalizados (sin tocar la interfaz)
+async function fbCollect(input, token, ver, log){
     const objId = await resolveObjectId(input, token, ver, log);
     log('Obteniendo datos de la publicación…');
     let post={};
@@ -3003,10 +3505,21 @@ async function graphFetch(){
       const j = await gReq(url); all = all.concat(j.data||[]); url = j.paging?.next;
     }
     log(`✓ ${fmtN(all.length)} comentarios descargados.`);
-    loadData(fromGraph(all, {
+    return fromGraph(all, {
       postId: objId, url: post.permalink_url || input, title: (post.message||post.description||post.title||'').slice(0,160) || 'Publicación '+objId,
       postAuthor: post.from?.name||FBA.page?.name||'', postDate: post.created_time||'', extractedAt:new Date().toISOString(), totalReported: total
-    }));
+    });
+}
+async function graphFetch(){
+  const input=$('#gUrl').value, token=$('#gToken').value.trim(), ver=apiVer();
+  if(!input.trim()){ setStatus('#gStatus','Indica la URL o el ID de la publicación, o elige una de la lista.',true); $('#gUrl').focus(); return; }
+  if(!token){ setStatus('#gStatus','Primero inicia sesión con Facebook (o pega un token en Opciones avanzadas).',true,'facebook'); return; }
+  try{ $('#gRemember').checked ? sessionStorage.setItem('fbca:token',token) : sessionStorage.removeItem('fbca:token'); }catch(e){}
+  gAbort = new AbortController();
+  const log = m => setStatus('#gStatus', m);
+  $('#gFetch').disabled=true; $('#gStop').classList.remove('hidden'); $('#gProg').classList.remove('hidden');
+  try{
+    loadData(await fbCollect(input, token, ver, log));
   }catch(e){
     if(e.name==='AbortError') log('Descarga detenida.');
     else setStatus('#gStatus', e.message + (e.code===10||e.code===200?' — Comprueba que el token sea de la página y tenga el permiso pages_read_user_content.':'') + (e.code===190?' — El token caducó: vuelve a iniciar sesión.':''), true, e.code===190?'faq-token':(e.code===10||e.code===200)?'faq-autor':/pfbid|no se reconoce|share/i.test(e.message)?'faq-pfbid':'faq');
@@ -3036,14 +3549,8 @@ async function resolveIgMedia(input, token, ver, log){
   }
   throw new Error(`No se encontró la publicación ${code} entre las recientes de tus cuentas de Instagram. La API solo da acceso a publicaciones de tus propias cuentas profesionales; para otras usa el extractor.`);
 }
-async function igFetch(){
-  const input=$('#gUrl').value, token=$('#gToken').value.trim(), ver=apiVer();
-  if(!input.trim()){ setStatus('#gStatus','Indica la URL o el ID de la publicación de Instagram, o elige una de la lista.',true,'ig-api'); $('#gUrl').focus(); return; }
-  if(!token && !FBA.igAccounts.length){ setStatus('#gStatus','Primero inicia sesión y elige tu cuenta de Instagram.',true,'instagram'); return; }
-  gAbort = new AbortController();
-  const log = m => setStatus('#gStatus', m);
-  $('#gFetch').disabled=true; $('#gStop').classList.remove('hidden'); $('#gProg').classList.remove('hidden');
-  try{
+// Igual para Instagram
+async function igCollect(input, token, ver, log){
     const mediaId = await resolveIgMedia(input, token, ver, log);
     const tk = $('#gToken').value.trim() || token;
     log('Obteniendo datos de la publicación…');
@@ -3067,11 +3574,21 @@ async function igFetch(){
     }
     const items = flattenIgComments(all);
     log(`✓ ${fmtN(items.length)} comentarios y respuestas descargados.`);
-    loadData(fromInstagramGraph(items, {
+    return fromInstagramGraph(items, {
       postId: mediaId, url: post.permalink || input, title: (post.caption||'').replace(/\s+/g,' ').slice(0,160) || 'Publicación de Instagram',
       postAuthor: post.username ? '@'+post.username : (FBA.ig?.username ? '@'+FBA.ig.username : ''), postDate: post.timestamp||'',
       extractedAt: new Date().toISOString(), totalReported: post.comments_count ?? null, platform:'instagram'
-    }));
+    });
+}
+async function igFetch(){
+  const input=$('#gUrl').value, token=$('#gToken').value.trim(), ver=apiVer();
+  if(!input.trim()){ setStatus('#gStatus','Indica la URL o el ID de la publicación de Instagram, o elige una de la lista.',true,'ig-api'); $('#gUrl').focus(); return; }
+  if(!token && !FBA.igAccounts.length){ setStatus('#gStatus','Primero inicia sesión y elige tu cuenta de Instagram.',true,'instagram'); return; }
+  gAbort = new AbortController();
+  const log = m => setStatus('#gStatus', m);
+  $('#gFetch').disabled=true; $('#gStop').classList.remove('hidden'); $('#gProg').classList.remove('hidden');
+  try{
+    loadData(await igCollect(input, token, ver, log));
   }catch(e){
     if(e.name==='AbortError') log('Descarga detenida.');
     else setStatus('#gStatus', e.message + (e.code===190?' — El token caducó: vuelve a iniciar sesión.':''), true,
@@ -3260,7 +3777,7 @@ function fbLogout(){
 /* ---------- filtrado / orden ---------- */
 function applyFilters(){
   computeTeam(); renderAssistBar();
-  let q = $('#q').value.trim().toLowerCase(), authorQ = null;
+  let q = S.sem ? '' : $('#q').value.trim().toLowerCase(), authorQ = null;
   const am = q.match(/autor:("([^"]+)"|(\S+))/);
   if(am){ authorQ = (am[2]||am[3]).toLowerCase(); q = q.replace(am[0],'').trim(); }
   const F=S.f;
@@ -3273,6 +3790,7 @@ function applyFilters(){
     if(F.extra.has('noreply') && (c.type!=='comment' || c.repliesCount)) return false;
     if(F.extra.has('noteam') && S.teamOn && !c.needsTeam) return false;
     if(authorQ && !c.authorName.toLowerCase().includes(authorQ)) return false;
+    if(S.sem){ const sc = S.sem.scores.get(c.id) ?? 0; return S.sem.mode === 'ai' ? sc >= 1 : sc >= (+$('#semLevel').value || .825); }
     if(q && !(c.text.toLowerCase().includes(q) || c.authorName.toLowerCase().includes(q))) return false;
     return true;
   });
@@ -3285,6 +3803,7 @@ function applyFilters(){
   Object.values(kids).forEach(a=>a.sort((x,y)=>(x.createdTs||0)-(y.createdTs||0)||x.idx-y.idx));
   S.kids = kids;
   S.tops = S.filtered.filter(c=>!c.parentId || !ids.has(c.parentId)).sort(cmp);
+  if(S.sem && S.sem.mode === 'sem' && S.sort.key === 'idx') S.tops.sort((a, b) => (S.sem.scores.get(b.id) || 0) - (S.sem.scores.get(a.id) || 0));
   if(S.threaded || S.listView==='conv'){
     const out=[]; const walk=c=>{ out.push(c); (kids[c.id]||[]).forEach(walk); };
     S.tops.forEach(walk); S.rows=out;
@@ -3667,6 +4186,8 @@ function renderConv(slice, q){
             ${ig && otherBadges.length ? `<span>${esc(otherBadges.join(' · '))}</span>` : ''}
             <span class="sdot" title="Sentimiento estimado"><i style="background:${sc}"></i>${cap(c.sentiment)}</span>
             ${c.edited?'<span>Editado</span>':''}
+            ${c._post && S.meta.multi ? `<span title="Publicación">${esc(c._post.slice(0, 40))}${c._post.length > 40 ? '…' : ''}</span>` : ''}
+            ${S.sem && S.sem.mode === 'sem' ? `<span class="cscore" title="Relevancia por significado">${Math.round((S.sem.scores.get(c.id) || 0) * 100)}</span>` : ''}
             ${c.needsTeam?'<span class="cstate pend" title="Nadie de tu equipo ha respondido todavía"><span class="ms fill">schedule</span>Pendiente</span>':''}
             ${S.teamOn && !c.isTeam && c.teamAnswered?'<span class="cstate done" title="Tu equipo ya respondió"><span class="ms">done_all</span>Respondido</span>':''}
             ${open?`<button data-toggle="${esc(c.id)}">Ocultar respuestas</button>`:''}
@@ -3796,12 +4317,15 @@ function teamKeys(){
 }
 function computeTeam(){
   const K = teamKeys(), byId = new Map(S.comments.map(c => [c.id, c])), done = ANSWERED.all();
-  const pa = TEAM.postAuthor() && S.meta.postAuthor ? normName(S.meta.postAuthor) : null;
+  const pa0 = TEAM.postAuthor() && S.meta.postAuthor ? normName(S.meta.postAuthor) : null;
+  const paOf = c => TEAM.postAuthor() && c._postAuthor ? normName(c._postAuthor) : pa0;
+  const pa = pa0 || (S.comments.some(c => c._postAuthor) && TEAM.postAuthor() ? ' ' : null);
   const rootOf = c => { let p = c, g = 0; while(p.parentId && byId.has(p.parentId) && g++ < 12) p = byId.get(p.parentId); return p; };
   S.teamOn = K.size > 0 || !!pa;
   S.comments.forEach(c => {
     const n = normName(c.authorName);
-    c.isTeam = !!n && (K.has(n) || (c.authorId && K.has('id:' + c.authorId)) || (!!pa && (n === pa || c.badges.includes('Autor de la publicación'))));
+    const cpa = paOf(c);
+    c.isTeam = !!n && (K.has(n) || (c.authorId && K.has('id:' + c.authorId)) || (!!cpa && (n === cpa || c.badges.includes('Autor de la publicación'))));
     c.teamAnswered = !!done[c.id];
     c.root = rootOf(c).id;
   });
@@ -3822,7 +4346,8 @@ function computeTeam(){
   const all = TEAM.allReplies();
   S.comments.forEach(c => {
     const parent = c.parentId && byId.get(c.parentId);
-    const directed = !c.parentId || all || (parent && parent.isTeam) || [c.replyTo, ...(c.mentions||[])].some(n => n && (K.has(normName(n)) || (pa && normName(n) === pa)));
+    const cpa = paOf(c);
+    const directed = !c.parentId || all || (parent && parent.isTeam) || [c.replyTo, ...(c.mentions||[])].some(n => n && (K.has(normName(n)) || (cpa && normName(n) === cpa)));
     c.needsTeam = S.teamOn && !c.isTeam && !c.teamAnswered && !!directed;
   });
   S.pending = S.comments.filter(c => c.needsTeam);
@@ -3998,7 +4523,8 @@ function afterReply(c, via, text, newId, asName, extra){
     if(!TEAM.has(author) && !(TEAM.postAuthor() && normName(author) === normName(S.meta.postAuthor))) TEAM.add(author);
     S.comments = finalize(S.comments.concat([{ id:newId, parentId: c.platform === 'tiktok' ? c.id : root.id, authorName:author, text, createdAt:new Date().toISOString(), dateText:'', reactions:0,
       replyTo: c.authorName, mentions: c.platform !== 'facebook' ? [String(c.authorName).replace(/^@/,'')] : [], source:'respuesta', platform:c.platform, badges:[],
-      permalink: extra?.permalink || '', verified: !!extra?.verified }]), S.meta);
+      permalink: extra?.permalink || '', verified: !!extra?.verified, _ref: c._ref }]), S.meta);
+    persistReplyToTracking(c, S.comments[S.comments.length - 1]);
     try{ localStorage.setItem('fbca:' + STORE_KEY, JSON.stringify({ meta:S.meta, comments:S.comments })); }catch(e){}
   }
   renderAll();
@@ -4403,6 +4929,946 @@ function initEmoji(){
   $$('.dlg-body').forEach(b => b.addEventListener('scroll', placeEmojiPop, { passive:true }));
 }
 
+
+/* =====================================================================
+   SEGUIMIENTO DE PUBLICACIONES
+   Lista de publicaciones · seguimientos con fecha · historial (IndexedDB)
+   ===================================================================== */
+const DB = {
+  db:null,
+  open(){
+    if(this.db) return Promise.resolve(this.db);
+    return this._p ||= new Promise((res, rej) => {
+      const r = indexedDB.open('sca-db', 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        if(!d.objectStoreNames.contains('posts')) d.createObjectStore('posts', { keyPath:'id' });
+        if(!d.objectStoreNames.contains('trackings')) d.createObjectStore('trackings', { keyPath:'id' });
+        if(!d.objectStoreNames.contains('results')){ const s = d.createObjectStore('results', { keyPath:'key' }); s.createIndex('tid', 'tid'); }
+      };
+      r.onsuccess = () => { this.db = r.result; res(this.db); };
+      r.onerror = () => rej(r.error || new Error('No se pudo abrir la base de datos del navegador.'));
+    });
+  },
+  async tx(store, mode, fn){
+    const d = await this.open();
+    return new Promise((res, rej) => {
+      const t = d.transaction(store, mode, { durability:'relaxed' }), s = t.objectStore(store);   // sin esperar al disco: más fluido durante la extracción
+      let out; const r = fn(s); if(r && 'onsuccess' in r) r.onsuccess = () => { out = r.result; };
+      t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('Operación cancelada (¿sin espacio?)'));
+    });
+  },
+  all(store){ return this.tx(store, 'readonly', s => s.getAll()); },
+  get(store, key){ return this.tx(store, 'readonly', s => s.get(key)); },
+  put(store, val){ return this.tx(store, 'readwrite', s => s.put(val)); },
+  del(store, key){ return this.tx(store, 'readwrite', s => s.delete(key)); },
+  async resultsOf(tid){ const d = await this.open(); return new Promise((res, rej) => { const r = d.transaction('results').objectStore('results').index('tid').getAll(tid); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
+  async delTracking(tid){ for(const r of await this.resultsOf(tid)) await this.del('results', r.key); await this.del('trackings', tid); }
+};
+const TR = { posts:[], tracks:[], sel:new Set(), hsel:new Set(), pf:new Set(), open:null, running:null };
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const todayISO = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const fmtDay = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('es', { weekday:'short', day:'numeric', month:'short', year:'numeric' }) : '';
+// Enlace canónico de una publicación (sin parámetros de seguimiento) para no duplicarla
+function canonUrl(u){
+  try{
+    const x = new URL(/^https?:/i.test(u) ? u : 'https://' + u.trim());
+    x.hash = ''; x.hostname = x.hostname.replace(/^(m|mbasic|web|business)\./, 'www.');
+    const keep = ['story_fbid', 'id', 'v', 'fbid', 'set'];
+    [...x.searchParams.keys()].forEach(k => { if(!keep.includes(k)) x.searchParams.delete(k); });
+    return x.toString().replace(/\/$/, '');
+  }catch(e){ return String(u).trim(); }
+}
+function postLabel(p){
+  if(p.name) return p.name;
+  if(p.title && !/^(facebook|instagram|tiktok)$/i.test(p.title)) return p.title;
+  try{ const x = new URL(p.url); return x.hostname.replace(/^www\./, '') + decodeURIComponent(x.pathname).slice(0, 60); }catch(e){ return p.url; }
+}
+async function loadTR(){
+  try{ [TR.posts, TR.tracks] = await Promise.all([DB.all('posts'), DB.all('trackings')]); }
+  catch(e){ TR.posts = []; TR.tracks = []; toast('No se pudo abrir el almacenamiento del navegador: ' + e.message); }
+  TR.posts.sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''));
+  TR.tracks.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''));
+  // un seguimiento que quedó "en curso" al cerrar la página pasa a "en pausa"
+  for(const t of TR.tracks) if(t.status === 'running' && TR.running !== t.id){ t.status = 'paused'; Object.values(t.items).forEach(i => { if(i.status === 'running') i.status = 'pending'; }); await DB.put('trackings', t); }
+  renderSeg();
+}
+async function addPosts(urls, name){
+  let added = 0, dup = 0, bad = 0;
+  for(let u of urls){
+    u = u.trim(); if(!u) continue;
+    const plat = detectPlatform(u);
+    if(!plat){ bad++; continue; }
+    const url = canonUrl(u);
+    if(TR.posts.some(p => p.url === url)){ dup++; continue; }
+    const p = { id:uid('p_'), url, platform:plat, name:(urls.length === 1 && name) ? name : '', title:'', author:'', addedAt:new Date().toISOString(), method:'auto', notes:'' };
+    await DB.put('posts', p); TR.posts.unshift(p); added++;
+  }
+  renderPosts(); renderSegCounts();
+  const parts = [added && countTxt(added, 'publicación añadida', 'publicaciones añadidas'), dup && countTxt(dup, 'ya estaba en la lista', 'ya estaban en la lista'), bad && countTxt(bad, 'enlace no reconocido', 'enlaces no reconocidos')].filter(Boolean);
+  toast(parts.join(' · ') || 'No había enlaces');
+  return added;
+}
+function renderSegCounts(){
+  $('#postsCount').textContent = TR.posts.length;
+  const active = TR.tracks.filter(t => t.status !== 'done');
+  $('#runsCount').textContent = active.length;
+  $('#histCount').textContent = TR.tracks.filter(t => t.status === 'done').length;
+  const b = $('#navTrackBadge'), run = TR.tracks.some(t => t.status === 'running');
+  b.classList.toggle('hidden', !active.length); b.textContent = run ? '●' : active.length;
+}
+function renderSeg(){ renderSegCounts(); renderPosts(); renderRuns(); renderHistory(); renderExt(); }
+function selectSegTab(n){
+  ['posts', 'runs', 'hist'].forEach(k => { const on = k === n; $('#stab-' + k).setAttribute('aria-selected', on); $('#stab-' + k).tabIndex = on ? 0 : -1; $('#sp-' + k).classList.toggle('active', on); });
+  PREF.set('segTab', n);
+}
+function lastRunOf(postId){
+  for(const t of TR.tracks){ const it = t.items?.[postId]; if(it && it.status === 'done') return { t, it }; }
+  return null;
+}
+function renderPosts(){
+  const q = normName($('#postQ').value);
+  const list = TR.posts.filter(p => (!TR.pf.size || TR.pf.has(p.platform)) && (!q || normName(postLabel(p) + ' ' + p.url + ' ' + (p.author||'') + ' ' + (p.notes||'')).includes(q)));
+  [...TR.sel].forEach(id => { if(!TR.posts.some(p => p.id === id)) TR.sel.delete(id); });
+  $('#postList').innerHTML = list.length ? list.map(p => {
+    const lr = lastRunOf(p.id), sel = TR.sel.has(p.id);
+    return `<div class="prow${sel ? ' sel' : ''}" data-pid="${esc(p.id)}">
+      <input type="checkbox" class="psel" ${sel ? 'checked' : ''} aria-label="Seleccionar ${esc(postLabel(p))}">
+      <span class="pico"><i class="pdot ${platDot(p.platform)}"></i></span>
+      <div class="pmain"><div class="pt" title="${esc(postLabel(p))}">${esc(postLabel(p))}</div><div class="ps">${esc(platName(p.platform))}${p.author ? ' · ' + esc(p.author) : ''} · <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 70))}</a></div></div>
+      <div class="pstat">${lr ? `<b>${fmtN(lr.it.count)} comentarios</b>${esc(fmtDay(lr.t.date))}` : 'Sin seguimientos'}</div>
+      <div class="pacts">
+        ${lr ? `<button class="icon-btn sm" data-pact="view" aria-label="Ver los últimos comentarios" title="Ver los últimos comentarios"><span class="ms">forum</span></button>` : ''}
+        <button class="icon-btn sm" data-pact="edit" aria-label="Editar" title="Editar"><span class="ms">edit</span></button>
+        <button class="icon-btn sm" data-pact="del" aria-label="Eliminar de la lista" title="Eliminar de la lista"><span class="ms">delete</span></button>
+      </div></div>`;
+  }).join('') : `<div class="empty-mini"><span class="ms">playlist_add</span>${TR.posts.length ? 'Ninguna publicación coincide con la búsqueda.' : 'Tu lista está vacía. Pega arriba el enlace de una publicación para empezar a darle seguimiento.'}</div>`;
+  const all = $('#postAll'); all.checked = !!list.length && list.every(p => TR.sel.has(p.id)); all.indeterminate = !all.checked && list.some(p => TR.sel.has(p.id)); all.disabled = !list.length;
+  TR.visible = list.map(p => p.id);
+  $('#postSelbar').classList.toggle('hidden', !TR.sel.size);
+  $('#postSelCount').textContent = TR.sel.size ? countTxt(TR.sel.size, 'publicación seleccionada', 'publicaciones seleccionadas') : '';
+}
+
+/* ---------- Extensión de Chrome ---------- */
+const EXT_LATEST = '1.1.0';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
+const EXT = { version:null, waiters:new Map(), jobs:new Map() };
+const verLt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for(let i = 0; i < 3; i++){ if((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
+function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', maxMinutes:+PREF.get('eoMax', '20') || 20, gap:+PREF.get('eoGap', '4') || 0 }; }
+function renderExt(){
+  const on = !!EXT.version, old = on && verLt(EXT.version, EXT_LATEST);
+  $('#extDl').classList.toggle('hidden', on && !old);
+  $('#extDlTxt').textContent = old ? 'Actualizar extensión (v' + EXT_LATEST + ')' : 'Descargar extensión';
+  $('#extDl').title = old ? 'Hay una versión nueva: descárgala y sustituye la carpeta de la extensión' : 'Descarga la extensión de Chrome (.zip) y sigue los pasos de la ayuda para instalarla';
+  $('#extChip').classList.toggle('on', on);
+  $('#extTxt').textContent = on ? 'Extensión conectada · v' + EXT.version : 'Extensión no instalada';
+  $('#extChip').title = on ? 'La extensión extraerá automáticamente las publicaciones' : 'Sin extensión, las publicaciones que no sean tuyas se extraen a mano con el marcador. Mira la ayuda para instalarla.';
+  $('#extChip').classList.toggle('old', old);
+}
+function extDetect(){
+  EXT.version = document.documentElement.dataset.scaExt || EXT.version;
+  window.postMessage({ source:'sca-app', type:'ping' }, '*');
+  renderExt();
+}
+window.addEventListener('message', e => {
+  if(e.source !== window || !e.data || e.data.source !== 'sca-ext') return;
+  const m = e.data;
+  if(m.type === 'hello' || m.type === 'pong' || m.type === 'ready'){ if(m.version && EXT.version !== m.version){ EXT.version = m.version; renderExt(); } return; }
+  const job = EXT.jobs.get(m.jobId); if(!job) return;
+  if(m.type === 'progress') job.onProgress && job.onProgress(m);
+  else if(m.type === 'result'){ EXT.jobs.delete(m.jobId); job.resolve(m); }
+  else if(m.type === 'error' || m.type === 'stopped'){ EXT.jobs.delete(m.jobId); m.type === 'stopped' ? job.resolve({ stopped:true }) : job.reject(new Error(m.error || 'Error de la extensión')); }
+});
+function extExtract(url, onProgress){
+  const jobId = uid('j_');
+  return { jobId, promise:new Promise((resolve, reject) => {
+    EXT.jobs.set(jobId, { resolve, reject, onProgress });
+    window.postMessage({ source:'sca-app', type:'extract', jobId, url, options:extOpts() }, '*');
+  }) };
+}
+function extStop(jobId){ window.postMessage({ source:'sca-app', type:'stop', jobId }, '*'); }
+
+/* ---------- Seguimientos ---------- */
+function methodFor(p){
+  if(p.method === 'api' || p.method === 'extension') return p.method;   // "manual" de versiones anteriores pasa a automático
+  if((p.platform === 'facebook' || p.platform === 'instagram') && FBA.userToken) return 'api';
+  return 'extension';
+}
+const METHOD_TXT = { api:'API', extension:'Extensión' };
+// Publicaciones que dependen de la extensión (las de la API pueden pasar a la extensión si la página no es tuya)
+const needsExt = posts => posts.some(p => methodFor(p) === 'extension' || (methodFor(p) === 'api' && p.method !== 'api'));
+function openTrackDlg(postIds, tid){
+  const t = tid ? TR.tracks.find(x => x.id === tid) : null;
+  TR.draft = { ids:[...(t ? t.postIds : postIds)], tid:t ? t.id : null };
+  $('#trackTitle').textContent = t ? 'Editar seguimiento' : 'Nuevo seguimiento';
+  $('#trackName').value = t ? t.name : 'Seguimiento del ' + new Date().toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' });
+  $('#trackDate').value = t ? t.date : todayISO();
+  renderTrackDlg(); $('#trackDlg').showModal();
+}
+function renderTrackDlg(){
+  const ids = TR.draft.ids, posts = ids.map(id => TR.posts.find(p => p.id === id)).filter(Boolean);
+  $('#trackN').textContent = '(' + posts.length + ')';
+  $('#trackPosts').innerHTML = posts.map(p => { const m = methodFor(p); return `<div class="titem"><i class="pdot ${platDot(p.platform)}"></i><span class="tt" title="${esc(p.url)}">${esc(postLabel(p))}</span><span class="mchip ${m}">${METHOD_TXT[m]}</span><button class="icon-btn sm" data-rmpost="${esc(p.id)}" aria-label="Quitar ${esc(postLabel(p))}" title="Quitar"><span class="ms">close</span></button></div>`; }).join('') || '<p class="small muted">No hay publicaciones. Ciérralo y selecciona algunas en la lista.</p>';
+  const ms = posts.map(methodFor), n = k => ms.filter(x => x === k).length;
+  const lines = [];
+  if(n('api')) lines.push(`<b>${n('api')}</b> por la API de Meta (si alguna no es de una página o cuenta tuya, se usará la extensión)`);
+  if(n('extension')) lines.push(`<b>${n('extension')}</b> con la extensión de Chrome, automáticamente`);
+  const noExt = !EXT.version && posts.some(p => methodFor(p) === 'extension');
+  $('#trackMethods div').innerHTML = (lines.length ? 'Se extraerán ' + lines.join('; ') + '.' : '')
+    + (noExt ? ` <b style="color:var(--error)">La extensión no está instalada:</b> <a href="downloads/social-comments-analyzer-extension.zip" download>descárgala</a> y sigue los <a href="#ayuda/ext-instalar">pasos de instalación</a> para poder iniciar el seguimiento.` : '');
+  $('#trackSave').disabled = !posts.length;
+  $('#trackStart').disabled = !posts.length || noExt;
+  $('#trackStart').title = noExt ? 'Instala la extensión de Chrome para iniciar el seguimiento' : '';
+}
+async function saveTrack(start){
+  const ids = TR.draft.ids.filter(id => TR.posts.some(p => p.id === id)); if(!ids.length) return;
+  let t = TR.draft.tid ? TR.tracks.find(x => x.id === TR.draft.tid) : null;
+  if(!t){ t = { id:uid('t_'), createdAt:new Date().toISOString(), status:'draft', items:{} }; TR.tracks.unshift(t); }
+  t.name = $('#trackName').value.trim() || 'Seguimiento'; t.date = $('#trackDate').value || todayISO(); t.postIds = ids;
+  ids.forEach(id => { t.items[id] ||= { status:'pending', count:0 }; });
+  Object.keys(t.items).forEach(id => { if(!ids.includes(id)) delete t.items[id]; });
+  await DB.put('trackings', t);
+  TR.tracks.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''));
+  $('#trackDlg').close(); TR.sel.clear(); TR.open = t.id;
+  selectSegTab('runs'); renderSeg();
+  if(start) runTracking(t.id);
+}
+function trackProgress(t){
+  const ids = t.postIds, n = ids.length || 1;
+  let done = 0, frac = 0;
+  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && it.total) frac += Math.min(.95, (it.count || 0) / it.total); else if(it.status === 'running') frac += .1; });
+  const comments = ids.reduce((s, id) => s + (t.items[id].count || 0), 0);
+  return { pct:Math.min(100, Math.round((done + frac) / n * 100)), done, n:ids.length, comments, errors:ids.filter(id => t.items[id].status === 'error').length };
+}
+const ST_TXT = { draft:['edit_note', 'Borrador'], running:['progress_activity', 'En curso'], paused:['pause_circle', 'En pausa'], done:['task_alt', 'Completado'] };
+function renderRuns(){
+  const list = TR.tracks.filter(t => t.status !== 'done');
+  if(TR.open && !TR.tracks.some(t => t.id === TR.open)) TR.open = null;
+  if(!TR.open && list.length) TR.open = list[0].id;
+  $('#runList').innerHTML = list.length ? list.map(t => {
+    const pr = trackProgress(t), [ic, tx] = ST_TXT[t.status];
+    return `<button class="rcard${TR.open === t.id ? ' open' : ''}" data-tid="${esc(t.id)}" aria-expanded="${TR.open === t.id}">
+      <span><span class="rt">${esc(t.name)}</span><br><span class="rs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</span></span>
+      <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx} · ${pr.pct} %</span>
+      <span class="pbar"><i style="width:${pr.pct}%"></i></span></button>`;
+  }).join('') : `<div class="empty-mini"><span class="ms">add_task</span>No hay seguimientos activos. En <b>Publicaciones</b>, selecciona las que quieras revisar hoy y pulsa <b>Crear seguimiento</b>.</div>`;
+  renderRunDetail();
+}
+function itemIcon(it){ return { pending:'radio_button_unchecked', running:'progress_activity', done:'check_circle', error:'error', skipped:'do_not_disturb_on' }[it.status] || 'radio_button_unchecked'; }
+function renderRunDetail(){
+  const t = TR.tracks.find(x => x.id === TR.open && x.status !== 'done');
+  const box = $('#runDetail');
+  if(!t){ box.innerHTML = ''; return; }
+  const pr = trackProgress(t), running = TR.running === t.id, [ic, tx] = ST_TXT[t.status];
+  const pend = t.postIds.filter(id => ['pending', 'error'].includes(t.items[id].status)).length;
+  box.innerHTML = `<div class="rdetail" aria-live="polite">
+    <div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rs small muted">${esc(fmtDay(t.date))} · <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx}</span></div></div>
+      <div class="rd-acts">
+        ${running ? `<button class="btn tonal" data-ract="stop"><span class="ms">stop</span>Detener</button>`
+          : `<button class="btn filled" data-ract="start" ${pend ? '' : 'disabled'}><span class="ms">play_arrow</span>${t.status === 'draft' ? 'Iniciar' : 'Continuar'}</button>`}
+        ${!running ? `<button class="btn text" data-ract="edit"><span class="ms">edit</span>Editar</button>` : ''}
+        ${!running && pr.done ? `<button class="btn text" data-ract="finish"><span class="ms">inventory</span>Finalizar y archivar</button>` : ''}
+        ${!running ? `<button class="icon-btn" data-ract="del" aria-label="Eliminar seguimiento" title="Eliminar seguimiento"><span class="ms">delete</span></button>` : ''}
+      </div></div>
+    <div class="rd-prog"><span class="pbar${running && !pr.pct ? ' indet' : ''}"><i style="width:${pr.pct}%"></i></span><span class="pct">${pr.pct} %</span>
+      <span class="pctsub">${pr.done} de ${pr.n} publicaciones · ${countTxt(pr.comments, 'comentario extraído', 'comentarios extraídos')}${pr.errors ? ` · <b style="color:var(--error)">${countTxt(pr.errors, 'con error', 'con error')}</b>` : ''}</span></div>
+    ${t.postIds.map(id => {
+      const p = TR.posts.find(x => x.id === id) || { id, url:'', platform:'facebook', name:'(publicación eliminada de la lista)' }, it = t.items[id];
+      const m = it.method || methodFor(p);
+      const sub = it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`)
+        : it.status === 'done' ? `${countTxt(it.count, 'comentario', 'comentarios')} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
+        : it.status === 'error' ? esc(it.error || 'Error') : it.status === 'skipped' ? 'Omitida' : 'Pendiente';
+      const pp = it.status === 'running' && it.total ? Math.min(100, Math.round((it.count || 0) / it.total * 100)) : 0;
+      return `<div class="ritem" data-ipid="${esc(id)}">
+        <span class="ms ri-ic ${it.status}">${itemIcon(it)}</span>
+        <div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span><span class="mchip ${m}">${METHOD_TXT[m]}</span></div><div class="ri-s${it.status === 'error' ? ' err' : ''}">${sub}</div></div>
+        <div class="ri-acts">
+          ${it.status === 'done' ? `<button class="btn text sm" data-iact="view"><span class="ms">forum</span>Ver comentarios</button>` : ''}
+          ${!running && ['error', 'skipped', 'done'].includes(it.status) ? `<button class="icon-btn sm" data-iact="retry" aria-label="Volver a extraer" title="Volver a extraer"><span class="ms">refresh</span></button>` : ''}
+          ${!running && it.status === 'pending' ? `<button class="icon-btn sm" data-iact="skip" aria-label="Omitir" title="Omitir"><span class="ms">do_not_disturb_on</span></button>` : ''}
+          ${p.url ? `<a class="icon-btn sm" href="${esc(p.url)}" target="_blank" rel="noopener" aria-label="Abrir publicación" title="Abrir publicación"><span class="ms">open_in_new</span></a>` : ''}
+        </div>
+        ${it.status === 'running' ? `<span class="pbar${it.total ? '' : ' indet'}"><i style="width:${pp}%"></i></span>` : ''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+// Normaliza los IDs de respaldo del extractor (x-1, local-1) para que sean únicos entre publicaciones
+function uniqueIds(parsed, postId){
+  const fix = v => v && /^(x|local)-/.test(v) ? postId + '-' + v : v;
+  parsed.comments.forEach(c => { c.id = fix(String(c.id || '')); if(c.parentId) c.parentId = fix(String(c.parentId)); });
+  return parsed;
+}
+async function storeResult(t, p, parsed, method, partial){
+  uniqueIds(parsed, p.id);
+  const meta = { ...parsed.meta, platform:parsed.meta.platform || p.platform, url:parsed.meta.url || p.url };
+  await DB.put('results', { key:t.id + '|' + p.id, tid:t.id, postId:p.id, date:t.date, meta, comments:parsed.comments, extractedAt:new Date().toISOString(), method, partial:!!partial });
+  const it = t.items[p.id];
+  Object.assign(it, { status:'done', count:parsed.comments.length, method, finishedAt:new Date().toISOString(), partial:!!partial, error:'' });
+  // la lista aprende el título y el autor de la publicación
+  let ch = false;
+  if(meta.title && !p.title){ p.title = String(meta.title).replace(/\s+/g, ' ').slice(0, 140); ch = true; }
+  if(meta.postAuthor && !p.author){ p.author = meta.postAuthor; ch = true; }
+  if(ch) await DB.put('posts', p);
+}
+const RUN = { stopReq:false, job:null, abort:null };
+// Pausas con un Worker: no sufren el frenado de Chrome cuando la pestaña de la app queda en segundo plano
+const bgSleep = (() => {
+  let w = null, n = 0; const cbs = new Map();
+  try{ w = new Worker(URL.createObjectURL(new Blob(['onmessage=e=>setTimeout(()=>postMessage(e.data),e.data.ms)'], { type:'text/javascript' }))); w.onmessage = e => { const f = cbs.get(e.data.id); cbs.delete(e.data.id); f && f(); }; }catch(e){ w = null; }
+  return ms => new Promise(r => { if(!w) return setTimeout(r, ms); const id = ++n; cbs.set(id, r); w.postMessage({ id, ms }); });
+})();
+async function collectPost(t, p, it, onProg){
+  let m = methodFor(p);
+  if(m === 'api'){
+    try{
+      gAbort = RUN.abort = new AbortController();
+      const log = s => onProg({ note:s });
+      const token = $('#gToken').value.trim() || FBA.userToken;
+      const parsed = p.platform === 'instagram' ? await igCollect(p.url, token, apiVer(), log) : await fbCollect(p.url, token, apiVer(), log);
+      return { parsed, method:'api' };
+    }catch(e){
+      if(e.name === 'AbortError') throw e;
+      if(p.method === 'api') throw e;
+      m = 'extension';   // no es una página tuya: se usa la extensión
+      onProg({ note:'La API no da acceso (' + e.message.slice(0, 80) + '); se usará la extensión' });
+    }finally{ gAbort = null; }
+  }
+  if(!EXT.version) throw new Error('La extensión de Chrome no está instalada o no responde. Instálala (Seguimiento › Descargar extensión) y recarga la página.');
+  const job = extExtract(p.url, msg => onProg({ phase:msg.phase, count:msg.count, total:msg.total }));
+  RUN.job = job.jobId;
+  const r = await job.promise; RUN.job = null;
+  if(r.stopped && !r.data) return { stopped:true };
+  if(!r.data) throw new Error('La extensión no devolvió datos.');
+  if(r.data.cambioDePublicacion) onProg({ note:'La página cambió de publicación durante la extracción; se guardó solo lo de la original.' });
+  return { parsed:fromExtractor(r.data), method:'extension', partial:!!r.stopped, stopped:r.stopped && RUN.stopReq };
+}
+async function runTracking(tid){
+  if(TR.running){ toast('Ya hay un seguimiento en curso'); return; }
+  const t = TR.tracks.find(x => x.id === tid); if(!t) return;
+  extDetect();
+  const pend = t.postIds.map(id => TR.posts.find(p => p.id === id)).filter(p => p && !['done', 'skipped'].includes(t.items[p.id].status));
+  if(!EXT.version && pend.some(p => methodFor(p) === 'extension')){
+    toast('Para extraer automáticamente necesitas la extensión de Chrome', { label:'Instalarla', run:() => go('ayuda', 'ext-instalar') });
+    return;
+  }
+  TR.running = tid; RUN.stopReq = false; TR.open = tid;
+  t.status = 'running'; t.startedAt ||= new Date().toISOString(); await DB.put('trackings', t);
+  selectSegTab('runs'); renderRuns(); renderSegCounts();
+  const gap = extOpts().gap * 1000;
+  let last = 0;
+  const save = () => { const now = Date.now(); if(now - last > 1500){ last = now; DB.put('trackings', t).catch(() => {}); } };
+  for(const id of t.postIds){
+    if(RUN.stopReq) break;
+    const it = t.items[id], p = TR.posts.find(x => x.id === id);
+    if(!p){ it.status = 'skipped'; continue; }
+    if(['done', 'skipped'].includes(it.status)) continue;
+    Object.assign(it, { status:'running', count:0, total:null, phase:'', error:'', method:methodFor(p), startedAt:new Date().toISOString() });
+    renderRuns();
+    try{
+      const r = await collectPost(t, p, it, u => {
+        if(u.phase) it.phase = u.phase; if(u.count != null) it.count = u.count; if(u.total) it.total = u.total; if(u.note) it.note = u.note;
+        save(); renderRunDetail(); renderRunCardsOnly();
+      });
+      if(r.skipped){ it.status = 'skipped'; }
+      else if(r.stopped || (RUN.stopReq && !r.parsed)){ it.status = 'pending'; }
+      else if(RUN.stopReq && r.partial){ it.status = 'pending'; }   // detenido a mitad: se repetirá al continuar
+      else { await storeResult(t, p, r.parsed, r.method, r.partial); }
+    }catch(e){
+      if(e.name === 'AbortError' || RUN.stopReq){ it.status = 'pending'; }
+      else { it.status = 'error'; it.error = e.message; }
+    }
+    it.phase = '';
+    await DB.put('trackings', t); renderRuns();
+    if(!RUN.stopReq && gap && t.postIds.some(x => t.items[x].status === 'pending')) await bgSleep(gap);
+  }
+  const pr = trackProgress(t), left = t.postIds.some(id => t.items[id].status === 'pending');
+  if(RUN.stopReq || left){ t.status = 'paused'; toast('Seguimiento en pausa: ' + pr.done + ' de ' + pr.n + ' publicaciones'); }
+  else if(pr.errors){ t.status = 'paused'; toast(countTxt(pr.errors, 'publicación no se pudo extraer', 'publicaciones no se pudieron extraer') + ': reinténtalas o finaliza el seguimiento'); }
+  else { t.status = 'done'; t.finishedAt = new Date().toISOString(); toast('✓ Seguimiento completado: ' + countTxt(pr.comments, 'comentario', 'comentarios') + '. Ya está en el historial.', { label:'Ver historial', run:() => selectSegTab('hist') }); }
+  TR.running = null; RUN.stopReq = false;
+  await DB.put('trackings', t); renderSeg();
+}
+function renderRunCardsOnly(){
+  $$('#runList .rcard').forEach(b => { const t = TR.tracks.find(x => x.id === b.dataset.tid); if(!t) return; const pr = trackProgress(t); const bar = b.querySelector('.pbar i'); if(bar) bar.style.width = pr.pct + '%'; const ch = b.querySelector('.stchip'); if(ch) ch.lastChild.textContent = ST_TXT[t.status][1] + ' · ' + pr.pct + ' %'; });
+}
+function stopTracking(){
+  if(!TR.running) return;
+  RUN.stopReq = true;
+  if(RUN.job) extStop(RUN.job);
+  if(RUN.abort) RUN.abort.abort();
+  toast('Deteniendo… se guardará lo ya extraído');
+}
+async function viewResult(tid, postId){
+  const r = await DB.get('results', tid + '|' + postId);
+  if(!r){ toast('No se encontraron los comentarios de esta publicación'); return; }
+  const p = TR.posts.find(x => x.id === postId), t = TR.tracks.find(x => x.id === tid);
+  loadData({ meta:{ ...r.meta, source:'Seguimiento · ' + (t ? t.name : fmtDay(r.date)), ref:{ tid, postId }, title:r.meta.title || (p && postLabel(p)) }, comments:r.comments.map(c => ({ ...c })) });
+}
+// Las respuestas publicadas desde Resultados se guardan también en el seguimiento de origen
+async function persistReplyToTracking(c, reply){
+  const ref = c._ref || S.meta.ref; if(!ref || !ref.tid) return;
+  try{ const r = await DB.get('results', ref.tid + '|' + ref.postId); if(!r) return; r.comments.push(reply); await DB.put('results', r); }catch(e){}
+}
+
+/* ---------- Historial ---------- */
+async function trackStats(t){
+  if(t._stats) return t._stats;
+  const rs = await DB.resultsOf(t.id); let pos = 0, neg = 0, neu = 0, n = 0;
+  rs.forEach(r => r.comments.forEach(c => { n++; const s = sentiment(c.text || '').label; s === 'positivo' ? pos++ : s === 'negativo' ? neg++ : neu++; }));
+  return t._stats = { n, pos, neg, neu };
+}
+function renderHistory(){
+  const from = $('#histFrom').value, to = $('#histTo').value;
+  const list = TR.tracks.filter(t => t.status === 'done' && (!from || t.date >= from) && (!to || t.date <= to));
+  [...TR.hsel].forEach(id => { if(!TR.tracks.some(t => t.id === id && t.status === 'done')) TR.hsel.delete(id); });
+  $('#histList').innerHTML = list.length ? list.map(t => {
+    const pr = trackProgress(t), sel = TR.hsel.has(t.id);
+    return `<div class="hrow${sel ? ' sel' : ''}" data-hid="${esc(t.id)}">
+      <input type="checkbox" class="hsel" ${sel ? 'checked' : ''} aria-label="Seleccionar ${esc(t.name)}">
+      <div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
+      <div class="hsent" data-hsent="${esc(t.id)}"></div>
+      <div class="pacts"><button class="icon-btn sm" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
+        <button class="icon-btn sm" data-hact="open" aria-label="Ver publicaciones" title="Ver publicaciones"><span class="ms">list</span></button>
+        <button class="icon-btn sm" data-hact="del" aria-label="Eliminar del historial" title="Eliminar del historial"><span class="ms">delete</span></button></div>
+    </div>`;
+  }).join('') : `<div class="empty-mini"><span class="ms">history</span>${TR.tracks.some(t => t.status === 'done') ? 'No hay seguimientos en esas fechas.' : 'Aquí aparecerán los seguimientos completados. Elige varios para crear un informe.'}</div>`;
+  $('#histSelbar').classList.toggle('hidden', !TR.hsel.size);
+  $('#histSelCount').textContent = TR.hsel.size ? countTxt(TR.hsel.size, 'seguimiento seleccionado', 'seguimientos seleccionados') : '';
+  // mini barra de sentimiento (asíncrona)
+  list.forEach(async t => {
+    const s = await trackStats(t), el = $(`[data-hsent="${CSS.escape(t.id)}"]`); if(!el || !s.n) return;
+    const nss = Math.round((s.pos - s.neg) / s.n * 100);
+    el.innerHTML = miniSeg({ total:s.n, pos:s.pos, neg:s.neg, neu:s.neu }) + `<small>Índice neto ${nss > 0 ? '+' : ''}${nss}</small>`;
+  });
+}
+
+/* ---------- Copia de seguridad ---------- */
+async function dbExport(){
+  const [posts, trackings, results] = await Promise.all([DB.all('posts'), DB.all('trackings'), DB.all('results')]);
+  download('social-comments-analyzer-copia-' + fileStamp() + '.json', JSON.stringify({ app:'social-comments-analyzer', kind:'backup', version:1, exportedAt:new Date().toISOString(),
+    posts, trackings:trackings.map(t => { const { _stats, ...r } = t; return r; }), results, team:TEAM.list(), replies:CATALOG.list() }), 'application/json');
+}
+async function dbImport(file){
+  try{
+    const j = JSON.parse(await file.text());
+    if(j.kind !== 'backup' || !Array.isArray(j.posts)) throw new Error('No es una copia de seguridad de Social Comments Analyzer.');
+    for(const x of j.posts) await DB.put('posts', x);
+    for(const x of j.trackings || []) await DB.put('trackings', x);
+    for(const x of j.results || []) await DB.put('results', x);
+    (j.team || []).forEach(m => TEAM.add(m.name, m.id ? { id:m.id } : null));
+    await loadTR();
+    toast(`Copia importada: ${countTxt(j.posts.length, 'publicación', 'publicaciones')}, ${countTxt((j.trackings || []).length, 'seguimiento', 'seguimientos')}`);
+  }catch(e){ toast('No se pudo importar: ' + e.message); }
+}
+
+function initTracking(){
+  // pestañas
+  ['posts', 'runs', 'hist'].forEach(k => $('#stab-' + k).onclick = () => selectSegTab(k));
+  $('.tabs[aria-label="Secciones de seguimiento"]').addEventListener('keydown', e => { if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const ks = ['posts', 'runs', 'hist'], i = ks.findIndex(k => $('#stab-' + k).getAttribute('aria-selected') === 'true'); const n = ks[(i + (e.key === 'ArrowRight' ? 1 : 2)) % 3]; selectSegTab(n); $('#stab-' + n).focus(); });
+  selectSegTab(['posts', 'runs', 'hist'].includes(PREF.get('segTab')) ? PREF.get('segTab') : 'posts');
+  // añadir
+  $('#addPostForm').onsubmit = async e => { e.preventDefault(); const u = $('#addPostUrl').value.trim(); if(!u){ $('#addPostUrl').focus(); return; } if(await addPosts([u], $('#addPostName').value.trim())){ $('#addPostUrl').value = ''; $('#addPostName').value = ''; } };
+  $('#addManyBtn').onclick = () => { $('#addMany').classList.toggle('hidden'); if(!$('#addMany').classList.contains('hidden')) $('#addManyTxt').focus(); };
+  $('#addManyCancel').onclick = () => $('#addMany').classList.add('hidden');
+  $('#addManyGo').onclick = async () => { const urls = $('#addManyTxt').value.split(/[\s,]+/).filter(Boolean); if(!urls.length) return; await addPosts(urls); $('#addManyTxt').value = ''; $('#addMany').classList.add('hidden'); };
+  $('#postQ').oninput = renderPosts;
+  $$('[data-pf]').forEach(b => b.onclick = () => { const k = b.dataset.pf; TR.pf.has(k) ? TR.pf.delete(k) : TR.pf.add(k); b.setAttribute('aria-pressed', TR.pf.has(k)); renderPosts(); });
+  $('#postList').addEventListener('change', e => { if(!e.target.classList.contains('psel')) return; const id = e.target.closest('[data-pid]').dataset.pid; e.target.checked ? TR.sel.add(id) : TR.sel.delete(id); renderPosts(); });
+  $('#postList').addEventListener('click', async e => {
+    const row = e.target.closest('[data-pid]'); if(!row) return;
+    const p = TR.posts.find(x => x.id === row.dataset.pid), a = e.target.closest('[data-pact]')?.dataset.pact;
+    if(a === 'view'){ const lr = lastRunOf(p.id); if(lr) viewResult(lr.t.id, p.id); }
+    if(a === 'edit'){ $('#pfId').value = p.id; $('#pfName').value = p.name || ''; $('#pfUrl').value = p.url; $('#pfMethod').value = ['api', 'extension'].includes(p.method) ? p.method : 'auto'; $('#pfNotes').value = p.notes || ''; $('#postDlg').showModal(); }
+    if(a === 'del'){ await DB.del('posts', p.id); TR.posts = TR.posts.filter(x => x !== p); TR.sel.delete(p.id); renderPosts(); renderSegCounts();
+      toast('Publicación eliminada de la lista', { label:'Deshacer', run:async () => { await DB.put('posts', p); TR.posts.unshift(p); renderPosts(); renderSegCounts(); } }); }
+    if(!a && !e.target.closest('a,button,input')){ const id = p.id; TR.sel.has(id) ? TR.sel.delete(id) : TR.sel.add(id); renderPosts(); }
+  });
+  $('#postSelNone').onclick = () => { TR.sel.clear(); renderPosts(); };
+  $('#postAll').onchange = e => { (TR.visible || []).forEach(id => e.target.checked ? TR.sel.add(id) : TR.sel.delete(id)); renderPosts(); };
+  $('#postDelSel').onclick = async () => { const ids = [...TR.sel]; if(!confirm(`¿Eliminar ${countTxt(ids.length, 'publicación', 'publicaciones')} de la lista? Su historial se conserva.`)) return; for(const id of ids) await DB.del('posts', id); TR.posts = TR.posts.filter(p => !ids.includes(p.id)); TR.sel.clear(); renderPosts(); renderSegCounts(); };
+  $('#newTrackBtn').onclick = () => openTrackDlg([...TR.sel]);
+  $('#pfSave').onclick = async () => { const p = TR.posts.find(x => x.id === $('#pfId').value); if(!p) return; p.name = $('#pfName').value.trim(); p.method = $('#pfMethod').value; p.notes = $('#pfNotes').value.trim(); await DB.put('posts', p); $('#postDlg').close(); renderPosts(); toast('Publicación guardada'); };
+  // diálogo de seguimiento
+  $('#trackPosts').addEventListener('click', e => { const b = e.target.closest('[data-rmpost]'); if(!b) return; TR.draft.ids = TR.draft.ids.filter(x => x !== b.dataset.rmpost); renderTrackDlg(); });
+  $('#trackSave').onclick = () => saveTrack(false);
+  $('#trackStart').onclick = () => saveTrack(true);
+  // seguimientos
+  $('#runList').addEventListener('click', e => { const c = e.target.closest('[data-tid]'); if(!c) return; TR.open = c.dataset.tid; renderRuns(); });
+  $('#runDetail').addEventListener('click', async e => {
+    const t = TR.tracks.find(x => x.id === TR.open); if(!t) return;
+    const ra = e.target.closest('[data-ract]')?.dataset.ract;
+    if(ra === 'start') runTracking(t.id);
+    if(ra === 'stop') stopTracking();
+    if(ra === 'edit') openTrackDlg(null, t.id);
+    if(ra === 'finish'){ t.status = 'done'; t.finishedAt = new Date().toISOString(); await DB.put('trackings', t); renderSeg(); toast('Seguimiento archivado en el historial', { label:'Ver historial', run:() => selectSegTab('hist') }); }
+    if(ra === 'del'){ if(!confirm('¿Eliminar este seguimiento y sus comentarios extraídos?')) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.open = null; renderSeg(); toast('Seguimiento eliminado'); }
+    const row = e.target.closest('[data-ipid]'); if(!row) return;
+    const pid = row.dataset.ipid, it = t.items[pid], ia = e.target.closest('[data-iact]')?.dataset.iact;
+    if(ia === 'view') viewResult(t.id, pid);
+    if(ia === 'retry' || ia === 'skip'){ it.status = ia === 'retry' ? 'pending' : 'skipped'; it.error = ''; if(ia === 'retry' && t.status === 'done') t.status = 'paused'; await DB.put('trackings', t); renderRuns(); }
+  });
+  // historial
+  $('#histFrom').onchange = $('#histTo').onchange = renderHistory;
+  $('#histList').addEventListener('change', e => { if(!e.target.classList.contains('hsel')) return; const id = e.target.closest('[data-hid]').dataset.hid; e.target.checked ? TR.hsel.add(id) : TR.hsel.delete(id); renderHistory(); });
+  $('#histList').addEventListener('click', async e => {
+    const row = e.target.closest('[data-hid]'); if(!row) return;
+    const t = TR.tracks.find(x => x.id === row.dataset.hid), a = e.target.closest('[data-hact]')?.dataset.hact;
+    if(a === 'report') openReport([t.id]);
+    if(a === 'open'){ t.status = 'done'; TR.open = t.id; showHistoryDetail(t); }
+    if(a === 'del'){ if(!confirm('¿Eliminar este seguimiento del historial y sus comentarios?')) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.hsel.delete(t.id); renderSeg(); }
+    if(!a && !e.target.closest('a,button,input')){ TR.hsel.has(t.id) ? TR.hsel.delete(t.id) : TR.hsel.add(t.id); renderHistory(); }
+  });
+  $('#histSelNone').onclick = () => { TR.hsel.clear(); renderHistory(); };
+  $('#histReport').onclick = () => openReport([...TR.hsel]);
+  $('#histViewSel').onclick = () => viewTrackingsComments([...TR.hsel]);
+  // copia de seguridad y opciones
+  $('#dbExport').onclick = () => { closeMenus(); dbExport(); };
+  $('#dbImport').onchange = e => { const f = e.target.files[0]; e.target.value = ''; closeMenus(); if(f) dbImport(f); };
+  $('#extDl').addEventListener('click', () => toast('Descargando la extensión: descomprímela y cárgala en chrome://extensions', { label:'Ver pasos', run:() => go('ayuda', 'ext-instalar') }));
+  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoWin').value = o.window; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
+  $('#eoSave').onclick = () => { PREF.set('eoWin', $('#eoWin').value); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(90, Math.max(2, +$('#eoMax').value || 20)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
+  addEventListener('beforeunload', e => { if(TR.running){ e.preventDefault(); e.returnValue = ''; } });
+  extDetect(); setTimeout(extDetect, 800);
+  loadTR();
+}
+// Detalle (solo lectura) de un seguimiento del historial: lista de publicaciones con acceso a sus comentarios
+function showHistoryDetail(t){
+  const pr = trackProgress(t);
+  const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="small muted">${esc(fmtDay(t.date))} · <span class="stchip done"><span class="ms">task_alt</span>Completado</span> · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
+    <div class="rd-acts"><button class="btn filled" data-hd="report"><span class="ms">analytics</span>Crear informe</button><button class="btn text" data-hd="reopen"><span class="ms">replay</span>Reabrir</button><button class="icon-btn" data-hd="close" aria-label="Cerrar" title="Cerrar"><span class="ms">close</span></button></div></div>
+    ${t.postIds.map(id => { const p = TR.posts.find(x => x.id === id) || { url:'', platform:'facebook', name:'(eliminada de la lista)' }, it = t.items[id];
+      return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' ? countTxt(it.count, 'comentario', 'comentarios') : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
+        <div class="ri-acts">${it.status === 'done' ? `<button class="btn text sm" data-hdv="${esc(id)}"><span class="ms">forum</span>Ver comentarios</button>` : ''}</div></div>`; }).join('')}</div>`;
+  let box = $('#histDetail'); if(!box){ box = document.createElement('div'); box.id = 'histDetail'; $('#sp-hist').appendChild(box); }
+  box.innerHTML = html; box.scrollIntoView({ behavior:'smooth', block:'start' });
+  box.onclick = async e => {
+    const v = e.target.closest('[data-hdv]'); if(v) return viewResult(t.id, v.dataset.hdv);
+    const a = e.target.closest('[data-hd]')?.dataset.hd;
+    if(a === 'close') box.innerHTML = '';
+    if(a === 'report') openReport([t.id]);
+    if(a === 'reopen'){ t.status = 'paused'; await DB.put('trackings', t); box.innerHTML = ''; TR.open = t.id; selectSegTab('runs'); renderSeg(); }
+  };
+}
+// Ver juntos los comentarios de varios seguimientos (sin duplicar los de una misma publicación)
+async function gatherComments(tids){
+  const out = new Map(), metaPlat = {};
+  const ts = tids.map(id => TR.tracks.find(t => t.id === id)).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date));
+  for(const t of ts){
+    for(const r of await DB.resultsOf(t.id)){
+      const p = TR.posts.find(x => x.id === r.postId);
+      r.comments.forEach(c => {
+        const k = r.postId + '|' + (c.id && !/^(x|local)-/.test(c.id) ? c.id : normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160));
+        const prev = out.get(k);
+        const item = { ...c, platform:c.platform || r.meta.platform, _ref:{ tid:t.id, postId:r.postId }, _post:p ? postLabel(p) : (r.meta.title || ''), _postAuthor:r.meta.postAuthor || '', _date:t.date, _firstDate:prev ? prev._firstDate : t.date };
+        out.set(k, item);
+        metaPlat[item.platform] = (metaPlat[item.platform] || 0) + 1;
+      });
+    }
+  }
+  return { comments:[...out.values()], platform:Object.keys(metaPlat).sort((a, b) => metaPlat[b] - metaPlat[a])[0] || 'facebook', tracks:ts };
+}
+async function viewTrackingsComments(tids){
+  const g = await gatherComments(tids);
+  if(!g.comments.length){ toast('Esos seguimientos no tienen comentarios'); return; }
+  loadData({ meta:{ title:g.tracks.length === 1 ? g.tracks[0].name : `${g.tracks.length} seguimientos (${fmtDay(g.tracks[0].date)} – ${fmtDay(g.tracks[g.tracks.length - 1].date)})`, source:'Seguimientos', platform:g.platform, multi:true, extractedAt:new Date().toISOString() }, comments:g.comments });
+}
+
+
+/* =====================================================================
+   INFORMES (varios seguimientos del historial)
+   ===================================================================== */
+const REP = { model:null };
+function renderReportPicker(){
+  const done = TR.tracks.filter(t => t.status === 'done');
+  const sel = new Set(jsonPref('repSel', []).filter(id => done.some(t => t.id === id)));
+  if(REP.model && !REP.editing){ $('#repPicker').innerHTML = ''; return; }
+  $('#repActs').innerHTML = '';
+  $('#repPicker').innerHTML = done.length ? `<div class="card rp-pick">
+    <h3>Elige los seguimientos del informe</h3><p class="small muted" style="margin:0">El informe combina sus comentarios sin duplicar los de una misma publicación y compara la evolución entre fechas.</p>
+    <div class="rp-presets" style="margin-top:12px"><button class="fchip" data-rpp="7">Últimos 7 días</button><button class="fchip" data-rpp="30">Últimos 30 días</button><button class="fchip" data-rpp="all">Todos</button><button class="fchip" data-rpp="none">Ninguno</button></div>
+    <div class="hlist">${done.map(t => { const pr = trackProgress(t); return `<label class="hrow${sel.has(t.id) ? ' sel' : ''}"><input type="checkbox" class="rpsel" value="${esc(t.id)}" ${sel.has(t.id) ? 'checked' : ''}><div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div></label>`; }).join('')}</div>
+    <div class="rp-cfg"><label class="field"><span class="lbl">Marcas o temas a vigilar (separados por comas)</span><input class="input" id="repTerms" value="${esc(PREF.get('repTerms', ''))}" placeholder="Ej.: Kanasta24, envío, precio, atención"></label>
+      <button class="btn filled" id="repGo"><span class="ms">analytics</span>Generar informe</button>${REP.model ? '<button class="btn text" id="repCancel">Cancelar</button>' : ''}</div>
+  </div>` : `<div class="empty-mini"><span class="ms">analytics</span>Todavía no hay seguimientos completados. Cuando termines alguno en <a href="#seguimiento">Seguimiento</a>, podrás elegirlo aquí para crear el informe.</div>`;
+}
+function openReport(tids){ PREF.set('repSel', JSON.stringify(tids)); REP.editing = false; go('informes'); generateReport(tids); }
+async function generateReport(tids){
+  if(!tids.length){ toast('Elige al menos un seguimiento'); return; }
+  $('#repOut').innerHTML = '<div class="empty-mini"><span class="ms" style="animation:spin 1.4s linear infinite">progress_activity</span>Analizando comentarios…</div>';
+  try{ REP.model = await buildReport(tids, (PREF.get('repTerms', '') || '').split(',').map(s => s.trim()).filter(Boolean)); REP.editing = false; renderReportPicker(); renderReport(); }
+  catch(e){ $('#repOut').innerHTML = `<div class="empty-mini"><span class="ms">error</span>${esc(e.message)}</div>`; }
+}
+// Calcula el pendiente/atendido del equipo sobre una lista cualquiera (reutiliza la lógica del asistente)
+function teamOn(list){
+  const bak = { c:S.comments, m:S.meta, t:S.teamOn, p:S.pending };
+  S.comments = list; S.meta = { postAuthor:'' }; computeTeam(); const on = S.teamOn;
+  S.comments = bak.c; S.meta = bak.m; S.teamOn = bak.t; S.pending = bak.p;
+  return on;
+}
+const nssOf = s => s.total ? Math.round((s.pos - s.neg) / s.total * 100) : 0;
+const sentOf = list => { const s = { total:list.length, pos:0, neg:0, neu:0 }; list.forEach(c => c.sentiment === 'positivo' ? s.pos++ : c.sentiment === 'negativo' ? s.neg++ : s.neu++); return s; };
+async function buildReport(tids, terms){
+  const g = await gatherComments(tids);
+  if(!g.comments.length) throw new Error('Los seguimientos elegidos no tienen comentarios.');
+  const list = finalize(g.comments.map((c, i) => ({ ...c, id:c.id || ('r' + i) })), { platform:g.platform });
+  const team = teamOn(list);
+  const tracks = g.tracks, first = tracks[0], last = tracks[tracks.length - 1];
+  // Evolución por fecha de seguimiento
+  const seen = new Set(), byDate = [];
+  for(const t of tracks){
+    const rs = await DB.resultsOf(t.id); let total = 0, nw = 0; const day = [];
+    rs.forEach(r => r.comments.forEach(c => { total++; const k = r.postId + '|' + (c.id && !/^(x|local)-/.test(c.id) ? c.id : normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160)); if(!seen.has(k)){ seen.add(k); nw++; } day.push(sentiment(c.text || '').label); }));
+    byDate.push({ t, total, nw, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => t.items[id].status === 'done').length });
+  }
+  const st = computeStats(list), s = sentOf(list);
+  const nonTeam = list.filter(c => !c.isTeam);
+  const answered = nonTeam.filter(c => c.teamAnswered && (!c.parentId || c.needsTeam === false)).length, pending = nonTeam.filter(c => c.needsTeam).length;
+  // Tiempo de primera respuesta del equipo (solo con fechas exactas)
+  const byRoot = {}; list.forEach(c => (byRoot[c.root || c.id] ||= []).push(c));
+  const rts = [];
+  nonTeam.forEach(c => { if(!c.teamAnswered || c.dateApprox || isNaN(c.createdTs)) return; const y = (byRoot[c.root || c.id] || []).filter(x => x.isTeam && !x.dateApprox && x.createdTs > c.createdTs).sort((a, b) => a.createdTs - b.createdTs)[0]; if(y) rts.push((y.createdTs - c.createdTs) / 36e5); });
+  rts.sort((a, b) => a - b);
+  const medRT = rts.length ? rts[Math.floor(rts.length / 2)] : null;
+  // Por publicación y por red
+  const byPost = {}; list.forEach(c => { const k = c._ref?.postId || 'x'; (byPost[k] ||= { label:c._post || '(sin nombre)', platform:c.platform, items:[] }).items.push(c); });
+  const posts = Object.entries(byPost).map(([id, b]) => { const ss = sentOf(b.items); const w = computeStats(b.items).words[0]; return { id, label:b.label, platform:b.platform, total:b.items.length, authors:new Set(b.items.map(c => c.authorName)).size, reacts:b.items.reduce((a, c) => a + (c.reactions || 0), 0), nss:nssOf(ss), negPct:ss.total ? Math.round(ss.neg / ss.total * 100) : 0, pending:b.items.filter(c => c.needsTeam).length, topWord:w ? w[0] : '', s:ss }; }).sort((a, b) => b.total - a.total);
+  const plats = {}; list.forEach(c => (plats[c.platform] ||= []).push(c));
+  const platRows = Object.entries(plats).map(([k, v]) => { const ss = sentOf(v); return { k, total:v.length, authors:new Set(v.map(c => c.authorName)).size, reacts:v.reduce((a, c) => a + (c.reactions || 0), 0), nss:nssOf(ss), s:ss }; }).sort((a, b) => b.total - a.total);
+  // Audiencia
+  const au = {}; nonTeam.forEach(c => { const k = c.authorName || '(desconocido)'; const a = au[k] ||= { name:k, n:0, pos:0, neg:0, reacts:0, dates:new Set(), plats:new Set() }; a.n++; a.reacts += c.reactions || 0; if(c.sentiment === 'positivo') a.pos++; if(c.sentiment === 'negativo') a.neg++; a.dates.add(c._date); a.plats.add(c.platform); });
+  const authors = Object.values(au);
+  const topAuthors = [...authors].sort((a, b) => b.n - a.n || b.reacts - a.reacts).slice(0, 10);
+  const ambassadors = authors.filter(a => a.pos >= 2 && a.pos > a.neg * 2).sort((a, b) => b.pos - a.pos).slice(0, 8);
+  const detractors = authors.filter(a => a.neg >= 1 && a.neg >= a.pos).sort((a, b) => b.neg - a.neg || b.n - a.n).slice(0, 8);
+  const influencers = [...authors].sort((a, b) => b.reacts - a.reacts).filter(a => a.reacts > 0).slice(0, 8);
+  const recurring = authors.filter(a => a.dates.size > 1).length;
+  // Temas vigilados
+  const watch = terms.map(term => { const q = normName(term); const hits = list.filter(c => normName(c.text).includes(q) || (c.mentions || []).some(m => normName(m).includes(q))); const ss = sentOf(hits); return { term, n:hits.length, pct:list.length ? Math.round(hits.length / list.length * 100) : 0, nss:nssOf(ss), s:ss, sample:hits.sort((a, b) => (b.reactions || 0) - (a.reactions || 0))[0] }; });
+  // Destacados
+  const byReact = arr => [...arr].sort((a, b) => (b.reactions || 0) - (a.reactions || 0) || b.length - a.length);
+  const topPos = byReact(nonTeam.filter(c => c.sentiment === 'positivo')).slice(0, 5);
+  const topNeg = byReact(nonTeam.filter(c => c.sentiment === 'negativo')).slice(0, 5);
+  const openQ = byReact(nonTeam.filter(c => c.isQuestion && c.needsTeam)).slice(0, 8);
+  const openNeg = nonTeam.filter(c => c.sentiment === 'negativo' && c.needsTeam).length;
+  // Comparación primer/último seguimiento
+  const fd = byDate[0], ld = byDate[byDate.length - 1];
+  const negShare = d => d.total ? Math.round(d.neg / d.total * 100) : 0;
+  const m = { tids, tracks, first, last, list, st, s, nss:nssOf(s), team, answered, pending, respRate:(answered + pending) ? Math.round(answered / (answered + pending) * 100) : null, medRT, rtN:rts.length,
+    byDate, posts, platRows, topAuthors, ambassadors, detractors, influencers, recurring, authorsN:authors.length, watch, topPos, topNeg, openQ, openNeg,
+    negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date() };
+  m.alerts = reportAlerts(m); m.recs = reportRecs(m); m.summary = reportSummary(m);
+  return m;
+}
+function reportAlerts(m){
+  const a = [];
+  m.posts.filter(p => p.total >= 5 && p.negPct >= 30).forEach(p => a.push({ lvl:'high', txt:`“${p.label}” concentra un ${p.negPct} % de comentarios negativos (${fmtN(p.s.neg)} de ${fmtN(p.total)}).` }));
+  if(m.byDate.length > 1 && m.negLast - m.negFirst >= 10) a.push({ lvl:'high', txt:`La proporción de negativos subió de ${m.negFirst} % a ${m.negLast} % entre el primer y el último seguimiento.` });
+  if(m.team && m.openNeg) a.push({ lvl:m.openNeg >= 5 ? 'high' : 'mid', txt:`${countTxt(m.openNeg, 'comentario negativo sigue', 'comentarios negativos siguen')} sin respuesta del equipo.` });
+  if(m.team && m.openQ.length) a.push({ lvl:'mid', txt:`${countTxt(m.list.filter(c => !c.isTeam && c.isQuestion && c.needsTeam).length, 'pregunta sin responder', 'preguntas sin responder')}: son oportunidades de venta o de soporte.` });
+  if(m.team && m.respRate != null && m.respRate < 50) a.push({ lvl:'mid', txt:`La tasa de respuesta del equipo es baja (${m.respRate} %).` });
+  if(!a.length) a.push({ lvl:'ok', txt:'Sin alertas: el sentimiento y la atención están dentro de lo normal.' });
+  return a;
+}
+function reportRecs(m){
+  const r = [];
+  if(m.team && m.pending) r.push(`Responder primero los ${fmtN(m.openNeg)} negativos y las preguntas pendientes con el asistente de respuestas (filtro “Sin respuesta del equipo”).`);
+  if(!m.team) r.push('Definir el equipo en Resultados › Comentarios › Equipo para medir la tasa y el tiempo de respuesta.');
+  if(m.detractors.length) r.push(`Contactar por privado a los detractores más activos (${m.detractors.slice(0, 3).map(a => a.name).join(', ')}) para resolver su caso antes de que escale.`);
+  if(m.ambassadors.length) r.push(`Agradecer y reconocer a los embajadores (${m.ambassadors.slice(0, 3).map(a => a.name).join(', ')}); son candidatos para testimonios o contenido generado por usuarios.`);
+  const best = [...m.posts].filter(p => p.total >= 5).sort((a, b) => b.nss - a.nss)[0];
+  if(best && best.nss > 20) r.push(`Replicar el enfoque de “${best.label}” (índice neto ${best.nss > 0 ? '+' : ''}${best.nss}), la publicación mejor valorada.`);
+  const topW = m.st.words.slice(0, 3).map(w => w[0]);
+  if(topW.length) r.push(`Tener en cuenta los temas más mencionados (${topW.join(', ')}) en las próximas publicaciones y en las respuestas tipo del catálogo.`);
+  if(m.medRT != null && m.medRT > 12) r.push(`Reducir el tiempo de primera respuesta (mediana actual: ${fmtDec(m.medRT)} h); el objetivo habitual en redes es menos de 2–4 h.`);
+  return r;
+}
+function reportSummary(m){
+  const out = [];
+  const span = m.tracks.length === 1 ? 'el ' + fmtDay(m.first.date) : 'del ' + fmtDay(m.first.date) + ' al ' + fmtDay(m.last.date);
+  out.push(`Se analizaron ${countTxt(m.list.length, 'comentario único', 'comentarios únicos')} de ${countTxt(m.posts.length, 'publicación', 'publicaciones')} en ${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')} (${span}), escritos por ${countTxt(m.authorsN, 'persona', 'personas')}.`);
+  out.push(`El sentimiento es ${m.nss >= 20 ? 'favorable' : m.nss <= -10 ? 'desfavorable' : 'mixto'}: índice neto ${m.nss > 0 ? '+' : ''}${m.nss} (${pctTxt(m.s.pos, m.s.total)} positivos, ${pctTxt(m.s.neg, m.s.total)} negativos).`);
+  if(m.byDate.length > 1){ const d = m.byDate[m.byDate.length - 1].nw; out.push(`En el último seguimiento aparecieron ${countTxt(d, 'comentario nuevo', 'comentarios nuevos')}; la proporción de negativos pasó de ${m.negFirst} % a ${m.negLast} %.`); }
+  if(m.team) out.push(`El equipo respondió ${m.respRate != null ? m.respRate + ' %' : '—'} de los comentarios que lo requerían; quedan ${countTxt(m.pending, 'pendiente', 'pendientes')}${m.medRT != null ? ` y la mediana de primera respuesta es de ${fmtDec(m.medRT)} h` : ''}.`);
+  if(m.posts[0]) out.push(`La publicación con más conversación fue “${m.posts[0].label}” (${countTxt(m.posts[0].total, 'comentario', 'comentarios')}).`);
+  if(m.watch.length){ const w = [...m.watch].sort((a, b) => b.n - a.n)[0]; if(w.n) out.push(`“${w.term}” aparece en ${countTxt(w.n, 'comentario', 'comentarios')} (${w.pct} %), con índice neto ${w.nss > 0 ? '+' : ''}${w.nss}.`); }
+  return out;
+}
+const miniSeg = s => s.total ? `<span class="mini-seg" title="${s.pos} positivos · ${s.neu} neutrales · ${s.neg} negativos">${[['var(--viz-neg)', s.neg], ['var(--viz-neu)', s.neu], ['var(--viz-pos)', s.pos]].filter(x => x[1]).map(([c, v]) => `<i style="flex:${v} 1 0;background:${c}"></i>`).join('')}</span>` : '';
+const sign = n => (n > 0 ? '+' : '') + n;
+function qItem(c){ return `<div class="qitem"><b>${esc(c.authorName || '(desconocido)')}</b>: ${esc(c.text.slice(0, 280))}${c.text.length > 280 ? '…' : ''}<div class="qm">${esc(c._post || '')} · ${esc(platName(c.platform))}${c.reactions ? ' · ' + fmtN(c.reactions) + ' reacciones' : ''}${c._date ? ' · ' + esc(fmtDay(c._date)) : ''}</div></div>`; }
+function renderReport(){
+  const m = REP.model; if(!m) return;
+  $('#repActs').innerHTML = `<button class="btn text" id="repEdit"><span class="ms">tune</span>Cambiar selección</button>
+    <button class="btn text" id="repAI"><span class="ms">auto_awesome</span>Resumen con IA</button>
+    <button class="btn tonal" id="repCopy"><span class="ms">content_copy</span>Copiar texto</button>
+    <button class="btn filled" data-menu="repExpMenu" aria-haspopup="menu" aria-expanded="false"><span class="ms">download</span>Exportar</button>
+    <div class="menu" id="repExpMenu" role="menu">
+      <button role="menuitem" data-rexp="word"><span class="ms">description</span>Word (.doc)</button>
+      <button role="menuitem" data-rexp="pdf"><span class="ms">picture_as_pdf</span>PDF</button>
+      <button role="menuitem" data-rexp="html"><span class="ms">html</span>Página web (.html)</button>
+      <button role="menuitem" data-rexp="xlsx"><span class="ms">grid_on</span>Comentarios en Excel</button>
+      <button role="menuitem" data-rexp="print"><span class="ms">print</span>Imprimir</button>
+    </div>`;
+  const dates = m.byDate.map(d => ({ l:new Date(d.t.date + 'T12:00:00').toLocaleDateString('es', { day:'numeric', month:'short' }), tl:fmtDay(d.t.date) + ' · ' + d.t.name, v:d.total }));
+  const kpi = (k, v, d, cls = '') => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d ${cls}">${d || '&nbsp;'}</div></div>`;
+  const dNeg = m.byDate.length > 1 ? m.negLast - m.negFirst : null;
+  $('#repOut').innerHTML = `<div class="report" id="reportDoc">
+    <div class="rep-cover"><h2>Informe de comentarios</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · generado el ${esc(m.generatedAt.toLocaleString('es'))}</p></div>
+    <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen ejecutivo</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div id="repAiOut"></div></section>
+    <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores clave</h3><p class="sub">Comentarios únicos (sin duplicar entre seguimientos de la misma publicación).</p>
+      <div class="kpis">
+        ${kpi('Comentarios', fmtN(m.list.length), `${fmtN(m.st.comments)} principales · ${fmtN(m.st.replies)} respuestas`)}
+        ${kpi('Personas que comentan', fmtN(m.authorsN), `${fmtN(m.recurring)} recurrentes`)}
+        ${kpi('Interacciones', fmtN(m.st.reacts), 'reacciones y me gusta')}
+        ${kpi('Índice neto de sentimiento', sign(m.nss), '% positivos − % negativos', m.nss >= 0 ? 'up' : 'down')}
+        ${kpi('Negativos', pctTxt(m.s.neg, m.s.total), dNeg != null ? `${sign(dNeg)} pts frente al primer seguimiento` : fmtN(m.s.neg) + ' comentarios', dNeg != null ? (dNeg > 0 ? 'down' : 'up') : '')}
+        ${kpi('Preguntas', fmtN(m.st.q), pctTxt(m.st.q, m.list.length) + ' de los comentarios')}
+        ${kpi('Tasa de respuesta', m.team && m.respRate != null ? m.respRate + ' %' : '—', m.team ? `${fmtN(m.pending)} pendientes` : 'define tu equipo')}
+        ${kpi('Primera respuesta (mediana)', m.medRT != null ? fmtDec(m.medRT) + ' h' : '—', m.medRT != null ? `sobre ${fmtN(m.rtN)} casos con fecha exacta` : 'requiere fechas exactas (API)')}
+      </div></section>
+    <section class="card rep-sec"><h3><span class="ms">warning</span>Alertas</h3>${m.alerts.map(a => `<div class="rep-alert ${a.lvl}"><span class="ms">${a.lvl === 'ok' ? 'check_circle' : a.lvl === 'high' ? 'error' : 'warning'}</span><span>${esc(a.txt)}</span></div>`).join('')}</section>
+    ${m.byDate.length > 1 ? `<section class="card rep-sec viz-card"><h3><span class="ms">timeline</span>Evolución por seguimiento</h3><p class="sub">Comentarios en cada fecha y nuevos respecto a los seguimientos anteriores.</p>
+      <div class="viz-plot" id="repChartDates"></div>
+      <div class="rtable-wrap" style="margin-top:12px"><table class="rtable"><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="num">Publicaciones</th><th class="num">Comentarios</th><th class="num">Nuevos</th><th>Sentimiento</th><th class="num">Índice neto</th></tr></thead><tbody>
+      ${m.byDate.map(d => { const ss = { total:d.total, pos:d.pos, neg:d.neg, neu:d.neu }; return `<tr><td>${esc(fmtDay(d.t.date))}</td><td>${esc(d.t.name)}</td><td class="num">${d.posts}</td><td class="num">${fmtN(d.total)}</td><td class="num">${fmtN(d.nw)}</td><td>${miniSeg(ss)}</td><td class="num">${sign(nssOf(ss))}</td></tr>`; }).join('')}</tbody></table></div></section>` : ''}
+    <section class="card rep-sec"><h3><span class="ms">article</span>Publicaciones</h3><p class="sub">Ordenadas por volumen de conversación.</p>
+      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Publicación</th><th>Red</th><th class="num">Comentarios</th><th class="num">Personas</th><th class="num">Reacciones</th><th>Sentimiento</th><th class="num">Índice neto</th><th class="num">Negativos</th>${m.team ? '<th class="num">Pendientes</th>' : ''}<th>Tema principal</th></tr></thead><tbody>
+      ${m.posts.map(p => `<tr><td>${esc(p.label)}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num">${fmtN(p.total)}</td><td class="num">${fmtN(p.authors)}</td><td class="num">${fmtN(p.reacts)}</td><td>${miniSeg(p.s)}</td><td class="num">${sign(p.nss)}</td><td class="num">${p.negPct} %</td>${m.team ? `<td class="num">${fmtN(p.pending)}</td>` : ''}<td>${esc(p.topWord)}</td></tr>`).join('')}</tbody></table></div>
+      ${m.platRows.length > 1 ? `<h4 class="viz-h4" style="margin-top:16px">Por red social</h4><div class="rtable-wrap"><table class="rtable"><thead><tr><th>Red</th><th class="num">Comentarios</th><th class="num">Personas</th><th class="num">Reacciones</th><th>Sentimiento</th><th class="num">Índice neto</th></tr></thead><tbody>${m.platRows.map(r => `<tr><td><i class="pdot ${platDot(r.k)}"></i> ${esc(platName(r.k))}</td><td class="num">${fmtN(r.total)}</td><td class="num">${fmtN(r.authors)}</td><td class="num">${fmtN(r.reacts)}</td><td>${miniSeg(r.s)}</td><td class="num">${sign(r.nss)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    </section>
+    <div class="rep-grid">
+      <section class="card rep-sec viz-card"><h3><span class="ms">groups</span>Quién más comenta</h3><p class="sub">Sin contar a tu equipo.</p>${rankedBars(m.topAuthors.map(a => ({ l:a.name, v:a.n })), 'rauthor', { unit:'comentarios' })}</section>
+      <section class="card rep-sec viz-card"><h3><span class="ms">tag</span>Temas más mencionados</h3><p class="sub">Palabras más frecuentes, sin palabras vacías.</p>${rankedBars(m.st.words.slice(0, 10).map(([w, n]) => ({ l:w, v:n })), 'rword')}</section>
+    </div>
+    <div class="rep-grid">
+      <section class="card rep-sec"><h3><span class="ms">favorite</span>Embajadores</h3><p class="sub">Comentan varias veces y casi siempre en positivo.</p>${m.ambassadors.length ? `<div class="rtable-wrap"><table class="rtable"><thead><tr><th>Persona</th><th class="num">Positivos</th><th class="num">Total</th></tr></thead><tbody>${m.ambassadors.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a.pos}</td><td class="num">${a.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="small muted">Aún no hay embajadores claros.</p>'}</section>
+      <section class="card rep-sec"><h3><span class="ms">sentiment_dissatisfied</span>Detractores</h3><p class="sub">Personas con más comentarios negativos.</p>${m.detractors.length ? `<div class="rtable-wrap"><table class="rtable"><thead><tr><th>Persona</th><th class="num">Negativos</th><th class="num">Total</th></tr></thead><tbody>${m.detractors.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a.neg}</td><td class="num">${a.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="small muted">No hay detractores destacados.</p>'}</section>
+      <section class="card rep-sec"><h3><span class="ms">campaign</span>Más influyentes</h3><p class="sub">Comentarios con más reacciones acumuladas.</p>${m.influencers.length ? `<div class="rtable-wrap"><table class="rtable"><thead><tr><th>Persona</th><th class="num">Reacciones</th><th class="num">Comentarios</th></tr></thead><tbody>${m.influencers.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${fmtN(a.reacts)}</td><td class="num">${a.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="small muted">Sin reacciones registradas.</p>'}</section>
+    </div>
+    ${m.watch.length ? `<section class="card rep-sec"><h3><span class="ms">visibility</span>Marcas y temas vigilados</h3><p class="sub">Comentarios que mencionan cada término (por coincidencia de texto).</p>
+      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Término</th><th class="num">Menciones</th><th class="num">% del total</th><th>Sentimiento</th><th class="num">Índice neto</th><th>Ejemplo</th></tr></thead><tbody>
+      ${m.watch.map(w => `<tr><td><b>${esc(w.term)}</b></td><td class="num">${fmtN(w.n)}</td><td class="num">${w.pct} %</td><td>${miniSeg(w.s)}</td><td class="num">${w.n ? sign(w.nss) : '—'}</td><td>${w.sample ? esc(w.sample.text.slice(0, 120)) + (w.sample.text.length > 120 ? '…' : '') : ''}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
+    <div class="rep-grid">
+      <section class="card rep-sec"><h3><span class="ms">thumb_up</span>Comentarios positivos destacados</h3><div class="qlist">${m.topPos.map(qItem).join('') || '<p class="small muted">Sin comentarios positivos.</p>'}</div></section>
+      <section class="card rep-sec"><h3><span class="ms">thumb_down</span>Comentarios negativos destacados</h3><div class="qlist">${m.topNeg.map(qItem).join('') || '<p class="small muted">Sin comentarios negativos.</p>'}</div></section>
+    </div>
+    ${m.team ? `<section class="card rep-sec"><h3><span class="ms">help</span>Preguntas sin responder</h3><p class="sub">Ordenadas por reacciones: atiéndelas con el asistente de respuestas.</p><div class="qlist">${m.openQ.map(qItem).join('') || '<p class="small muted">No hay preguntas pendientes. 🎉</p>'}</div></section>` : ''}
+    <section class="card rep-sec"><h3><span class="ms">lightbulb</span>Recomendaciones</h3><ol class="rep-sum">${m.recs.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+      <p class="no-print" style="margin:12px 0 0"><button class="btn tonal sm" id="repOpenList"><span class="ms">forum</span>Ver y responder estos comentarios</button></p></section>
+    <p class="small muted">Metodología: sentimiento estimado por diccionario (orientativo); índice neto = % positivos − % negativos; “pendiente” = comentario dirigido a la marca sin respuesta de tu equipo; la tasa de respuesta se calcula sobre los comentarios que la requerían.</p>
+  </div>`;
+  if(m.byDate.length > 1){ const W = chartW('#repChartDates'); $('#repChartDates').innerHTML = columnChart(dates, { W, h:chartH(W), label:'Comentarios por seguimiento' }); }
+  bindVizTips($('#repOut'));
+}
+
+/* ---------- Exportar informe: texto, Word, PDF, HTML ---------- */
+function reportText(m){
+  const L = [], H = t => { L.push('', t.toUpperCase(), '-'.repeat(Math.min(60, t.length))); };
+  L.push('INFORME DE COMENTARIOS', m.tracks.length === 1 ? `${m.first.name} · ${fmtDay(m.first.date)}` : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`, `Generado el ${m.generatedAt.toLocaleString('es')}`);
+  H('Resumen ejecutivo'); m.summary.forEach(x => L.push('• ' + x)); if(REP.ai) L.push('', REP.ai);
+  H('Indicadores clave');
+  L.push(`Comentarios: ${fmtN(m.list.length)} (${fmtN(m.st.comments)} principales, ${fmtN(m.st.replies)} respuestas)`, `Personas que comentan: ${fmtN(m.authorsN)} (${fmtN(m.recurring)} recurrentes)`, `Interacciones: ${fmtN(m.st.reacts)}`,
+    `Índice neto de sentimiento: ${sign(m.nss)} (${pctTxt(m.s.pos, m.s.total)} positivos, ${pctTxt(m.s.neu, m.s.total)} neutrales, ${pctTxt(m.s.neg, m.s.total)} negativos)`, `Preguntas: ${fmtN(m.st.q)}`,
+    `Tasa de respuesta del equipo: ${m.team && m.respRate != null ? m.respRate + ' %' : '—'}${m.team ? ` (${fmtN(m.pending)} pendientes)` : ''}`, `Primera respuesta (mediana): ${m.medRT != null ? fmtDec(m.medRT) + ' h' : '—'}`);
+  H('Alertas'); m.alerts.forEach(a => L.push('• ' + a.txt));
+  if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, índice neto ${sign(nssOf({ total:d.total, pos:d.pos, neg:d.neg }))}`)); }
+  H('Publicaciones'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.total)} comentarios, ${fmtN(p.authors)} personas, índice neto ${sign(p.nss)}, ${p.negPct} % negativos${m.team ? `, ${fmtN(p.pending)} pendientes` : ''}`));
+  H('Quién más comenta'); m.topAuthors.forEach((a, i) => L.push(`${i + 1}. ${a.name}: ${a.n} comentarios`));
+  if(m.ambassadors.length){ H('Embajadores'); m.ambassadors.forEach(a => L.push(`• ${a.name} (${a.pos} positivos de ${a.n})`)); }
+  if(m.detractors.length){ H('Detractores'); m.detractors.forEach(a => L.push(`• ${a.name} (${a.neg} negativos de ${a.n})`)); }
+  H('Temas más mencionados'); L.push(m.st.words.slice(0, 15).map(([w, n]) => `${w} (${n})`).join(', '));
+  if(m.watch.length){ H('Marcas y temas vigilados'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones (${w.pct} %), índice neto ${w.n ? sign(w.nss) : '—'}`)); }
+  H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`));
+  H('Comentarios positivos destacados'); m.topPos.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`));
+  if(m.team && m.openQ.length){ H('Preguntas sin responder'); m.openQ.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`)); }
+  H('Recomendaciones'); m.recs.forEach((x, i) => L.push(`${i + 1}. ${x}`));
+  return L.join('\n').trim();
+}
+// Convierte los gráficos SVG en imágenes PNG (Word y PDF no muestran SVG con estilos CSS)
+async function svgToPng(svg){
+  const cs = getComputedStyle(document.documentElement), clone = svg.cloneNode(true), vb = svg.viewBox.baseVal;
+  const W = vb && vb.width ? vb.width : svg.clientWidth, H = vb && vb.height ? vb.height : svg.clientHeight;
+  clone.setAttribute('width', W); clone.setAttribute('height', H); clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const src = [...svg.querySelectorAll('*')], dst = [...clone.querySelectorAll('*')];
+  src.forEach((el, i) => { const s = getComputedStyle(el); ['fill', 'stroke', 'stroke-width', 'font', 'font-size', 'font-weight', 'opacity', 'fill-opacity'].forEach(k => { const v = s.getPropertyValue(k); if(v) dst[i].style.setProperty(k, v); }); });
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(clone));
+  const img = new Image(); await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+  const c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
+  const g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height); g.scale(2, 2); g.drawImage(img, 0, 0, W, H);
+  return { src:c.toDataURL('image/png'), W, H };
+}
+// Documento autónomo (colores fijos claros) para Word, PDF y HTML
+async function reportDocHtml(){
+  const m = REP.model; const doc = $('#reportDoc').cloneNode(true);
+  doc.querySelectorAll('.no-print,button').forEach(e => e.remove());
+  const svgs = [...$('#reportDoc').querySelectorAll('.viz-plot svg')], dsv = [...doc.querySelectorAll('.viz-plot svg')];
+  for(let i = 0; i < svgs.length; i++){ try{ const r = await svgToPng(svgs[i]); const img = document.createElement('img'); img.src = r.src; img.width = Math.min(640, r.W); img.style.maxWidth = '100%'; dsv[i].replaceWith(img); }catch(e){ dsv[i].remove(); } }
+  // barras ordenadas → tabla simple; mini barras → texto
+  doc.querySelectorAll('.rbars').forEach(b => { const t = document.createElement('table'); t.className = 'rtable'; t.innerHTML = [...b.querySelectorAll('.rbar')].map(r => `<tr><td>${esc(r.querySelector('.rb-label').textContent)}</td><td class="num">${esc(r.querySelector('.rb-val').textContent)}</td></tr>`).join(''); b.replaceWith(t); });
+  doc.querySelectorAll('.mini-seg').forEach(s => { const sp = document.createElement('span'); sp.textContent = s.title; s.replaceWith(sp); });
+  doc.querySelectorAll('.ms').forEach(e => e.remove());
+  doc.querySelectorAll('.pdot').forEach(e => e.remove());
+  const css = `body{font-family:Calibri,Arial,sans-serif;color:#1f1f1f;font-size:11pt;line-height:1.45;margin:24px}
+    h2{font-size:22pt;font-weight:400;margin:0 0 4px;color:#0b57d0} h3{font-size:14pt;margin:18px 0 4px;color:#0b57d0} h4{font-size:11pt;margin:12px 0 4px}
+    .rep-cover{border-bottom:3px solid #0b57d0;padding-bottom:10px;margin-bottom:8px} .rep-cover p,.sub,.small,.muted,.qm,.d{color:#5f6368;font-size:9.5pt}
+    table{border-collapse:collapse;width:100%;margin:6px 0} th{background:#e8f0fe;text-align:left;padding:5px 7px;font-size:9.5pt} td{border-top:1px solid #dadce0;padding:5px 7px;font-size:9.5pt;vertical-align:top}
+    td.num,th.num{text-align:right} .kpis{display:block} .kpi{display:inline-block;width:23%;vertical-align:top;margin:0 1% 8px 0;padding:6px 8px;border:1px solid #dadce0}
+    .kpi .k{font-size:9pt;color:#5f6368} .kpi .v{font-size:16pt} .rep-alert{padding:6px 8px;margin:4px 0;border-left:4px solid #e69500;background:#fff4e0} .rep-alert.high{border-color:#d93025;background:#fce8e6} .rep-alert.ok{border-color:#188038;background:#e6f4ea}
+    .qitem{padding:6px 8px;margin:4px 0;background:#f1f3f4} section{page-break-inside:avoid} .rep-grid{display:block}`;
+  return { html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Informe de comentarios</title><style>${css}</style></head><body>${doc.innerHTML}</body></html>`, css, body:doc.innerHTML };
+}
+async function reportExport(kind){
+  const m = REP.model; if(!m) return;
+  const name = 'informe-comentarios-' + (m.tracks.length === 1 ? m.first.date : m.first.date + '_' + m.last.date);
+  if(kind === 'print'){ window.print(); return; }
+  if(kind === 'xlsx'){ exportXLSX(m.list.map(c => ({ ...c, text:c.text }))); return; }
+  toast('Preparando el documento…');
+  const d = await reportDocHtml();
+  if(kind === 'html'){ download(name + '.html', d.html, 'text/html;charset=utf-8'); return; }
+  if(kind === 'word'){
+    const word = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Informe de comentarios</title>
+      <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2cm}${d.css}</style></head><body>${d.body}</body></html>`;
+    download(name + '.doc', new Blob(['﻿', word], { type:'application/msword' }));
+    return;
+  }
+  if(kind === 'pdf'){
+    try{
+      if(!window.html2pdf) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+      const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;width:780px;background:#fff';
+      box.innerHTML = `<style>${d.css.replace(/body\{/g, '.pdfdoc{')}</style><div class="pdfdoc">${d.body}</div>`; document.body.appendChild(box);
+      await html2pdf().set({ margin:[12, 12, 14, 12], filename:name + '.pdf', image:{ type:'jpeg', quality:.95 }, html2canvas:{ scale:2, backgroundColor:'#ffffff' }, jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }, pagebreak:{ mode:['css', 'legacy'], avoid:['tr', 'section', '.kpi', '.qitem', '.rep-alert'] } }).from(box.querySelector('.pdfdoc')).save();
+      box.remove(); toast('PDF descargado');
+    }catch(e){ toast('No se pudo generar el PDF directamente: se abre la impresión (elige “Guardar como PDF”)'); window.print(); }
+  }
+}
+async function reportCopy(){
+  const m = REP.model; if(!m) return;
+  const text = reportText(m);
+  try{
+    const d = await reportDocHtml();
+    await navigator.clipboard.write([new ClipboardItem({ 'text/plain':new Blob([text], { type:'text/plain' }), 'text/html':new Blob([`<style>${d.css}</style>${d.body}`], { type:'text/html' }) })]);
+    toast('Informe copiado: pégalo en Word, Google Docs o un correo (con formato)');
+  }catch(e){ copyText(text, 'Informe copiado como texto'); }
+}
+async function reportAI(){
+  const m = REP.model, cfg = AI.cfg();
+  if(!aiConfigured(cfg)){ openAiCfg(); toast('Configura primero un modelo de IA gratuito'); return; }
+  const out = $('#repAiOut'); out.innerHTML = '<p class="small muted"><span class="ms sm" style="animation:spin 1.4s linear infinite;vertical-align:-4px">progress_activity</span> Redactando el resumen con ' + esc(AI_PROV[cfg.prov].name) + '…</p>';
+  const facts = reportText(m).slice(0, 6000);
+  const sys = 'Eres un consultor senior de marketing digital y comunicación. Redactas resúmenes ejecutivos claros y accionables en español, sin inventar datos.';
+  const user = `A partir de este informe de comentarios en redes sociales, escribe un resumen ejecutivo de 2 o 3 párrafos breves: situación de la reputación, causas principales de los comentarios negativos, oportunidades y 3 acciones prioritarias. Usa solo los datos dados.\n\n${facts}`;
+  try{
+    let txt = await aiRequest(cfg, sys, user);
+    txt = String(txt || '').replace(/^```\w*\n?|```$/g, '').trim();
+    try{ const j = JSON.parse(txt); txt = j.resumen || j.summary || Object.values(j).join('\n\n'); }catch(e){}
+    REP.ai = txt;
+    out.innerHTML = `<h4 class="viz-h4" style="margin-top:14px">Análisis redactado con IA (${esc(AI_PROV[cfg.prov].name)})</h4><div class="rep-ai">${esc(txt)}</div><p class="small muted">Generado automáticamente: revísalo antes de compartirlo.</p>`;
+  }catch(e){ out.innerHTML = `<p class="small" style="color:var(--error)">IA: ${esc(e.message)}</p>`; }
+}
+function initReports(){
+  $('#repPicker').addEventListener('click', e => {
+    const pr = e.target.closest('[data-rpp]');
+    if(pr){ const k = pr.dataset.rpp, lim = k === 'all' || k === 'none' ? null : new Date(Date.now() - (+k) * 864e5).toISOString().slice(0, 10);
+      $$('.rpsel').forEach(c => { const t = TR.tracks.find(x => x.id === c.value); c.checked = k === 'none' ? false : !lim || (t && t.date >= lim); c.closest('.hrow').classList.toggle('sel', c.checked); }); }
+    if(e.target.id === 'repGo' || e.target.closest('#repGo')){ const ids = $$('.rpsel').filter(c => c.checked).map(c => c.value); PREF.set('repSel', JSON.stringify(ids)); PREF.set('repTerms', $('#repTerms').value); generateReport(ids); }
+    if(e.target.closest('#repCancel')){ REP.editing = false; renderReportPicker(); }
+  });
+  $('#repPicker').addEventListener('change', e => { if(e.target.classList.contains('rpsel')) e.target.closest('.hrow').classList.toggle('sel', e.target.checked); });
+  $('#repActs').addEventListener('click', e => {
+    if(e.target.closest('#repEdit')){ REP.editing = true; renderReportPicker(); $('#repPicker').scrollIntoView({ behavior:'smooth' }); }
+    if(e.target.closest('#repCopy')) reportCopy();
+    if(e.target.closest('#repAI')) reportAI();
+    const x = e.target.closest('[data-rexp]'); if(x){ closeMenus(); reportExport(x.dataset.rexp); }
+  });
+  $('#repOut').addEventListener('click', e => { if(e.target.closest('#repOpenList') && REP.model) viewTrackingsComments(REP.model.tids).then(() => selectTab('list')); });
+}
+
+/* =====================================================================
+   BÚSQUEDA POR SIGNIFICADO (IA gratuita en el navegador) Y CLASIFICACIÓN CON IA
+   ===================================================================== */
+const SEM = { lib:'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1', model:'Xenova/multilingual-e5-small', pipe:null, loading:null, cache:new Map() };
+function semStatus(txt, busy, showLevel){
+  $('#semBar').classList.remove('hidden'); $('#semBar').classList.toggle('busy', !!busy);
+  $('#semIc').textContent = busy ? 'progress_activity' : 'psychology'; $('#semTxt').textContent = txt;
+  $('#semLevel').classList.toggle('hidden', !showLevel);
+}
+async function semLoad(){
+  if(SEM.pipe) return SEM.pipe;
+  SEM.loading ||= (async () => {
+    const T = await import(SEM.lib);
+    T.env.allowLocalModels = false;
+    const files = {};
+    SEM.pipe = await T.pipeline('feature-extraction', SEM.model, { dtype:'q8', progress_callback:p => {
+      if(p.status === 'progress' && p.total){ files[p.file] = [p.loaded, p.total]; const a = Object.values(files).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); semStatus(`Descargando el modelo de búsqueda (solo la primera vez)… ${Math.round(a[0] / a[1] * 100)} %`, true); }
+    } });
+    return SEM.pipe;
+  })().catch(e => { SEM.loading = null; throw e; });
+  return SEM.loading;
+}
+// Vectores normalizados con caché (e5: "query:" para la consulta, "passage:" para los comentarios)
+async function semEmbed(texts, kind, onProg){
+  const pipe = await semLoad(), out = new Array(texts.length), todo = [];
+  texts.forEach((t, i) => { const k = kind + '|' + t; if(SEM.cache.has(k)) out[i] = SEM.cache.get(k); else todo.push(i); });
+  for(let i = 0; i < todo.length; i += 16){
+    const batch = todo.slice(i, i + 16), r = await pipe(batch.map(j => kind + ': ' + texts[j].slice(0, 512)), { pooling:'mean', normalize:true });
+    const arr = r.tolist();
+    batch.forEach((j, n) => { out[j] = arr[n]; SEM.cache.set(kind + '|' + texts[j], arr[n]); });
+    onProg && onProg(Math.min(todo.length, i + 16), todo.length);
+  }
+  return out;
+}
+const dot = (a, b) => { let s = 0; for(let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
+async function runSemantic(q){
+  const list = S.comments.filter(c => c.text && c.text.trim());
+  semStatus('Preparando la búsqueda por significado…', true);
+  try{
+    const [qv] = await semEmbed([q], 'query');
+    const vs = await semEmbed(list.map(c => c.text), 'passage', (a, b) => semStatus(`Analizando comentarios por significado… ${Math.round(a / b * 100)} %`, true));
+    const qn = normName(q).split(/\s+/).filter(w => w.length > 2);
+    S.sem = { q, mode:'sem', scores:new Map() };
+    list.forEach((c, i) => { let s = dot(qv, vs[i]); const t = normName(c.text); if(qn.length && qn.every(w => t.includes(w))) s = Math.max(s, .99); S.sem.scores.set(c.id, s); });
+    semApply();
+  }catch(e){ semStatus('No se pudo usar la búsqueda por significado: ' + (e.message || e) + '. Prueba “Clasificar con IA” o la búsqueda por términos.', false); S.sem = null; }
+}
+function semApply(){
+  if(!S.sem) return;
+  S.page = 1; renderTable();
+  const n = S.filtered.length;
+  semStatus(S.sem.mode === 'ai' ? `${countTxt(n, 'comentario cumple', 'comentarios cumplen')} el criterio “${S.sem.q}” según la IA.` : `${countTxt(n, 'comentario relacionado', 'comentarios relacionados')} con “${S.sem.q}”, ordenados por relevancia.`, false, S.sem.mode === 'sem');
+}
+async function runAIClassify(q){
+  const cfg = AI.cfg();
+  if(!aiConfigured(cfg)){ openAiCfg(); toast('Configura un modelo de IA gratuito para clasificar'); return; }
+  const list = S.comments.filter(c => c.text && c.text.trim());
+  const max = 600, take = list.slice(0, max);
+  if(list.length > max) toast(`Se clasificarán los primeros ${max} comentarios`);
+  S.sem = { q, mode:'ai', scores:new Map() }; const ok = new Set();
+  const sys = 'Clasificas comentarios de redes sociales. Respondes SOLO con JSON válido.';
+  try{
+    for(let i = 0; i < take.length; i += 25){
+      semStatus(`Clasificando con ${AI_PROV[cfg.prov].name}… ${Math.round(i / take.length * 100)} %`, true);
+      const batch = take.slice(i, i + 25);
+      const user = `Criterio: "${q}"\nDevuelve {"ids":[…]} con los números de los comentarios que cumplen el criterio (incluye los relacionados de forma indirecta).\n\n` + batch.map((c, n) => `${n + 1}. ${c.text.replace(/\s+/g, ' ').slice(0, 300)}`).join('\n');
+      const txt = await aiRequest(cfg, sys, user);
+      const mm = String(txt).match(/\{[\s\S]*\}/); let ids = [];
+      try{ ids = JSON.parse(mm ? mm[0] : txt).ids || []; }catch(e){ ids = (String(txt).match(/\d+/g) || []).map(Number); }
+      ids.forEach(n => { const c = batch[+n - 1]; if(c) ok.add(c.id); });
+    }
+    take.forEach(c => S.sem.scores.set(c.id, ok.has(c.id) ? 1 : 0));
+    semApply();
+  }catch(e){ semStatus('IA: ' + e.message, false); S.sem = null; }
+}
+function semClear(){ S.sem = null; $('#semBar').classList.add('hidden'); S.page = 1; renderTable(); }
+function initSemantic(){
+  $('#qMode').value = PREF.get('qMode', 'terms');
+  const ph = () => { const m = $('#qMode').value; $('#q').placeholder = m === 'terms' ? 'Buscar en comentarios o autores' : m === 'sem' ? 'Describe el tema y pulsa Intro (p. ej.: quejas por demoras en la entrega)' : 'Criterio para la IA y pulsa Intro (p. ej.: se refieren a Kanasta24)'; };
+  ph();
+  $('#qMode').onchange = () => { PREF.set('qMode', $('#qMode').value); ph(); if($('#qMode').value === 'terms') semClear(); $('#q').focus(); };
+  $('#q').addEventListener('keydown', e => { if(e.key !== 'Enter') return; const m = $('#qMode').value, v = $('#q').value.trim(); if(m === 'terms' || !v) return; e.preventDefault(); m === 'sem' ? runSemantic(v) : runAIClassify(v); });
+  $('#semClear').onclick = () => { semClear(); $('#q').value = ''; };
+  $('#semLevel').onchange = semApply;
+}
+
 function initAssistant(){
   $('#openTeam').onclick = openTeam;
   $('#openCatalog').onclick = openCatalog;
@@ -4635,13 +6101,15 @@ function demoData(platform='facebook'){
 /* =====================================================================
    NAVEGACIÓN, ONBOARDING, AYUDA Y EVENTOS
    ===================================================================== */
-const VIEWS=['obtener','resultados','ayuda'];
+const VIEWS=['seguimiento','informes','obtener','resultados','ayuda'];
 function go(view, section){ const h = '#'+view+(section?'/'+section:''); if(location.hash!==h) location.hash=h; else route(); }
 // Sección de la ayuda relacionada con lo que el usuario está viendo
 function contextHelp(){
   const v = (location.hash.replace(/^#/,'').split('/')[0]) || curView;
   if(v==='obtener'){ const P = PLATFORMS[curPlatform()]; return {fb:P.help, extractor:P.exHelp, import:'importar'}[PREF.get('method','fb')] || 'metodos'; }
   if(v==='resultados') return !S.comments.length ? 'inicio' : $('#tp-list').classList.contains('active') ? 'filtrar' : 'analisis';
+  if(v==='seguimiento') return 'seguimiento';
+  if(v==='informes') return 'informes';
   return '';
 }
 const scrollPos = {}; let curView = null, lastNonHelp = null;
@@ -4653,12 +6121,14 @@ function route(){
   if(view!=='ayuda') lastNonHelp = view;
   $$('dialog[open]').forEach(d=>{ if(d.id!=='onboarding') d.close(); });
   const hb = $('#helpBack');
-  if(view==='ayuda' && lastNonHelp){ hb.classList.remove('hidden'); hb.href = '#'+lastNonHelp; $('#helpBackTxt').textContent = 'Volver a '+({obtener:'Obtener', resultados:'Resultados'}[lastNonHelp]); }
+  if(view==='ayuda' && lastNonHelp){ hb.classList.remove('hidden'); hb.href = '#'+lastNonHelp; $('#helpBackTxt').textContent = 'Volver a '+({obtener:'Obtener', resultados:'Resultados', seguimiento:'Seguimiento', informes:'Informes'}[lastNonHelp]); }
   else hb.classList.add('hidden');
   $$('.view').forEach(x=>x.classList.toggle('active', x.id==='view-'+view));
   $$('.nav-item').forEach(a=>a.toggleAttribute('aria-current', a.dataset.view===view) || a.dataset.view===view && a.setAttribute('aria-current','page'));
   $$('.nav-item').forEach(a=>{ if(a.dataset.view===view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
-  document.title = {obtener:'Obtener comentarios', resultados:'Resultados', ayuda:'Ayuda'}[view] + ' · Social Comments Analyzer';
+  document.title = {obtener:'Obtener comentarios', resultados:'Resultados', ayuda:'Ayuda', seguimiento:'Seguimiento', informes:'Informes'}[view] + ' · Social Comments Analyzer';
+  if(view==='seguimiento' && prevView!==view){ extDetect(); renderSeg(); }
+  if(view==='informes' && prevView!==view) renderReportPicker();
   closeMenus();
   if(view==='ayuda' && sec){
     const t = document.getElementById('h-'+sec);
@@ -4730,7 +6200,7 @@ const OB_STEPS = [
     <p class="small">Las guías completas están en <b>Ayuda → Conectar con Facebook</b> e <b>Instagram</b>.</p>` },
   { icon:'travel_explore', title:'Para cualquier otra publicación', html:`<ol style="padding-left:20px">
     <li>Arrastra el botón <b>Social Comments Analyzer</b> a tu barra de marcadores.</li>
-    <li>Abre la publicación en Facebook (elige <b>“Todos los comentarios”</b>), Instagram o TikTok.</li>
+    <li>Abre la publicación en Facebook, Instagram o TikTok (el extractor abre la sección de comentarios si está cerrada).</li>
     <li>Pulsa el marcador: se abrirán las respuestas y los comentarios ocultos.</li>
     <li>Pulsa <b>Copiar JSON</b> y pégalo aquí.</li></ol>` },
   { icon:'insights', title:'Analiza y exporta', html:`<p>En <b>Resultados</b> verás un resumen con gráficos y los comentarios <b>como en Facebook</b>, con sus respuestas anidadas, o en una tabla con autor, fecha, texto, reacciones y más.</p>
@@ -5071,6 +6541,9 @@ function filterHelp(raw){
   // diálogos
   $$('dialog [data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
   initAssistant();
+  initTracking();
+  initReports();
+  initSemantic();
   $('#dTeam').onclick = () => { const c = detailCurrent; if(!c) return; const was = TEAM.has(c.authorName);
     was ? TEAM.remove(c.authorName) : TEAM.add(c.authorName, c.authorId ? { id:c.authorId } : null);
     toast(was ? c.authorName + ' ya no está en el equipo' : c.authorName + ' añadido al equipo'); renderTable(); showDetail(S.comments.find(x => x.id === c.id)); };
