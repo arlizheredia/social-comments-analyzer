@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// Extensión 1.1.0
+// Extensión 1.1.1
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -68,7 +68,27 @@ function fbExtractor(){
     var all = Array.prototype.slice.call(document.querySelectorAll('div[role="article"]'));
     var lab = all.filter(function(a){ return LABEL_RE.test(a.getAttribute('aria-label') || ''); });
     if (lab.length) return lab;
-    return all.filter(function(a){ return a.querySelector('a[href*="comment_id="]'); });
+    var withLink = all.filter(function(a){ return a.querySelector('a[href*="comment_id="]'); });
+    if (withLink.length) return withLink;
+    return pseudoArticles();
+  }
+  // Reels: los comentarios pueden no ser role="article". Para cada comment_id se toma el contenedor más amplio
+  // que solo contiene ese comentario (enlace de autor/fecha + texto) y se marca para tratarlo como un artículo.
+  function cidOf(a){ try { var u = new URL(a.href, location.href); return u.searchParams.get('reply_comment_id') || u.searchParams.get('comment_id') || ''; } catch(e){ return ''; } }
+  function pseudoArticles(){
+    var marked = Array.prototype.slice.call(document.querySelectorAll('[data-sca-art]'));
+    var links = Array.prototype.slice.call(document.querySelectorAll('a[href*="comment_id="]')).filter(function(a){ return !a.closest('[data-sca-art]'); });
+    links.forEach(function(a){
+      var id = cidOf(a); if (!id) return;
+      var box = a, p = a.parentElement;
+      while (p && p !== document.body){
+        var ids = {}; Array.prototype.slice.call(p.querySelectorAll('a[href*="comment_id="]')).forEach(function(x){ var k = cidOf(x); if (k) ids[k] = 1; });
+        if (Object.keys(ids).length > 1) break;
+        box = p; p = p.parentElement;
+      }
+      if (box !== a && !box.closest('[data-sca-art]') && box.querySelector('div[dir="auto"], span[dir="auto"]')){ box.setAttribute('data-sca-art', '1'); marked.push(box); }
+    });
+    return marked.filter(function(b){ return b.isConnected; });
   }
   function root(){
     var dlg = Array.prototype.slice.call(document.querySelectorAll('div[role="dialog"]')).filter(function(d){ return d.querySelector('div[role="article"]'); });
@@ -136,7 +156,7 @@ function fbExtractor(){
   }
 
   function extractOne(art){
-    var own = function(sel){ return Array.prototype.slice.call(art.querySelectorAll(sel)).filter(function(n){ return n.closest('div[role="article"]') === art; }); };
+    var own = function(sel){ return Array.prototype.slice.call(art.querySelectorAll(sel)).filter(function(n){ return n.closest('div[role="article"],[data-sca-art]') === art; }); };
     var label = art.getAttribute('aria-label') || '';
     var labelName = labelAuthor(label);
     var links = own('a[href]');
@@ -491,23 +511,44 @@ function fbExtractor(){
   }
   function keyOf(c){ return c.id || (c.authorName + '|' + c.text); }
   // ---- Antes de empezar: abrir la sección de comentarios (reels de Facebook/Instagram, vídeos de TikTok) ----
-  var OPEN_RE = /^(comentar|comment|comentarios|comments|ver comentarios|view comments|ver los comentarios|comentários|commentaires|commenter|kommentieren|kommentare|commenta|commenti)$/i;
+  var OPEN_RE = /^(comentar|comment|comentarios|comments|ver comentarios|view comments|ver los comentarios|ver todos los comentarios|view all comments|deja un comentario|leave a comment|abrir comentarios|open comments|comentários|commentaires|commenter|kommentieren|kommentare|commenta|commenti)\b/i;
+  var LIKE_RE = /^(me gusta|like|reaccionar|react|j'aime|curtir|gefällt mir|mi piace)\b/i;
   function visibleCount(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; }
   function loadingVisible(){ return !!document.querySelector('[aria-busy="true"],[data-visualcompletion="loading-state"],[role="progressbar"]'); }
   function commentButtons(){
     var list = [];
     if (TT) list = Array.prototype.slice.call(document.querySelectorAll('[data-e2e="comment-icon"],[data-e2e="browse-comment-icon"],[data-e2e="comment-count"],button[aria-label*="omment"],button[aria-label*="omentario"]'));
-    else list = Array.prototype.slice.call(document.querySelectorAll('[aria-label]')).filter(function(el){
-      var l = (el.getAttribute('aria-label') || '').trim().replace(/\s*[·:]?\s*\d[\d.,]*\s*[kKmM]?$/, '');   // "Comentar 25" → "Comentar"
-      return OPEN_RE.test(l);
-    });
+    else {
+      list = Array.prototype.slice.call(document.querySelectorAll('[aria-label]')).filter(function(el){
+        var l = (el.getAttribute('aria-label') || '').trim().replace(/\s*[·:]?\s*\d[\d.,]*\s*[kKmM]?$/, '');   // "Comentar 25" → "Comentar"
+        return OPEN_RE.test(l);
+      });
+      // Reels de Facebook: columna de acciones (Me gusta · Comentar · Compartir). Si el botón no tiene una etiqueta
+      // reconocible, se toma el botón situado justo debajo de "Me gusta" en esa columna.
+      if (!list.length && !IG){
+        Array.prototype.slice.call(document.querySelectorAll('[aria-label]')).filter(function(el){ return LIKE_RE.test((el.getAttribute('aria-label') || '').trim()) && el.offsetParent; }).forEach(function(like){
+          var lb = (like.closest('[role="button"],button') || like), r = lb.getBoundingClientRect();
+          var next = Array.prototype.slice.call(document.querySelectorAll('[role="button"],button')).filter(function(b){
+            if (b === lb || !b.offsetParent || b.contains(lb) || lb.contains(b)) return false;
+            var q = b.getBoundingClientRect();
+            return Math.abs((q.left + q.width / 2) - (r.left + r.width / 2)) < 24 && q.top > r.bottom - 4 && q.top - r.bottom < 120;
+          }).sort(function(a, b){ return a.getBoundingClientRect().top - b.getBoundingClientRect().top; })[0];
+          if (next) list.push(next);
+        });
+      }
+    }
     return list.map(function(el){ return el.closest('button,[role="button"],a') || el; }).filter(function(el, i, a){
       return a.indexOf(el) === i && el.offsetParent && el.getAttribute('role') !== 'textbox' && !el.isContentEditable && !el.closest('[contenteditable="true"],form');
     });
   }
   async function openComments(){
     if (visibleCount() > 0) return;
-    var btns = commentButtons(); if (!btns.length) return;
+    // Si la sección ya se está abriendo (marcadores de carga), primero se espera a que termine (máx. ~10 s)
+    for (var w0 = 0; w0 < 40 && loadingVisible() && !stop; w0++){ if (w0 === 0) status('Esperando a que carguen los comentarios…', true); await sleep(250); if (visibleCount() > 0){ await sleep(600); return; } }
+    if (visibleCount() > 0) return;
+    // un botón ya activo (sección abierta) no se pulsa: lo cerraría
+    var btns = commentButtons().filter(function(b){ return b.getAttribute('aria-pressed') !== 'true' && b.getAttribute('aria-expanded') !== 'true'; });
+    if (!btns.length) return;
     status('Abriendo la sección de comentarios…', true);
     if (AUTO) AUTO.emit({ type: 'progress', round: 0, count: 0, note: 'abriendo comentarios' });
     for (var i = 0; i < Math.min(btns.length, 3) && !stop; i++){
@@ -595,6 +636,10 @@ function fbExtractor(){
       botonesRespuestas: document.querySelectorAll('[data-e2e^="view-more"],p[class*="ReplyActionText"]').length,
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
+    if (!TT && !IG) Object.assign(data.diag, { articulos: document.querySelectorAll('div[role="article"]').length, articulosComentario: articles().length,
+      enlacesComentario: document.querySelectorAll('a[href*="comment_id="]').length, cargando: loadingVisible(), dialogos: document.querySelectorAll('div[role="dialog"]').length,
+      botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || (b.innerText || '').trim()).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
+      etiquetasBotones: Array.prototype.slice.call(document.querySelectorAll('[role="button"][aria-label],button[aria-label]')).filter(function(b){ return b.offsetParent; }).map(function(b){ return b.getAttribute('aria-label').replace(/\d[\d.,]*/g, 'N').slice(0, 40); }).filter(function(v, i, a){ return a.indexOf(v) === i; }).slice(0, 40) });
     if (data.diag) data.diag.pulsados = pressed.filter(function(v, i, a){ return a.indexOf(v) === i; });
     if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'done', data: data }); return; }
     var json = JSON.stringify(data, null, 2);

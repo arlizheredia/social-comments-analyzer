@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Social Comments Analyzer – Extractor",
   "short_name": "SCA Extractor",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Extrae automáticamente los comentarios de publicaciones de Facebook, Instagram y TikTok para los seguimientos de Social Comments Analyzer.",
   "permissions": ["scripting", "tabs", "storage"],
   "host_permissions": [
