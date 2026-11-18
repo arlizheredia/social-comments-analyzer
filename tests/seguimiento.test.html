@@ -362,6 +362,20 @@ const TR = () => w.eval('TR');
     const normName = w.eval('normName');
     w.semEmbed = async (texts, kind) => texts.map(t => { const n = normName(t); let v = VOC.map(k => n.includes(k) ? 1 : 0); if(/kanasta/.test(n)) v[0] = v[1] = 1; const s = Math.hypot(...v) || 1; return v.map(x => x / s); });
     w.localStorage.setItem('fbca:aiLocal', '1'); w.localStorage.setItem('fbca:aiSem', '1'); w.renderAiState();
+    // Postura frente a la marca: elogiar a otra marca, preferir otra opción o recomendar no comprar es negativo
+    { const L = w.finalize([
+        { id:'b1', authorName:'Dinna Ramirez Cuevas', text:'Mi experiencia con Kanasta24 ha sido desagradable: 5 días de tardanza y carne maloliente' },
+        { id:'b2', parentId:'b1', authorName:'Irina Domecq', mentions:['Dinna Ramirez Cuevas'], text:'Dinna Ramirez Cuevas Pues mira no eres la sola, a mi también me pasó lo mismo muchis días y la carne ni hablar, mi madre me ha dicho no compres más ahí.' },
+        { id:'b3', parentId:'b1', authorName:'Irina Domecq', text:'además prefiero la bodega será más caro pero mejor calidad y rápido en entregar.' },
+        { id:'b4', parentId:'b1', authorName:'Dinna Ramirez Cuevas', mentions:['Irina Domecq'], text:'Irina Domecq y La Bodega del Chago ya está bajando todos sus precios, más competitivos y menos de 24 horas. Lo AFIRMO. Es lo mejor.' },
+        { id:'b5', authorName:'Luis Pérez', text:'Kanasta 24 es lo mejor, mucho más rápidos con los pedidos' },
+        { id:'b6', authorName:'Marta Gil', text:'Holguín es lo mejor, la ciudad más bonita' },
+        { id:'b7', parentId:'b5', authorName:'Ana López', mentions:['Luis Pérez'], text:'Luis Pérez totalmente de acuerdo' }
+      ], { platform:'facebook' });
+      const s = Object.fromEntries(L.map(c => [c.id, c.sentiment]));
+      check('Comentarios contra la marca: los de Dinna e Irina son negativos (otra marca mejor, preferir otra, no comprar, acuerdo con la queja)', s.b1 === 'negativo' && s.b2 === 'negativo' && s.b3 === 'negativo' && s.b4 === 'negativo', JSON.stringify(s) + ' · ' + L.filter(c => c.sentimentFrom).map(c => c.id + ': ' + c.sentimentFrom).join(' | '));
+      check('Sin falsos negativos: elogiar a la marca o a la ciudad sigue siendo positivo, y el acuerdo con un elogio también', s.b5 === 'positivo' && s.b6 === 'positivo' && s.b7 === 'positivo', JSON.stringify({ b5:s.b5, b6:s.b6, b7:s.b7 }));
+      check('El motivo queda en «Detalles»', /otra marca \(La Bodega del Chago\)/.test(L.find(c => c.id === 'b4').sentimentFrom || '') && /no comprar/.test(L.find(c => c.id === 'b2').sentimentFrom || ''), L.map(c => c.sentimentFrom || '').join(' | ')); }
     // «Sin responder» y el informe de Resultados siguen el criterio del informe (Kanasta24)
     w.applyFilters(); await until(() => w.eval('!!(S.focusRes && S.focusRes.list === S.comments)'), 8000).catch(() => {});
     const pendT = w.eval('S.pending.map(c => c.text)');
@@ -371,6 +385,24 @@ const TR = () => w.eval('TR');
       await w.doExport('word'); await w.doExport('html'); w.download = bk;
       const html = (files.find(f => /\.html$/.test(f.name)) || {}).content || '';
       check('Resultados: el informe Word y HTML solo trata los comentarios sobre el criterio', files.some(f => /\.doc$/.test(f.name)) && /Informe de comentarios sobre Kanasta24/.test(html) && /Ana López/.test(html) && !/Precio por favor/.test(html) && !/enfoque/i.test(html), files.map(f => f.name).join(', ')); }
+    // Cambiar a mano la polaridad de un comentario: manda sobre la automática y el informe se vuelve a generar
+    { const ana = w.eval(`S.comments.find(c => c.id === 'facebook5')`);
+      check('Antes del cambio: el comentario de Ana es positivo', ana && ana.sentiment === 'positivo', ana && ana.sentiment);
+      w.eval(`setSentiment(S.comments.find(c => c.id === 'facebook5'), 'negativo')`); await wait(150);
+      const a2 = w.eval(`S.comments.find(c => c.id === 'facebook5')`);
+      const btn = d.querySelector('#conv .cnode[data-id="facebook5"] [data-act="sent"]');
+      check('Polaridad cambiada a mano: Resultados la muestra como «Negativo · a mano» y queda guardada', a2.sentiment === 'negativo' && a2.sentimentManual && /Negativo/.test(btn ? btn.textContent : '') && /a mano/.test(btn ? btn.textContent : '') && /facebook5/.test(w.localStorage.getItem('fbca:sentOverrides') || ''), btn && btn.textContent);
+      check('El informe abierto queda pendiente de actualizar', w.eval('REP.stale') === true);
+      w.go('informes'); await until(() => !w.eval('REP.stale') && w.eval('REP.model') && d.getElementById('reportDoc'), 15000).catch(() => {});
+      await until(() => { const x = w.eval(`REP.model && REP.model.list.find(c => c.id === 'facebook5')`); return x && x.sentiment === 'negativo'; }, 15000).catch(() => {});
+      const mx = w.eval(`REP.model.list.find(c => c.id === 'facebook5')`);
+      check('Al volver a Informes, el informe se regenera con la polaridad corregida', mx && mx.sentiment === 'negativo' && mx.sentimentManual, mx && mx.sentiment);
+      const qb = d.querySelector('#reportDoc [data-qsent]');
+      check('En el informe, cada comentario destacado tiene su botón de polaridad (no se imprime)', !!qb && qb.classList.contains('no-print'));
+      w.eval(`setSentiment(S.comments.find(c => c.id === 'facebook5'), 'auto')`); await wait(150);
+      check('«Automática» quita el cambio a mano', w.eval(`S.comments.find(c => c.id === 'facebook5').sentiment`) === 'positivo' && !/facebook5/.test(w.localStorage.getItem('fbca:sentOverrides') || ''));
+      await until(() => !w.eval('REP.stale'), 15000).catch(() => {});
+      w.go('resultados'); await wait(300); w.selectTab('list'); }
     check('La búsqueda es siempre con IA: no existe la opción «Términos»', ![...d.getElementById('qMode').options].some(o => o.value === 'terms') && d.getElementById('qMode').value === 'sem');
     d.getElementById('q').value = 'servicio'; w.renderTable(); await wait(50);
     check('Escribir sin pulsar Intro no filtra por palabras', w.eval('S.filtered.length') === w.eval('S.comments.length'));
