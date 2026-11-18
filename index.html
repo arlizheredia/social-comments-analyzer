@@ -5564,7 +5564,7 @@ function aiStatusText(t, pct){
 const AIW = { w:null, seq:0, pend:new Map(), failed:false, crashes:0, notified:false };
 const AIW_SRC = `
 let T = null; const P = {}, O = {};
-async function lib(url){ if(!T){ T = await import(url); T.env.allowLocalModels = false; try{ T.env.backends.onnx.wasm.numThreads = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1)); }catch(e){} } return T; }
+async function lib(url){ if(!T){ T = await import(url); T.env.allowLocalModels = false; try{ T.env.backends.onnx.wasm.numThreads = self.crossOriginIsolated ? Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1)) : 1; }catch(e){} } return T; }
 async function load(kind, model, task, tries, url, id){
   if(P[kind]) return P[kind];
   // un solo modelo en memoria: se libera el otro antes de cargar este (evita que el motor se quede sin memoria)
@@ -5582,7 +5582,7 @@ onmessage = async e => {
     if(m.type === 'load'){ await load(m.kind, m.model, m.task, m.tries, m.lib, id); postMessage({ id, type:'done', result:O[m.kind] }); }
     else if(m.type === 'embed'){
       const pipe = await load('sem', m.model, 'feature-extraction', m.tries, m.lib, id), out = [];
-      for(let i = 0; i < m.texts.length; i += 16){ const r = await pipe(m.texts.slice(i, i + 16), { pooling:'mean', normalize:true }); out.push(...r.tolist()); postMessage({ id, type:'step', a:Math.min(m.texts.length, i + 16), b:m.texts.length }); }
+      for(let i = 0; i < m.texts.length; i += 8){ const r = await pipe(m.texts.slice(i, i + 8), { pooling:'mean', normalize:true }); out.push(...r.tolist()); r.dispose?.(); postMessage({ id, type:'step', a:Math.min(m.texts.length, i + 8), b:m.texts.length }); }
       postMessage({ id, type:'done', result:out });
     }
     else if(m.type === 'gen'){
@@ -5626,13 +5626,14 @@ function aiCall(msg, { onProgress, onStep, signal } = {}){
 // La IA nunca pasa al hilo de la página: allí la bloquearía («La página no responde»). Devuelve null solo si el navegador no admite el motor.
 const AI_TRIES = 3;
 async function aiRun(msg, opts){
+  const max = (opts && opts.maxTries) || AI_TRIES;
   for(let attempt = 1; ; attempt++){
     const pr = aiCall(msg, opts); if(!pr) return null;
     try{ return await pr; }
     catch(e){
       if(!e.workerCrash) throw e;
-      if(attempt >= AI_TRIES) throw Object.assign(new Error('La IA se quedó sin memoria en este equipo. Cierra otras pestañas o programas y vuelve a intentarlo.'), { workerCrash:true });
-      toast('La IA se reinició; repitiendo la tarea…');
+      if(attempt >= max) throw Object.assign(new Error('La IA se quedó sin memoria en este equipo. Cierra otras pestañas o programas y vuelve a intentarlo.'), { workerCrash:true });
+      if(!(opts && opts.quiet)) toast('La IA se reinició; repitiendo la tarea…');
       await new Promise(r => setTimeout(r, 1500 * attempt));
     }
   }
@@ -6779,15 +6780,19 @@ const fkey = (postId, c) => (postId || '') + '|' + normName((c.authorName || '')
 async function focusMatch(list, q, onProg){
   const kws = focusKeywords(q), keys = new Set(), items = list.filter(c => c.text && c.text.trim());
   if(!items.length) return keys;
-  // se compara con el tema limpio («Kanasta24»), no con «… y comentarios relacionados», que acerca cualquier comentario
-  const [qv] = await semEmbed([focusSubj(q)], 'query');
-  const vs = await semEmbed(items.map(c => c.text), 'passage', onProg);
-  items.forEach((c, i) => {
-    const t = focusText(c);
-    // los textos muy cortos («Qué lindo», «Mi Holguín, cómo extraño») solo cuentan si nombran el tema
-    const words = normName(c.text).split(/[^a-z0-9ñ]+/).filter(w => w.length > 1).length;
-    if(kws.some(k => t.includes(k)) || (words >= 5 && dot(qv, vs[i]) >= FOCUS_TH)) keys.add(fkey(c._ref?.postId, c));
+  // los que nombran el tema entran directos; los textos muy cortos («Qué lindo», «Mi Holguín, cómo extraño») solo cuentan si lo nombran;
+  // la IA solo compara el resto (menos trabajo y menos memoria)
+  const need = [];
+  items.forEach(c => {
+    if(kws.some(k => focusText(c).includes(k))) keys.add(fkey(c._ref?.postId, c));
+    else if(normName(c.text).split(/[^a-z0-9ñ]+/).filter(w => w.length > 1).length >= 5) need.push(c);
   });
+  if(need.length){
+    // se compara con el tema limpio («Kanasta24»), no con «… y comentarios relacionados», que acerca cualquier comentario
+    const [qv] = await semEmbed([focusSubj(q)], 'query');
+    const vs = await semEmbed(need.map(c => c.text), 'passage', onProg);
+    need.forEach((c, i) => { if(dot(qv, vs[i]) >= FOCUS_TH) keys.add(fkey(c._ref?.postId, c)); });
+  }
   // Contexto del hilo: si el equipo de la marca respondió un comentario, ese comentario va dirigido a la marca
   // («Los mejores» → «Gracias por considerarnos los mejores»); y las respuestas dentro de un hilo de la marca también son de ella.
   const byId = new Map(list.map(c => [c.id, c]));
@@ -7266,12 +7271,15 @@ async function semLoad(){
   if(SEM.pipe) return SEM.pipe;
   SEM.loading ||= (async () => {
     const filesW = {};
-    const wp = aiRun({ type:'load', kind:'sem', model:SEM.model, task:'feature-extraction', tries:await semTries() }, { onProgress:p => {
+    const wp = SEM.main ? Promise.resolve(null) : aiRun({ type:'load', kind:'sem', model:SEM.model, task:'feature-extraction', tries:await semTries() }, { maxTries:2, quiet:true, onProgress:p => {
       if(p.status === 'progress' && p.total){ filesW[p.file] = [p.loaded, p.total]; const a = Object.values(filesW).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); SEM.mb = a; if(SEM.onProgress) SEM.onProgress(a); else semStatus(`Cargando el modelo de búsqueda… ${Math.round(a[0] / a[1] * 100)} %`, true, false, Math.round(a[0] / a[1] * 100)); }
     } });
-    if(await wp){ SEM.pipe = 'worker'; PREF.set('aiSem', '1'); return SEM.pipe; }
+    let wr = null;
+    try{ wr = await wp; }catch(e){ if(!e.workerCrash) throw e; semToPage(); }
+    if(wr){ SEM.pipe = 'worker'; PREF.set('aiSem', '1'); return SEM.pipe; }
     const T = await import(SEM.lib);
     T.env.allowLocalModels = false;
+    try{ T.env.backends.onnx.wasm.numThreads = 1; }catch(e){}
     const files = {};
     if(!AISTATE.checked) await aiScanCache();
     const semDtype = AISTATE.semTypes.includes('q8') ? 'q8' : (AISTATE.semTypes[0] || 'q8');
@@ -7283,25 +7291,46 @@ async function semLoad(){
   })().catch(e => { SEM.loading = null; throw e; });
   return SEM.loading;
 }
+// Caché persistente de vectores (IndexedDB): volver a generar un informe no repite el cálculo
+const EMB = {
+  db:null,
+  open(){ return this.db ||= new Promise(res => { try{ const r = indexedDB.open('sca-emb', 1); r.onupgradeneeded = () => r.result.createObjectStore('v'); r.onsuccess = () => res(r.result); r.onerror = () => res(null); }catch(e){ res(null); } }); },
+  async getMany(keys){ const db = await this.open(); if(!db || !keys.length) return []; return new Promise(res => { const out = new Array(keys.length); let n = 0; try{ const st = db.transaction('v').objectStore('v'); keys.forEach((k, i) => { const q = st.get(k); q.onsuccess = () => { out[i] = q.result; if(++n === keys.length) res(out); }; q.onerror = () => { if(++n === keys.length) res(out); }; }); }catch(e){ res([]); } }); },
+  async putMany(entries){ const db = await this.open(); if(!db || !entries.length) return; try{ const st = db.transaction('v', 'readwrite').objectStore('v'); entries.forEach(([k, v]) => st.put(v, k)); }catch(e){} }
+};
+// El motor en segundo plano no aguanta en este equipo: la búsqueda sigue en la página el resto de la sesión (modelo pequeño, lotes que ceden el control)
+function semToPage(){ if(!SEM.main) console.warn('IA: la búsqueda por significado sigue en la página'); SEM.main = true; SEM.pipe = null; }
 // Vectores normalizados con caché (e5: "query:" para la consulta, "passage:" para los comentarios)
 async function semEmbed(texts, kind, onProg){
-  const pipe = await semLoad(), out = new Array(texts.length), todo = [];
+  const out = new Array(texts.length), todo = [];
   texts.forEach((t, i) => { const k = kind + '|' + t; if(SEM.cache.has(k)) out[i] = SEM.cache.get(k); else todo.push(i); });
+  // caché persistente
+  if(todo.length){
+    const pk = j => SEM.model + '|' + kind + '|' + texts[j].slice(0, 512);
+    const got = await EMB.getMany(todo.map(pk));
+    for(let n = todo.length - 1; n >= 0; n--){ const v = got[n]; if(v && v.length){ const j = todo[n]; out[j] = v; SEM.cache.set(kind + '|' + texts[j], v); todo.splice(n, 1); } }
+  }
+  if(!todo.length){ onProg && onProg(texts.length, texts.length); return out; }
+  const done = texts.length - todo.length, save = [];
+  const keep = (j, v) => { const f = v instanceof Float32Array ? v : Float32Array.from(v); out[j] = f; SEM.cache.set(kind + '|' + texts[j], f); save.push([SEM.model + '|' + kind + '|' + texts[j].slice(0, 512), f]); };
+  const pipe = await semLoad();
   if(pipe === 'worker'){
-    if(todo.length){
-      const vs = await aiRun({ type:'embed', model:SEM.model, tries:await semTries(), texts:todo.map(j => kind + ': ' + texts[j].slice(0, 512)) }, { onStep:(a, b) => onProg && onProg(a, b) });
-      if(vs === null){ SEM.pipe = null; SEM.loading = null; return semEmbed(texts, kind, onProg); }   // sin motor en segundo plano
-      todo.forEach((j, n) => { out[j] = vs[n]; SEM.cache.set(kind + '|' + texts[j], vs[n]); });
-    }
-    return out;
+    try{
+      const vs = await aiRun({ type:'embed', model:SEM.model, tries:await semTries(), texts:todo.map(j => kind + ': ' + texts[j].slice(0, 512)) }, { maxTries:2, quiet:true, onStep:(a, b) => onProg && onProg(done + a, texts.length) });
+      if(vs !== null){ todo.forEach((j, n) => keep(j, vs[n])); EMB.putMany(save); return out; }
+      semToPage();
+    }catch(e){ if(!e.workerCrash) throw e; semToPage(); }
+    SEM.loading = null;
+    return semEmbed(texts, kind, onProg);   // sigue en la página con lo que falte
   }
   for(let i = 0; i < todo.length; i += 4){
     const batch = todo.slice(i, i + 4), r = await pipe(batch.map(j => kind + ': ' + texts[j].slice(0, 512)), { pooling:'mean', normalize:true });
-    const arr = r.tolist();
-    batch.forEach((j, n) => { out[j] = arr[n]; SEM.cache.set(kind + '|' + texts[j], arr[n]); });
-    onProg && onProg(Math.min(todo.length, i + 4), todo.length);
+    const arr = r.tolist(); r.dispose?.();
+    batch.forEach((j, n) => keep(j, arr[n]));
+    onProg && onProg(done + Math.min(todo.length, i + 4), texts.length);
     await new Promise(r => setTimeout(r, 0));   // la página sigue respondiendo entre lotes
   }
+  EMB.putMany(save);
   return out;
 }
 const dot = (a, b) => { let s = 0; for(let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
