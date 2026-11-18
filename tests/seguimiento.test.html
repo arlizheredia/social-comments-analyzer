@@ -259,6 +259,8 @@ const TR = () => w.eval('TR');
     const cRow = m.cmp.find(r => r.k === 'Comentarios');
     check('Comparativa: el martes 4 comentarios sobre Kanasta24 frente a 6 el lunes', m.last.name === 'Martes' && m.prevT.name === 'Lunes' && cRow.a === 4 && cRow.b === 6 && /▼ -2/.test(cRow.D), JSON.stringify(cRow));
     check('Comparativa con el seguimiento anterior en sección propia', m.postCmp.length === 2 && /Comparativa con el seguimiento anterior/.test(rtxt));
+    { const fb = m.postKpi.find(x => x.platform === 'facebook'), ig = m.postKpi.find(x => x.platform === 'instagram'), r = (pk, k) => pk.rows.find(x => x.k === k);
+      check('Indicadores por publicación: Facebook 3 comentarios el martes frente a 2 el lunes (1 nuevo: Pedro); Instagram no está en el martes', m.postKpi.length === 2 && fb && r(fb, 'Comentarios').a === 3 && r(fb, 'Comentarios').b === 2 && r(fb, 'Comentarios nuevos').a === 1 && !ig && d.querySelectorAll('#reportDoc .pkpi').length === 2, JSON.stringify(m.postKpi.map(x => ({ p:x.platform, c:r(x, 'Comentarios').a, antes:r(x, 'Comentarios').b, nuevos:r(x, 'Comentarios nuevos').a })))); }
     check('El resumen empieza por cuántos comentarios hablan del tema y después el seguimiento principal', /^De 16 comentarios revisados, 7 hablan de Kanasta24\.$/.test(m.summary[0]) && m.summary.some(x => /^Seguimiento principal: «Martes».*sobre Kanasta24/.test(x)), m.summary.slice(0, 2).join(' | '));
     check('El informe nombra el tema y no dice «enfoque» ni menciona la IA', /Informe de comentarios sobre Kanasta24/.test(rtxt) && /Quién más comenta sobre Kanasta24/.test(rtxt) && /Quiénes hablan bien de Kanasta24/.test(rtxt) && !/enfoque/i.test(rtxt) && !/\bIA\b|inteligencia artificial/i.test(rtxt) && !/Estadísticas generales/.test(rtxt), rtxt.match(/enfoque|\bIA\b/i)?.[0]);
     const rdocW = w.reportDocument(m).body, rtext = w.reportText(m);
@@ -268,6 +270,7 @@ const TR = () => w.eval('TR');
     check('El informe habla de positivos y negativos, sin “índice neto”', /Comentarios positivos/.test(rtxt) && !/índice neto/i.test(rtxt));
     check('Otras marcas y temas: no repite el propio tema (Kanasta24) ni muestra términos sin menciones («envío»)', !m.watch.some(x => x.term === 'Kanasta24') && !m.watch.some(x => x.term === 'envío'), JSON.stringify(m.watch.map(x => x.term)));
     check('Quién más comenta sobre Kanasta24: Dinna Ramírez y Ana López', m.topAuthors.slice(0, 2).map(a => a.name).sort().join() === 'Ana López,Dinna Ramírez', m.topAuthors.slice(0, 3).map(a => a.name + ' ' + a.n).join(', '));
+    check('«Qué se dice» muestra frases que se repiten, sin la marca ni nombres de personas', m.phrases.list.length >= 2 && m.phrases.list.every(p => p.t.split(' ').length >= 2 && !/kanasta|\b(dinna|ana|pedro|lópez)\b/i.test(p.t)) && m.phrases.list.some(p => /carne maloliente/.test(p.t)) && /Qué se dice sobre Kanasta24/.test(d.getElementById('reportDoc').textContent) && /carne maloliente»/.test(w.reportDocument(m).body), JSON.stringify(m.phrases.list.map(p => p.t + ' ' + p.v)));
     check('Las palabras más usadas no repiten el tema', !m.st.words.some(([x]) => /kanasta/i.test(x)), m.st.words.slice(0, 5).map(x => x[0]).join(', '));
     check('Hay resumen ejecutivo y recomendaciones', m.summary.length >= 3 && m.recs.length >= 2);
     check('El gráfico de evolución por seguimiento se dibuja', !!d.querySelector('#repChartDates svg'));
@@ -343,7 +346,7 @@ const TR = () => w.eval('TR');
 
     // 7. Exportaciones
     const txt = w.reportText(m);
-    check('Copiar texto: incluye resumen, indicadores y publicaciones, sin «Próximos pasos»', /\nRESUMEN\n/.test(txt) && /SEGUIMIENTO MÁS RECIENTE FRENTE AL ANTERIOR/.test(txt) && /POR PUBLICACIÓN/.test(txt) && !/PRÓXIMOS PASOS/.test(txt), txt.slice(0, 200));
+    check('Copiar texto: incluye resumen, indicadores y publicaciones, sin «Próximos pasos»', /\nRESUMEN\n/.test(txt) && /SEGUIMIENTO MÁS RECIENTE, POR PUBLICACIÓN/.test(txt) && /POR PUBLICACIÓN/.test(txt) && !/PRÓXIMOS PASOS/.test(txt), txt.slice(0, 200));
     const files = []; w.download = (name, content) => files.push({ name, content });
     await w.reportExport('word');
     const doc = files.find(f => /\.doc$/.test(f.name));
@@ -351,7 +354,7 @@ const TR = () => w.eval('TR');
     check('Word: se descarga un .doc con el informe', !!doc && /urn:schemas-microsoft-com:office:word/.test(wordHtml) && /Informe de comentarios/.test(wordHtml) && /<h2>Resumen<\/h2>/.test(wordHtml), doc ? doc.name + ' · ' + Math.round(wordHtml.length / 1024) + ' KB' : 'sin archivo');
     check('Word: documento en blanco y negro con Arial 12 y pie de página numerado', /Arial/.test(wordHtml) && /font-size:12pt/.test(wordHtml) && !/#(0b57d0|1877f2|d93025|188038|e8f0fe)/i.test(wordHtml) && /mso-element:footer/.test(wordHtml) && /NUMPAGES/.test(wordHtml));
     const docB = w.reportDocument(m);
-    check('Documento del informe: sin colores y con las secciones del modelo', !(docB.body.match(/#[0-9a-f]{3,6}\b|rgb\(/gi) || []).length && /Resumen/.test(docB.body) && /Indicadores del seguimiento más reciente/.test(docB.body) && /Comparativa por publicación/.test(docB.body) && /<h2>Por publicación<\/h2>/.test(docB.body) && !/Próximos pasos/.test(docB.body));
+    check('Documento del informe: sin colores y con las secciones del modelo', !(docB.body.match(/#[0-9a-f]{3,6}\b|rgb\(/gi) || []).length && /Resumen/.test(docB.body) && /Indicadores del seguimiento más reciente/.test(docB.body) && /Indicadores del seguimiento más reciente, por publicación/.test(docB.body) && (docB.body.match(/<h3>[^<]+\((Facebook|TikTok|Instagram)\)/g) || []).length === 2 && /<h2>Por publicación<\/h2>/.test(docB.body) && !/Próximos pasos/.test(docB.body));
     await w.reportExport('html');
     check('HTML: se descarga un informe autónomo', files.some(f => /\.html$/.test(f.name) && /<table/.test(f.content)));
     const pdfLoaded = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js').then(() => typeof w.html2pdf === 'function', () => false);
