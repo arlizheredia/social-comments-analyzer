@@ -941,8 +941,14 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 .rp-session div{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13px;line-height:19px}
 .rp-session b{font-size:14px}
 .rp-session.checking{background:var(--surface)}
-.rp-session.checking>.ms{color:var(--primary);animation:spin 1s linear infinite}
+.rp-session.checking>.ms{color:var(--primary)}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* Indicador de carga: anillo tenue + arco que gira sobre su centro exacto (toma el color y el tamaño del texto) */
+.spinner{display:inline-block;flex:none;width:1em;height:1em;vertical-align:middle;transform-origin:50% 50%;animation:spin .9s linear infinite}
+.spinner circle{fill:none;stroke:currentColor;stroke-width:2.6}
+.spinner .trk{opacity:.2}
+.spinner .arc{stroke-linecap:round;stroke-dasharray:16 41}
+@media (prefers-reduced-motion:reduce){ .spinner{animation-duration:2.4s} }
 @media (max-width:720px){.rp-session{flex-wrap:wrap}.rp-session .btn{margin-left:auto}}
 
 /* Selector de emojis */
@@ -1022,10 +1028,10 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 .rep-focus>h3 .ms{color:var(--primary)}
 .rep-divider{font:500 20px/28px var(--font);margin:28px 0 12px;padding-top:16px;border-top:1px solid var(--outline-variant)}
 .ai-prog{display:inline-grid;grid-template-columns:auto minmax(0,1fr);gap:4px 8px;align-items:center;width:min(100%,440px);vertical-align:middle;text-align:left}
-.ai-prog .ai-spin{font-size:18px;animation:spin 1.4s linear infinite;color:var(--primary)}
+.ai-prog .ai-spin{font-size:18px;line-height:1;display:inline-flex;color:var(--primary)}
 .ai-prog .ai-prog-t{font-size:13px;line-height:18px;color:var(--on-surface-variant)}
 .ai-prog .pbar{grid-column:1/-1;height:6px}
-@media (prefers-reduced-motion:reduce){ .ai-prog .ai-spin{animation:none} }
+
 .sem-bar .pbar{flex:1 1 100%;order:9;height:6px;background:color-mix(in srgb,var(--on-primary-container) 18%,transparent)}
 .ai-banner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 16px;align-items:center;margin:0 0 16px;padding:14px 18px;border-radius:16px;background:var(--pend-bg);color:var(--on-surface);border:1px solid var(--outline-variant)}
 .ai-banner-t{grid-column:1;grid-row:1}
@@ -1063,7 +1069,7 @@ body.no-ai .needs-ai{display:none!important}
 .rd-prog .pctsub{grid-column:1/-1;font-size:13px;color:var(--on-surface-variant);margin-top:-6px}
 .ritem{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--outline-variant)}
 .ritem .ri-ic{font-size:22px}
-.ritem .ri-ic.done{color:var(--success)} .ritem .ri-ic.error{color:var(--error)} .ritem .ri-ic.running{color:var(--primary);animation:spin 1.2s linear infinite}
+.ritem .ri-ic.done{color:var(--success)} .ritem .ri-ic.error{color:var(--error)} .ritem .ri-ic.running{color:var(--primary)}
 .ritem .ri-ic.pending,.ritem .ri-ic.skipped{color:var(--outline)}
 .ritem .ri-t{font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:8px}
 .ritem .ri-s{font-size:12px;color:var(--on-surface-variant)}
@@ -1102,7 +1108,7 @@ select.input.qmode{width:auto;max-width:230px;height:48px;border-radius:24px;pad
 .sem-bar .sem-txt{flex:1;min-width:160px}
 .sem-bar .input.sm{height:32px;background-color:var(--surface);padding:0 32px 0 12px;background-position:calc(100% - 17px) 13px,calc(100% - 12px) 13px}
 .sem-bar .ms{font-size:20px}
-.sem-bar.busy .ms{animation:spin 1.4s linear infinite}
+
 .cscore{font-size:11px;font-weight:600;color:var(--primary);border:1px solid currentColor;border-radius:6px;padding:0 6px}
 @media (max-width:720px){ select.input.qmode{height:40px;max-width:none;flex:1 1 140px} }
 /* ================== INFORMES ================== */
@@ -5535,7 +5541,8 @@ async function localDelete(){
   renderAiState();
 }
 // Indicador de carga de IA: icono girando, texto y barra (con porcentaje si se conoce)
-function aiProgressHtml(txt, pct){ return `<span class="ai-prog" role="status" aria-live="polite"><span class="ms ai-spin" aria-hidden="true">progress_activity</span><span class="ai-prog-t">${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-label="${esc(txt)}" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></span>`; }
+const SPIN = '<svg class="spinner" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="trk" cx="12" cy="12" r="9"/><circle class="arc" cx="12" cy="12" r="9"/></svg>';
+function aiProgressHtml(txt, pct){ return `<span class="ai-prog" role="status" aria-live="polite"><span class="ai-spin" aria-hidden="true">${SPIN}</span><span class="ai-prog-t">${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-label="${esc(txt)}" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></span>`; }
 function aiProgressSet(sel, txt, pct){ const e = typeof sel === 'string' ? $(sel) : sel; if(e) e.innerHTML = aiProgressHtml(txt, pct); }
 function aiStatusText(t, pct){
   ['#rpAiState', '#waAiState'].forEach(s => { const e = $(s); if(e && e.offsetParent && e.dataset.busy === '1') aiProgressSet(e, t, pct); });
@@ -5833,7 +5840,7 @@ function showSession(state){
   const box = $('#rpSession'), block = !!state && state !== 'checking';
   box.classList.toggle('hidden', !state);
   box.classList.toggle('checking', state === 'checking');
-  $('#rpSessionIc').textContent = state === 'checking' ? 'progress_activity' : 'error';
+  $('#rpSessionIc').innerHTML = state === 'checking' ? SPIN : 'error';
   $('#rpSessionTitle').textContent = state === 'checking' ? 'Comprobando la sesión de Facebook…' : 'No hay una sesión de Facebook activa';
   $('#rpSessionMsg').textContent = state === 'nologin' ? 'Para responder comentarios necesitas iniciar sesión con Facebook (Obtener › Conectar con Facebook; si no lo ves, actívalo en ⋮ › Mostrar «Conectar con Facebook»).'
     : state === 'expired' ? 'La sesión de Facebook caducó o se cerró. Vuelve a iniciar sesión para poder responder.' : '';
@@ -6306,7 +6313,7 @@ function renderRunDetail(){
         : it.status === 'error' ? esc(it.error || 'Error') : it.status === 'skipped' ? 'Omitida' : 'Pendiente';
       const pp = it.status === 'running' && it.total ? Math.min(100, Math.round((it.count || 0) / it.total * 100)) : 0;
       return `<div class="ritem" data-ipid="${esc(id)}">
-        <span class="ms ri-ic ${it.status}">${itemIcon(it)}</span>
+        <span class="ms ri-ic ${it.status}">${it.status === 'running' ? SPIN : itemIcon(it)}</span>
         <div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span><span class="mchip ${m}">${METHOD_TXT[m]}</span></div><div class="ri-s${it.status === 'error' ? ' err' : ''}">${sub}</div></div>
         <div class="ri-acts">
           ${it.status === 'done' ? `<button class="btn text sm" data-iact="view"><span class="ms">forum</span>Ver comentarios</button>` : ''}
@@ -6654,7 +6661,7 @@ function showHistoryDetail(t){
   const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="small muted">${esc(fmtDay(t.date))} · <span class="stchip done"><span class="ms">task_alt</span>Completado</span> · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
     <div class="rd-acts"><button class="btn filled" data-hd="report"><span class="ms">analytics</span>Crear informe</button><button class="btn text" data-hd="reopen"><span class="ms">replay</span>Reabrir</button><button class="icon-btn" data-hd="close" aria-label="Cerrar" title="Cerrar"><span class="ms">close</span></button></div></div>
     ${t.postIds.map(id => { const p = TR.posts.find(x => x.id === id) || { url:'', platform:'facebook', name:'(eliminada de la lista)' }, it = t.items[id];
-      return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' && !it.count ? '<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: reabre el seguimiento y reintenta esta publicación</span>' : it.status === 'done' ? itemCountTxt(it) : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
+      return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${it.status === 'running' ? SPIN : itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' && !it.count ? '<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: reabre el seguimiento y reintenta esta publicación</span>' : it.status === 'done' ? itemCountTxt(it) : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
         <div class="ri-acts">${it.status === 'done' ? `<button class="btn text sm" data-hdv="${esc(id)}"><span class="ms">forum</span>Ver comentarios</button>` : ''}</div></div>`; }).join('')}</div>`;
   let box = $('#histDetail'); if(!box){ box = document.createElement('div'); box.id = 'histDetail'; $('#sp-hist').appendChild(box); }
   box.innerHTML = html; box.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -6717,7 +6724,7 @@ async function generateReport(tids){
   if(!tids.length){ toast('Elige al menos un seguimiento'); return; }
   if(!aiInstalled()){ aiNeedInstall(); $('#repOut').innerHTML = '<div class="empty-mini"><span class="ms">psychology</span>Los informes usan la IA para encontrar los comentarios del enfoque: instálala con el aviso de la parte superior.</div>'; return; }
   const fq = reportFocus();
-  const prog = (txt, pct) => { $('#repOut').innerHTML = `<div class="empty-mini rep-gen" role="status" aria-live="polite"><span class="ms" style="animation:spin 1.4s linear infinite">progress_activity</span><div style="display:grid;gap:8px;min-width:min(420px,70vw)"><span>${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></div></div>`; };
+  const prog = (txt, pct) => { $('#repOut').innerHTML = `<div class="empty-mini rep-gen" role="status" aria-live="polite"><span class="ms" style="color:var(--primary)">${SPIN}</span><div style="display:grid;gap:8px;min-width:min(420px,70vw)"><span>${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></div></div>`; };
   prog(`Buscando los comentarios sobre ${focusName(fq)}…`, null);
   try{
     REP.model = await buildReport(tids, reportTerms().split(',').map(s => s.trim()).filter(Boolean), fq, (a, b) => prog(`Buscando los comentarios sobre ${focusName(fq)}… ${Math.round(a / b * 100)} %`, Math.round(a / b * 100)));
@@ -7222,7 +7229,7 @@ function initReports(){
 const SEM = { lib:'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1', model:'Xenova/multilingual-e5-small', pipe:null, loading:null, cache:new Map() };
 function semStatus(txt, busy, showLevel, pct){
   $('#semBar').classList.remove('hidden'); $('#semBar').classList.toggle('busy', !!busy);
-  $('#semIc').textContent = busy ? 'progress_activity' : 'psychology'; $('#semTxt').textContent = txt;
+  $('#semIc').innerHTML = busy ? SPIN : 'psychology'; $('#semTxt').textContent = txt;
   $('#semLevel').classList.toggle('hidden', !showLevel);
   const pb = $('#semPb'); pb.classList.toggle('hidden', !busy); pb.classList.toggle('indet', !!busy && pct == null); pb.firstElementChild.style.width = (pct || 0) + '%';
   if(pct != null) pb.setAttribute('aria-valuenow', String(pct)); else pb.removeAttribute('aria-valuenow');
