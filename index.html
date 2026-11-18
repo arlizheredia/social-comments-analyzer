@@ -5621,23 +5621,23 @@ function aiCall(msg, { onProgress, onStep, signal } = {}){
     w.postMessage({ ...msg, id, lib:SEM.lib });
   });
 }
-// Ejecuta una tarea en el motor recuperándose de caídas: 1.ª caída → motor nuevo y se repite la tarea;
-// 2.ª caída → modo compatible (la IA pasa al hilo de la página el resto de la sesión). Devuelve null si no hay motor.
+// Ejecuta una tarea en el motor en segundo plano recuperándose de caídas (casi siempre, falta de memoria):
+// se arranca un motor nuevo y se repite la tarea, hasta 3 intentos con una pausa para liberar memoria.
+// La IA nunca pasa al hilo de la página: allí la bloquearía («La página no responde»). Devuelve null solo si el navegador no admite el motor.
+const AI_TRIES = 3;
 async function aiRun(msg, opts){
-  for(let attempt = 0; ; attempt++){
+  for(let attempt = 1; ; attempt++){
     const pr = aiCall(msg, opts); if(!pr) return null;
     try{ return await pr; }
     catch(e){
       if(!e.workerCrash) throw e;
-      if(AIW.crashes >= 2 || attempt >= 1){
-        AIW.failed = true; AIW.w = null;
-        if(!AIW.notified){ AIW.notified = true; toast('La IA se reinició en modo compatible: puede ir algo más lenta'); }
-        return null;   // el llamador sigue en el hilo de la página
-      }
+      if(attempt >= AI_TRIES) throw Object.assign(new Error('La IA se quedó sin memoria en este equipo. Cierra otras pestañas o programas y vuelve a intentarlo.'), { workerCrash:true });
       toast('La IA se reinició; repitiendo la tarea…');
+      await new Promise(r => setTimeout(r, 1500 * attempt));
     }
   }
 }
+const NO_WORKER = 'Este navegador no puede ejecutar la IA en segundo plano. Usa una versión reciente de Chrome o Edge.';
 // Variantes del modelo de lenguaje a probar: primero las ya guardadas en la caché
 async function llmTries(){
   let device = 'wasm';
@@ -5662,27 +5662,8 @@ async function localModel(){
     } });
     const o = await wp;
     if(o){ LLM.gen = 'worker'; LLM.dtype = o.dtype; LLM.device = o.device; return LLM.gen; }
-    const T = await import(SEM.lib);
-    T.env.allowLocalModels = false;
-    let device = 'wasm';
-    try{ if(navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; }catch(e){}
-    const files = {};
-    const progress_callback = pr => {
-      if(pr.status === 'progress' && pr.total){ files[pr.file] = [pr.loaded, pr.total]; const a = Object.values(files).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); LLM.pct = Math.min(99, Math.floor(a[0] / a[1] * 100)); LLM.mb = [a[0] / 1e6, a[1] / 1e6]; aiStatusText(`Cargando la IA de la app… ${LLM.pct} %`); LLM.onProgress?.(); }
-    };
-    // primero las variantes ya descargadas (en el orden que mejor funciona en este equipo); si ninguna sirve, se descarga la recomendada
-    if(!AISTATE.checked) await aiScanCache();
-    const pref = device === 'webgpu' ? ['q4f16', 'q4', 'fp16', 'q8', 'int8', 'uint8', 'bnb4', 'fp32'] : ['q4', 'q8', 'int8', 'uint8', 'bnb4', 'q4f16', 'fp32', 'fp16'];
-    const cached = pref.filter(d => AISTATE.llmTypes.includes(d));
-    const tries = [...cached.map(d => ({ dtype:d, device:device === 'webgpu' && /f16/.test(d) ? 'webgpu' : device })), ...(cached.length ? [] : [{ dtype:device === 'webgpu' ? 'q4f16' : 'q8', device }])];
-    if(device === 'webgpu') tries.push(...cached.filter(d => !/f16/.test(d)).map(d => ({ dtype:d, device:'wasm' })));
-    if(!tries.some(t => t.dtype === 'q8' && t.device === 'wasm')) tries.push({ dtype:'q8', device:'wasm' });   // último recurso
-    let lastErr;
-    for(const t of tries){
-      try{ LLM.gen = await T.pipeline('text-generation', LLM.model, { ...t, progress_callback }); LLM.dtype = t.dtype; LLM.device = t.device; return LLM.gen; }
-      catch(e){ lastErr = e; console.warn('IA: no se pudo cargar la variante', t, e); }
-    }
-    throw lastErr;
+    // generar texto en la página la bloquea durante minutos: sin motor en segundo plano no se usa
+    throw new Error(NO_WORKER);
   })().catch(e => { LLM.loading = null; throw new Error('No se pudo cargar la IA de la app: ' + (e.message || e) + (navigator.onLine ? '' : ' (sin conexión)')); });
   return LLM.loading;
 }
@@ -5695,15 +5676,10 @@ async function localGenerate(sys, user, signal, onProgress){
   if(gen === 'worker'){
     const step = (a, b) => { const x = Math.min(.97, a / b); onProgress?.(x); aiStatusText(`Redactando con la IA… ${Math.round(x * 100)} %`, Math.round(x * 100)); };
     const r = await aiRun({ type:'gen', model:LLM.model, tries:await llmTries(), messages:[{ role:'system', content:sys }, { role:'user', content:user }], opts }, { onStep:step, signal });
-    if(r !== null) return r;
-    LLM.gen = null; LLM.loading = null;   // modo compatible: se repite en el hilo de la página
-    return localGenerate(sys, user, signal, onProgress);
+    if(r === null) throw new Error(NO_WORKER);
+    return r;
   }
-  // progreso real: se cuentan los fragmentos que el modelo va escribiendo
-  if(onProgress){ try{ const T = await import(SEM.lib); let n = 0; opts.streamer = new T.TextStreamer(gen.tokenizer, { skip_prompt:true, skip_special_tokens:true, callback_function:() => { n++; onProgress(Math.min(.97, n / MAX)); } }); }catch(e){} }
-  const out = await gen([{ role:'system', content:sys }, { role:'user', content:user }], opts);
-  const g = out[0].generated_text;
-  return Array.isArray(g) ? (g[g.length - 1].content || '') : String(g || '');
+  throw new Error(NO_WORKER);
 }
 
 let aiAbort = null;
@@ -7314,16 +7290,17 @@ async function semEmbed(texts, kind, onProg){
   if(pipe === 'worker'){
     if(todo.length){
       const vs = await aiRun({ type:'embed', model:SEM.model, tries:await semTries(), texts:todo.map(j => kind + ': ' + texts[j].slice(0, 512)) }, { onStep:(a, b) => onProg && onProg(a, b) });
-      if(vs === null){ SEM.pipe = null; SEM.loading = null; return semEmbed(texts, kind, onProg); }   // modo compatible
+      if(vs === null){ SEM.pipe = null; SEM.loading = null; return semEmbed(texts, kind, onProg); }   // sin motor en segundo plano
       todo.forEach((j, n) => { out[j] = vs[n]; SEM.cache.set(kind + '|' + texts[j], vs[n]); });
     }
     return out;
   }
-  for(let i = 0; i < todo.length; i += 16){
-    const batch = todo.slice(i, i + 16), r = await pipe(batch.map(j => kind + ': ' + texts[j].slice(0, 512)), { pooling:'mean', normalize:true });
+  for(let i = 0; i < todo.length; i += 4){
+    const batch = todo.slice(i, i + 4), r = await pipe(batch.map(j => kind + ': ' + texts[j].slice(0, 512)), { pooling:'mean', normalize:true });
     const arr = r.tolist();
     batch.forEach((j, n) => { out[j] = arr[n]; SEM.cache.set(kind + '|' + texts[j], arr[n]); });
-    onProg && onProg(Math.min(todo.length, i + 16), todo.length);
+    onProg && onProg(Math.min(todo.length, i + 4), todo.length);
+    await new Promise(r => setTimeout(r, 0));   // la página sigue respondiendo entre lotes
   }
   return out;
 }
