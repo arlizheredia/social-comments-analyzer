@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// sca-extractor 1.4.1 · requiere extensión 1.4.0
+// sca-extractor 1.4.2 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -595,25 +595,44 @@ function fbExtractor(){
     }
   }
   // ---- Facebook: cambiar "Más relevantes" por "Todos los comentarios" para no perder ninguno ----
-  var SORT_RE = /^(más relevantes|most relevant|los más relevantes|top comments|comentarios destacados|plus pertinents|mais relevantes|newest|más recientes)$/i;
+  // nombres del orden actual (Facebook los cambia: «Más relevantes» → «Más pertinentes»)
+  var SORT_RE = /^((los )?más (relevantes|pertinentes|recientes)|comentarios (destacados|más relevantes|más pertinentes)|most relevant|top comments|newest|most recent|plus pertinents|les plus pertinents|plus récents|mais relevantes|mais recentes)$/i;
   var ALL_RE = /^(todos los comentarios|all comments|tous les commentaires|todos os comentários|alle kommentare|tutti i commenti)/i;
   // Estado del orden: 'cambiado' | 'ya' (ya mostraba todos) | 'sin-selector' | 'sin-opcion'
   var sortState = '', sortTries = 0, sortMenu = [], LOOP = { round: 0, second: false };   // LOOP: datos del bucle para el diagnóstico final
-  function sortButtons(){ return Array.prototype.slice.call(root().querySelectorAll('div[role="button"],span[role="button"]')).filter(function(b){ return b.offsetParent; }); }
+  function sortButtons(){ return Array.prototype.slice.call(root().querySelectorAll('div[role="button"],span[role="button"],[aria-haspopup="menu"]')).filter(function(b){ return b.offsetParent; }); }
+  // pulsación completa (Facebook abre algunos menús al soltar el botón, no con un click() simple)
+  function press(el){
+    var r = el.getBoundingClientRect(), o = { bubbles: true, cancelable: true, view: window, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0 };
+    try { el.dispatchEvent(new PointerEvent('pointerdown', Object.assign({ pointerId: 1, pointerType: 'mouse', isPrimary: true }, o))); } catch(e){}
+    try { el.dispatchEvent(new MouseEvent('mousedown', o)); } catch(e){}
+    try { el.dispatchEvent(new PointerEvent('pointerup', Object.assign({ pointerId: 1, pointerType: 'mouse', isPrimary: true }, o))); } catch(e){}
+    try { el.dispatchEvent(new MouseEvent('mouseup', o)); } catch(e){}
+    try { el.click(); } catch(e){}
+  }
+  var sortText = function(b){ return (b.innerText || '').trim().split('\n')[0].trim(); };
   async function fbAllComments(){
     if (sortState === 'cambiado' || sortState === 'ya') return sortState;
     sortTries++;
     var bs = sortButtons();
-    if (bs.some(function(b){ return ALL_RE.test((b.innerText || '').trim()); })) return (sortState = 'ya');
-    var sortBtn = bs.filter(function(b){ return SORT_RE.test((b.innerText || '').trim()); })[0];
+    if (bs.some(function(b){ return ALL_RE.test(sortText(b)); })) return (sortState = 'ya');
+    var sortBtn = bs.filter(function(b){ return SORT_RE.test(sortText(b)); })[0];
     if (!sortBtn) return (sortState = 'sin-selector');
-    try { sortBtn.click(); } catch(e){ return (sortState = 'sin-selector'); }
-    for (var t = 0; t < 14; t++){
+    try { sortBtn.scrollIntoView({ block: 'center' }); } catch(e){}
+    press(sortBtn);
+    for (var t = 0; t < 20; t++){
       await sleep(150);
-      var items = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]'));
+      var items = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return m.offsetParent; });
       if (items.length && !sortMenu.length) sortMenu = items.map(function(m){ return ((m.innerText || '').trim().split('\n')[0] || '').slice(0, 40); }).slice(0, 6);
       var item = items.filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
-      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); for (var t2 = 0; t2 < 16; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; } return (sortState = 'cambiado'); }
+      if (item){
+        press(item); status('Mostrando todos los comentarios…', true);
+        for (var t2 = 0; t2 < 16; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; }
+        // comprobar que el orden cambió (el botón muestra ahora «Todos los comentarios»); si no, se reintenta en otra ronda
+        var now = sortButtons().some(function(b){ return ALL_RE.test(sortText(b)); });
+        return (sortState = now ? 'cambiado' : 'sin-confirmar');
+      }
+      if (t === 8 && !items.length) press(sortBtn);   // el menú no se abrió: segundo intento
     }
     try { document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); } catch(e){}
     return (sortState = 'sin-opcion');
@@ -805,7 +824,7 @@ function fbExtractor(){
         if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)){
           if (!TT && !IG && !secondPass && total && collected.length < total * 0.97){
             // segunda pasada: volver a intentar «Todos los comentarios», reiniciar los botones y recorrer el panel de nuevo
-            secondPass = true; LOOP.second = true; idle = 0; clicks = new Map(); sortState = sortState === 'cambiado' || sortState === 'ya' ? sortState : '';
+            secondPass = true; LOOP.second = true; idle = 0; clicks = new Map(); sortState = sortState === 'cambiado' || sortState === 'ya' ? sortState : '';   // también 'sin-confirmar'
             status('Faltan comentarios frente al total de Facebook: revisando de nuevo…', true);
             await fbAllComments(); scrollNudge(); await sleep(800); scrollAll(); await sleep(1200);
             continue;
