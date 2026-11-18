@@ -2133,7 +2133,7 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 
 ## Exportar y compartir {#inf-exportar}
 
-**Mensaje para WhatsApp**: genera un párrafo breve y **sin tecnicismos** con tu **valoración personal**: cuántos comentarios se analizaron, cuántos hablan de las marcas o temas vigilados y cuántos de ellos son positivos y negativos, quiénes más critican, quiénes son los embajadores, tu opinión sobre lo que se dice y qué conviene atender. Sirve para situar a quienes reciban el informe en un chat o canal. Elige el tono (cercano, formal o muy breve), añade tu firma, edítalo y pulsa **Copiar mensaje** o **Abrir en WhatsApp**. Con **Redactar con IA** lo reescribe el modelo gratuito que configures ([cómo configurarlo](#ayuda/ia-config)).
+**Mensaje para WhatsApp**: genera un mensaje breve y **sin tecnicismos**: cuántos comentarios se revisaron, cuántos hablan del tema y cuántos son positivos y negativos, **quiénes comentan en contra** de la marca (con cuántos comentarios cada uno) y **algunos ejemplos** de lo que dicen, **quiénes más comentan a favor** y lo que sigue sin respuesta. No incluye opiniones. Sirve para situar a quienes reciban el informe en un chat o canal. Elige el tono (cercano, formal o muy breve), añade tu firma, edítalo y pulsa **Copiar mensaje** o **Abrir en WhatsApp**. Con **Redactar con IA** lo reescribe el modelo gratuito que configures ([cómo configurarlo](#ayuda/ia-config)).
 
 Los documentos exportados tienen un formato **sencillo, en blanco y negro y en Arial 12**: título, ficha (fecha, *Elaborado por*, *Cliente / marca* y periodo), resumen, indicadores, detalle por publicación, audiencia, comentarios destacados, con pie de página numerado. Rellena *Elaborado por* y *Cliente / marca* al elegir los seguimientos del informe.
 
@@ -7513,12 +7513,16 @@ function whatsappMessage(m, tone = 'cercano'){
   // comentarios que hablan del criterio (el informe ya trae solo esos); sin criterio, los de las marcas vigiladas
   const about = fq ? c.list : terms.length ? others.filter(x => terms.some(t => normName(x.text).includes(normName(t)) || (x.mentions || []).some(mm => normName(mm).includes(normName(t))))) : others;
   const pos = about.filter(x => x.sentiment === 'positivo'), neg = about.filter(x => x.sentiment === 'negativo');
-  const topBy = arr => { const k = {}; arr.forEach(x => { const n = x.authorName || ''; if(n) k[n] = (k[n] || 0) + 1; }); return Object.entries(k).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]); };
-  const critics = topBy(neg.filter(x => !x.isTeam)), fans = topBy(pos);
-  // temas que más aparecen en lo positivo y en lo negativo (sin la propia marca)
-  const skip = [...terms.map(t => normName(t).replace(/\s+/g, '')), ...(fq ? focusKeywords(fq) : [])];
-  const topWord = arr => (computeStats(arr).words.find(([w]) => !skip.some(s => normName(w).includes(s) || s.includes(normName(w)))) || [])[0];
-  const likeW = pos.length ? topWord(pos) : '', badW = neg.length ? topWord(neg) : '';
+  // personas con más comentarios en una lista, con su número: «Dinna Ramírez (3)»
+  const topBy = (arr, n) => { const k = {}; arr.forEach(x => { const a = x.authorName || ''; if(a) k[a] = (k[a] || 0) + 1; }); return Object.entries(k).sort((a, b) => b[1] - a[1]).slice(0, n); };
+  const negPub = neg.filter(x => !x.isTeam);
+  const critics = topBy(negPub, 4), fans = topBy(pos, 3);
+  const withN = arr => people(arr.map(([a, n]) => `${a} (${n})`));
+  // ejemplos de comentarios negativos: los de más reacciones, uno por persona, recortados
+  const clip = s => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > 140 ? s.slice(0, 137).replace(/\s+\S*$/, '') + '…' : s; };
+  const seenA = new Set();
+  const examples = [...negPub].sort((a, b) => (b.reactions || 0) - (a.reactions || 0) || (b.text || '').length - (a.text || '').length)
+    .filter(x => x.text && !seenA.has(x.authorName) && seenA.add(x.authorName)).slice(0, 3);
   const pendNeg = c.team ? others.filter(x => x.sentiment === 'negativo' && x.needsTeam).length : 0;
   const pendQ = c.team ? others.filter(x => x.isQuestion && x.needsTeam).length : 0;
   const diff = m.prev ? (fq ? c.list.length - m.prev.list.length : others.length - m.prev.list.filter(x => !x.isTeam).length) : null;
@@ -7533,25 +7537,17 @@ function whatsappMessage(m, tone = 'cercano'){
   if(about.length) L.push(`${aboutTxt}: *${pos.length} ${pos.length === 1 ? 'positivo' : 'positivos'}* 👍 y *${neg.length} ${neg.length === 1 ? 'negativo' : 'negativos'}* 👎${about.length - pos.length - neg.length ? ` (el resto, neutrales)` : ''}.`);
   else if(crit) L.push(`Nadie mencionó *${crit}* en este seguimiento.`);
   if(tone !== 'breve'){
-    if(critics.length) L.push(`👎 ${formal ? 'Quienes más críticas hicieron' : 'Quienes más critican'}: ${people(critics)}.`);
-    if(fans.length) L.push(`👍 ${formal ? 'Quienes mejor hablan' : 'Quienes hablan bien'}${crit ? ' de ' + crit : ''}: ${people(fans)}.`);
-    // opinión personal sobre lo que se dice del criterio
-    const op = [];
-    if(about.length){
-      if(pos.length >= 2 * Math.max(1, neg.length)) op.push(`la mayoría de quienes hablan${crit ? ' de ' + crit : ''} lo hacen en positivo`);
-      else if(neg.length > pos.length) op.push(`predominan las críticas${crit ? ' hacia ' + crit : ''}`);
-      else op.push(`las opiniones${crit ? ' sobre ' + crit : ''} están divididas`);
-      if(likeW) op.push(`lo que más se valora es «${likeW}»`);
-      if(badW) op.push(`las quejas giran sobre todo en torno a «${badW}»`);
+    // en contra de la marca: quiénes y algunos ejemplos de lo que dicen
+    if(critics.length){
+      L.push('', `👎 ${formal ? 'Comentaron en contra' : 'Comentan en contra'}${crit ? ' de ' + crit : ''}: ${withN(critics)}.${examples.length ? ' Por ejemplo:' : ''}`);
+      examples.forEach(x => L.push(`• «${clip(x.text)}» — ${x.authorName}`));
     }
+    // a favor: solo quienes más comentan
+    if(fans.length) L.push('', `👍 ${formal ? 'Quienes más comentaron a favor' : 'Quienes más comentan a favor'}: ${withN(fans)}.`);
     const todo = [];
-    if(pendNeg) todo.push(countTxt(pendNeg, 'comentario negativo que sigue', 'comentarios negativos que siguen') + ' sin respuesta');
-    if(pendQ) todo.push(countTxt(pendQ, 'pregunta pendiente', 'preguntas pendientes'));
-    if(op.length || todo.length){
-      let t = (formal ? 'En mi opinión, ' : 'Mi opinión: ') + (op.length ? op.join('; ') + '.' : '');
-      if(todo.length) t += (op.length ? ' ' : '') + `${formal ? 'Recomiendo atender' : 'Conviene atender'} cuanto antes ${todo.join(' y ')}.`;
-      L.push('', t);
-    }
+    if(pendNeg) todo.push(countTxt(pendNeg, 'comentario negativo sigue', 'comentarios negativos siguen') + ' sin respuesta');
+    if(pendQ) todo.push(countTxt(pendQ, 'pregunta sigue', 'preguntas siguen') + ' pendiente' + (pendQ === 1 ? '' : 's'));
+    if(todo.length) L.push('', `⏳ ${todo.join(' y ')}.`);
   }
   L.push('', formal ? 'Adjunto el informe completo con todo el detalle.' : tone === 'breve' ? 'Adjunto el informe completo 👇' : 'Les dejo el informe completo con el detalle 👇');
   return L.join('\n');
@@ -7580,7 +7576,7 @@ async function waAi(){
   try{
     const tone = { cercano:'cercano y profesional, en primera persona', formal:'formal, en primera persona', breve:'muy breve (2 o 3 frases), en primera persona' }[$('#waTone').value];
     const sys = 'Eres un especialista en comunicación y redes sociales. Escribes mensajes para WhatsApp en español, claros y humanos, para personas sin conocimientos técnicos. Usa lenguaje sencillo. Nunca uses términos técnicos como "índice neto", "puntos", "KPI" o porcentajes complicados: habla de cantidades de comentarios. No menciones la inteligencia artificial. No inventes datos. Usa *negrita* de WhatsApp con moderación y como mucho 3 emojis. Responde solo con el mensaje.';
-    const user = `Escribe un mensaje ${tone} para un canal de WhatsApp que acompañe un informe de comentarios en redes sociales. Incluye: cuántos comentarios se analizaron; cuántos hablan de ${m.focus ? focusSubj(m.focus.q) : ((m.terms || []).join(', ') || 'la marca')} y cuántos de esos son positivos y negativos; quiénes más critican y quiénes hablan bien; y mi opinión personal sobre lo que se dice de ese tema (qué se valora, de qué se quejan, qué conviene hacer). Máximo 700 caracteres. Termina indicando que se adjunta el informe.${$('#waSign').value.trim() ? ' Firma: ' + $('#waSign').value.trim() + '.' : ''}\n\nMensaje base con los datos correctos (reescríbelo con naturalidad):\n${whatsappMessage(m, 'cercano')}`;
+    const user = `Escribe un mensaje ${tone} para un canal de WhatsApp que acompañe un informe de comentarios en redes sociales. Incluye: cuántos comentarios se analizaron; cuántos hablan de ${m.focus ? focusSubj(m.focus.q) : ((m.terms || []).join(', ') || 'la marca')} y cuántos de esos son positivos y negativos; quiénes comentan en contra de la marca con dos o tres ejemplos breves de lo que dicen; y, de los positivos, solo quiénes son los que más comentan a favor. No des opiniones personales (qué se valora, de qué se quejan, qué conviene hacer). Máximo 700 caracteres. Termina indicando que se adjunta el informe.${$('#waSign').value.trim() ? ' Firma: ' + $('#waSign').value.trim() + '.' : ''}\n\nMensaje base con los datos correctos (reescríbelo con naturalidad):\n${whatsappMessage(m, 'cercano')}`;
     let txt = String(await aiRequest(cfg, sys, user, null, cfg.prov === 'local' ? (x => aiProgressSet(wst, `Redactando el mensaje… ${Math.round(x * 100)} %`, Math.round(x * 100))) : null) || '').replace(/^```\w*\n?|```$/g, '').trim();
     try{ const j = JSON.parse(txt); txt = j.mensaje || j.message || Object.values(j).join('\n'); }catch(e){}
     if(!txt) throw new Error('La IA no devolvió texto.');
