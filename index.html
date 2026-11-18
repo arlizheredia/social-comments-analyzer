@@ -2121,7 +2121,7 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 > El **seguimiento más reciente** de los elegidos es siempre el **principal**: sus indicadores encabezan el informe y se comparan con el seguimiento anterior (variación ▲/▼). La evolución, la audiencia y los temas cubren todo el periodo elegido.
 
 - **Valores por defecto**: el enfoque, los temas a vigilar, *Elaborado por* y *Cliente / marca* empiezan con tus preferencias (⋮ › **Preferencias de informes**, o **Valores por defecto** en el formulario del informe). Lo que cambies en un informe solo afecta a ese informe.
-- **Enfoque** (obligatorio): escribe el criterio del informe; por defecto, *Kanasta24 y comentarios relacionados*. Se buscan los comentarios que nombran el tema (también con otra ortografía, como *Canasta 24*) o que hablan claramente de él, y **todo el informe trata solo de esos comentarios**: indicadores, comparativa, evolución, publicaciones, quién comenta, quiénes hablan bien y quiénes critican, qué se dice, comentarios destacados, próximos pasos y el mensaje para WhatsApp. El informe nombra el tema (por ejemplo, *Comentarios sobre Kanasta24*) y no menciona cómo se elaboró. Las respuestas de tu **equipo** cuentan en las cifras, en *Quién más comenta* y en los comentarios destacados (marcadas como *Equipo*), pero no entre *quiénes hablan bien* o *quiénes más critican* ni en lo pendiente de respuesta.
+- **Enfoque** (obligatorio): escribe el criterio del informe; por defecto, *Kanasta24 y comentarios relacionados*. Se buscan los comentarios que nombran el tema (también con otra ortografía, como *Canasta 24*) o que hablan claramente de él, y **todo el informe trata solo de esos comentarios**: indicadores, comparativa, evolución, publicaciones, quién comenta, quiénes hablan bien y quiénes critican, qué se dice, comentarios destacados, próximos pasos y el mensaje para WhatsApp. El informe nombra el tema (por ejemplo, *Comentarios sobre Kanasta24*) y no menciona cómo se elaboró. Las respuestas de tu **equipo** cuentan en las cifras, en *Quién más comenta*, en *Quiénes hablan bien* y en los comentarios destacados (marcadas como *Equipo*), pero no entre *quiénes más critican* ni en lo pendiente de respuesta. La sección **Equipo y público** compara lo que dice el público (comentarios, personas y tono) con el trabajo del equipo (respuestas, quién respondió, comentarios respondidos y sin responder, tasa y tiempo de primera respuesta, y el tono de sus respuestas).
 - **Resumen** automático con las cifras clave del tema.
 - **Indicadores clave**: comentarios únicos, personas, interacciones, comentarios **positivos** y **negativos** y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
 - **Alertas**: publicaciones con muchos negativos, subida de negativos entre fechas y comentarios negativos o preguntas sin responder.
@@ -6912,7 +6912,7 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const au = {}; list.forEach(c => { const k = c.authorName || '(desconocido)'; const a = au[k] ||= { name:k, n:0, pos:0, neg:0, reacts:0, dates:new Set(), plats:new Set(), team:false }; if(c.isTeam) a.team = true; a.n++; a.reacts += c.reactions || 0; if(c.sentiment === 'positivo') a.pos++; if(c.sentiment === 'negativo') a.neg++; a.dates.add(c._date); a.plats.add(c.platform); });
   const authors = Object.values(au);
   const topAuthors = [...authors].sort((a, b) => b.n - a.n || b.reacts - a.reacts).slice(0, 10);
-  const ambassadors = authors.filter(a => !a.team && (focus ? a.pos >= 1 && a.pos > a.neg : a.pos >= 2 && a.pos > a.neg * 2)).sort((a, b) => b.pos - a.pos || b.n - a.n).slice(0, 8);
+  const ambassadors = authors.filter(a => (focus ? a.pos >= 1 && a.pos > a.neg : a.pos >= 2 && a.pos > a.neg * 2)).sort((a, b) => b.pos - a.pos || b.n - a.n).slice(0, 8);
   const detractors = authors.filter(a => !a.team && a.neg >= 1 && a.neg >= a.pos).sort((a, b) => b.neg - a.neg || b.n - a.n).slice(0, 8);
   const influencers = [...authors].sort((a, b) => b.reacts - a.reacts).filter(a => a.reacts > 0).slice(0, 8);
   const recurring = authors.filter(a => a.dates.size > 1).length;
@@ -6929,11 +6929,18 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const negShare = d => d.total ? Math.round(d.neg / d.total * 100) : 0;
   const m = { tids, tracks, first, last, list, st, s, nss:nssOf(s), team, answered, pending, respRate:(answered + pending) ? Math.round(answered / (answered + pending) * 100) : null, medRT, rtN:rts.length,
     byDate, posts, platRows, topAuthors, ambassadors, detractors, influencers, recurring, authorsN:authors.length, watch, topPos, topNeg, openQ, openNeg,
-    negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? { ...focus, n:list.length, pct:focus.total ? Math.round(list.length / focus.total * 100) : 0 } : null };
+    split:teamSplit(list, nonTeam), negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? { ...focus, n:list.length, pct:focus.total ? Math.round(list.length / focus.total * 100) : 0 } : null };
   // por defecto el principal es el propio conjunto (sin seguimiento anterior); buildReport lo sustituye por el más reciente
   m.cur = m; m.prev = null; m.prevT = null; m.curNew = list.length; m.prevNew = null; m.cmp = compareRows(m); m.postCmp = [];
   m.alerts = reportAlerts(m); m.recs = reportRecs(m); m.summary = reportSummary(m);
   return m;
+}
+// Desglose del informe: lo que dice el público frente al trabajo del equipo
+function teamSplit(list, nonTeam){
+  const tc = list.filter(c => c.isTeam), mem = {};
+  tc.forEach(c => { const k = c.authorName || '(equipo)'; (mem[k] ||= { name:k, n:0 }).n++; });
+  return { pub:{ n:nonTeam.length, people:new Set(nonTeam.map(c => c.authorName || '')).size, s:sentOf(nonTeam) },
+    team:{ n:tc.length, s:sentOf(tc), members:Object.values(mem).sort((a, b) => b.n - a.n) } };
 }
 function reportAlerts(m){
   const a = [], ab = m.focus ? ' sobre ' + m.focus.name : '';
@@ -6954,7 +6961,8 @@ function reportRecs(m){
   const names = arr => arr.slice(0, 3).map(a => a.name).join(', ');
   if(m.team && (m.openNeg || m.openQ.length)) r.push(`Responder cuanto antes ${[m.openNeg ? countTxt(m.openNeg, 'comentario negativo', 'comentarios negativos') : '', m.openQ.length ? countTxt(m.list.filter(c => !c.isTeam && c.isQuestion && c.needsTeam).length, 'pregunta', 'preguntas') : ''].filter(Boolean).join(' y ')} que siguen sin respuesta.`);
   if(m.detractors.length) r.push(`Escribir por privado a quienes más critican${ab} (${names(m.detractors)}) para entender qué pasó y resolverlo.`);
-  if(m.ambassadors.length) r.push(`Agradecer a quienes hablan bien${de} (${names(m.ambassadors)}); sus opiniones pueden servir como testimonio.`);
+  const fans = m.ambassadors.filter(a => !a.team);
+  if(fans.length) r.push(`Agradecer a quienes hablan bien${de} (${names(fans)}); sus opiniones pueden servir como testimonio.`);
   const best = [...m.posts].filter(p => p.total >= 3).sort((a, b) => b.nss - a.nss)[0];
   if(m.posts.length > 1 && best && best.nss > 20) r.push(`Repetir lo que funcionó en “${best.label}”, la publicación con mejores opiniones (${countTxt(best.s.pos, 'comentario positivo', 'comentarios positivos')} y ${countTxt(best.s.neg, 'negativo', 'negativos')}).`);
   const topW = m.st.words.slice(0, 3).map(w => w[0]);
@@ -6964,7 +6972,7 @@ function reportRecs(m){
 }
 function reportSummary(m){
   const out = [], f = m.focus, ab = f ? ' sobre ' + f.name : '', de = f ? ' de ' + f.name : '';
-  const names = arr => arr.slice(0, 3).map(a => a.name).join(', ');
+  const names = arr => arr.slice(0, 3).map(a => a.name + (a.team ? ' (equipo)' : '')).join(', ');
   if(f) out.push(`De ${countTxt(f.total, 'comentario revisado', 'comentarios revisados')}, ${f.n === 1 ? '1 habla' : fmtN(f.n) + ' hablan'} de ${f.name}.`);
   out.fl = out.length;   // la línea del tema va siempre primero
   const span = m.tracks.length === 1 ? 'el ' + fmtDay(m.first.date) : 'del ' + fmtDay(m.first.date) + ' al ' + fmtDay(m.last.date);
@@ -6981,6 +6989,20 @@ function reportSummary(m){
 const miniSeg = s => s.total ? `<span class="mini-seg" title="${s.pos} positivos · ${s.neu} neutrales · ${s.neg} negativos">${[['var(--viz-neg)', s.neg], ['var(--viz-neu)', s.neu], ['var(--viz-pos)', s.pos]].filter(x => x[1]).map(([c, v]) => `<i style="flex:${v} 1 0;background:${c}"></i>`).join('')}</span>` : '';
 const sign = n => (n > 0 ? '+' : '') + n;
 function qItem(c){ const k = SENT_OV.key(c); (REP.qmap ||= new Map()).set(k, c); return `<div class="qitem"><b>${esc(c.authorName || '(desconocido)')}</b>${c.isTeam ? ' <span class="qteam">Equipo</span>' : ''}: ${esc(c.text.slice(0, 280))}${c.text.length > 280 ? '…' : ''}<div class="qm">${esc(c._post || '')} · ${esc(platName(c.platform))}${c.reactions ? ' · ' + fmtN(c.reactions) + ' reacciones' : ''}${c._date ? ' · ' + esc(fmtDay(c._date)) : ''}<button class="sbtn qsent no-print" data-qsent="${esc(k)}" aria-haspopup="menu" title="Cambiar la polaridad de este comentario">${cap(c.sentiment)}${c.sentimentManual ? ' · a mano' : ''}</button></div></div>`; }
+// Sección «Equipo y público»: qué dice el público y cómo está trabajando el equipo
+function splitSection(m, ab){
+  const sp = m.split, P = sp.pub, T = sp.team;
+  const kpi = (k, v, d) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d || '&nbsp;'}</div></div>`;
+  const tone = s => s.total ? `${fmtN(s.pos)} positivos · ${fmtN(s.neu)} neutrales · ${fmtN(s.neg)} negativos` : 'sin comentarios';
+  return `<section class="card rep-sec"><h3><span class="ms">diversity_3</span>Equipo y público</h3><p class="sub">Lo que dice el público${ab} y cómo está respondiendo tu equipo.</p>
+    <div class="rep-grid">
+      <div><h4 class="viz-h4">Público</h4><div class="kpis">${kpi('Comentarios', fmtN(P.n), countTxt(P.people, 'persona', 'personas'))}${kpi('Positivos', fmtN(P.s.pos), pctTxt(P.s.pos, P.n))}${kpi('Negativos', fmtN(P.s.neg), pctTxt(P.s.neg, P.n))}</div>
+        <div style="margin-top:8px">${miniSeg(P.s)}</div><p class="small muted" style="margin:6px 0 0">${tone(P.s)}</p></div>
+      <div><h4 class="viz-h4">Equipo</h4><div class="kpis">${kpi('Respuestas', fmtN(T.n), countTxt(T.members.length, 'persona del equipo', 'personas del equipo'))}${kpi('Comentarios respondidos', fmtN(m.answered), m.pending ? countTxt(m.pending, 'sin responder', 'sin responder') : 'ninguno pendiente')}${kpi('Tasa de respuesta', m.respRate != null ? m.respRate + ' %' : '—', m.medRT != null ? 'primera respuesta en ~' + fmtDec(m.medRT) + ' h' : '')}</div>
+        ${T.members.length ? `<p class="small" style="margin:8px 0 0">Quién respondió: ${T.members.slice(0, 5).map(x => `${esc(x.name)} (${x.n})`).join(', ')}.</p>` : ''}
+        <p class="small muted" style="margin:6px 0 0">Tono de sus respuestas: ${tone(T.s)}</p></div>
+    </div></section>`;
+}
 function renderReport(){
   const m = REP.model; if(!m) return;
   REP.qmap = new Map();
@@ -7001,7 +7023,7 @@ function renderReport(){
   const dNeg = m.byDate.length > 1 ? m.negLast - m.negFirst : null;
   const f = m.focus, ab = f ? ' sobre ' + esc(f.name) : '', de = f ? ' de ' + esc(f.name) : '';
   const tbl = (head, rows) => `<div class="rtable-wrap"><table class="rtable"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
-  const people = (arr, k, lbl, empty) => arr.length ? tbl(`<th>Persona</th><th class="num">${lbl}</th><th class="num">Comentarios</th>`, arr.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a[k]}</td><td class="num">${a.n}</td></tr>`).join('')) : `<p class="small muted">${empty}</p>`;
+  const people = (arr, k, lbl, empty) => arr.length ? tbl(`<th>Persona</th><th class="num">${lbl}</th><th class="num">Comentarios</th>`, arr.map(a => `<tr><td>${esc(a.name)}${a.team ? ' <span class="qteam">Equipo</span>' : ''}</td><td class="num">${a[k]}</td><td class="num">${a.n}</td></tr>`).join('')) : `<p class="small muted">${empty}</p>`;
   $('#repOut').innerHTML = `<div class="report" id="reportDoc">
     <div class="rep-cover"><h2>Informe de comentarios${ab}</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · ${esc(m.generatedAt.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' }))}</p></div>
     <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
@@ -7028,6 +7050,7 @@ function renderReport(){
       <section class="card rep-sec"><h3><span class="ms">favorite</span>Quiénes hablan bien${de}</h3>${people(m.ambassadors, 'pos', 'Positivos', 'Nadie destaca por hablar bien.')}</section>
       <section class="card rep-sec"><h3><span class="ms">sentiment_dissatisfied</span>Quiénes más critican</h3>${people(m.detractors, 'neg', 'Negativos', 'Nadie destaca por criticar.')}</section>
     </div>
+    ${m.team && m.split ? splitSection(m, ab) : ''}
     ${m.watch.length ? `<section class="card rep-sec"><h3><span class="ms">visibility</span>Otras marcas y temas</h3><p class="sub">Cuántos de estos comentarios los mencionan.</p>
       ${tbl('<th>Término</th><th class="num">Menciones</th><th class="num">Positivos</th><th class="num">Negativos</th><th>Ejemplo</th>', m.watch.map(w => `<tr><td><b>${esc(w.term)}</b></td><td class="num">${fmtN(w.n)}</td><td class="num">${fmtN(w.s.pos)}</td><td class="num">${fmtN(w.s.neg)}</td><td>${w.sample ? esc(w.sample.text.slice(0, 120)) + (w.sample.text.length > 120 ? '…' : '') : ''}</td></tr>`).join(''))}</section>` : ''}
     <div class="rep-grid">
@@ -7056,8 +7079,12 @@ function reportText(m){
   if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, ${countTxt(d.pos, 'positivo', 'positivos')} y ${countTxt(d.neg, 'negativo', 'negativos')}`)); }
   H('Por publicación'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.total)} comentarios, ${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')}${m.team ? `, ${fmtN(p.pending)} sin responder` : ''}`));
   H('Quién más comenta' + ab); m.topAuthors.slice(0, 5).forEach((a, i) => L.push(`${i + 1}. ${a.name}${a.team ? ' (equipo)' : ''}: ${countTxt(a.n, 'comentario', 'comentarios')}`));
-  if(m.ambassadors.length){ H('Quiénes hablan bien' + de); m.ambassadors.slice(0, 5).forEach(a => L.push(`• ${a.name} (${countTxt(a.pos, 'positivo', 'positivos')})`)); }
+  if(m.ambassadors.length){ H('Quiénes hablan bien' + de); m.ambassadors.slice(0, 5).forEach(a => L.push(`• ${a.name}${a.team ? ' (equipo)' : ''} (${countTxt(a.pos, 'positivo', 'positivos')})`)); }
   if(m.detractors.length){ H('Quiénes más critican'); m.detractors.slice(0, 5).forEach(a => L.push(`• ${a.name} (${countTxt(a.neg, 'negativo', 'negativos')})`)); }
+  if(m.team && m.split){ const P = m.split.pub, T = m.split.team; H('Equipo y público');
+    L.push(`Público: ${countTxt(P.n, 'comentario', 'comentarios')} de ${countTxt(P.people, 'persona', 'personas')} (${countTxt(P.s.pos, 'positivo', 'positivos')}, ${countTxt(P.s.neu, 'neutral', 'neutrales')} y ${countTxt(P.s.neg, 'negativo', 'negativos')})`,
+      `Equipo: ${countTxt(T.n, 'respuesta', 'respuestas')} de ${countTxt(T.members.length, 'persona', 'personas')}; ${fmtN(m.answered)} comentarios respondidos, ${fmtN(m.pending)} sin responder${m.respRate != null ? ', tasa de respuesta ' + m.respRate + ' %' : ''}${m.medRT != null ? ', primera respuesta en ~' + fmtDec(m.medRT) + ' h' : ''}`);
+    if(T.members.length) L.push('Quién respondió: ' + T.members.slice(0, 5).map(x => `${x.name} (${x.n})`).join(', ')); }
   if(m.st.words.length){ H(f ? 'Qué se dice' + ab : 'Temas más mencionados'); L.push(m.st.words.slice(0, 10).map(([w, n]) => `${w} (${n})`).join(', ')); }
   if(m.watch.length){ H('Otras marcas y temas'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones, ${countTxt(w.s.pos, 'positivo', 'positivos')} y ${countTxt(w.s.neg, 'negativo', 'negativos')}`)); }
   H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}${c.isTeam ? ' (equipo)' : ''}: ${c.text.slice(0, 240)}`));
@@ -7122,9 +7149,14 @@ function reportDocument(m){
     ${m.posts.map(p => `<tr><td>${e(p.label)}</td><td>${e(platName(p.platform))}</td><td class="n">${n(p.total)}</td><td class="n">${n(p.s.pos)}</td><td class="n">${n(p.s.neg)}</td>${m.team ? `<td class="n">${n(p.pending)}</td>` : ''}</tr>`).join('')}</tbody></table></div>`;
   b += `<h2>Quiénes comentan${ab}</h2>
   <div class="avoid"><h3>Quién más comenta</h3>${OL(m.topAuthors.slice(0, 5).map(a => `${e(a.name)}${a.team ? ' (equipo)' : ''}: ${countTxt(a.n, 'comentario', 'comentarios')}`))}</div>
-  ${m.ambassadors.length ? `<div class="avoid"><h3>Quiénes hablan bien${de}</h3>${UL(m.ambassadors.slice(0, 5).map(a => `${e(a.name)} (${countTxt(a.pos, 'positivo', 'positivos')})`))}</div>` : ''}
+  ${m.ambassadors.length ? `<div class="avoid"><h3>Quiénes hablan bien${de}</h3>${UL(m.ambassadors.slice(0, 5).map(a => `${e(a.name)}${a.team ? ' (equipo)' : ''} (${countTxt(a.pos, 'positivo', 'positivos')})`))}</div>` : ''}
   ${m.detractors.length ? `<div class="avoid"><h3>Quiénes más critican</h3>${UL(m.detractors.slice(0, 5).map(a => `${e(a.name)} (${countTxt(a.neg, 'negativo', 'negativos')})`))}</div>` : ''}
   ${m.st.words.length ? `<h2>${f ? 'Qué se dice' + ab : 'Temas más mencionados'}</h2><p>${m.st.words.slice(0, 10).map(([w, c]) => `${e(w)} (${c})`).join(', ')}</p>` : ''}`;
+  if(m.team && m.split){ const P = m.split.pub, T = m.split.team;
+    b += `<div class="avoid"><h2>Equipo y público</h2><table><thead><tr><th></th><th class="n">Comentarios</th><th class="n">Personas</th><th class="n">Positivos</th><th class="n">Neutrales</th><th class="n">Negativos</th></tr></thead><tbody>
+      <tr><td>Público</td><td class="n">${n(P.n)}</td><td class="n">${n(P.people)}</td><td class="n">${n(P.s.pos)}</td><td class="n">${n(P.s.neu)}</td><td class="n">${n(P.s.neg)}</td></tr>
+      <tr><td>Equipo</td><td class="n">${n(T.n)}</td><td class="n">${n(T.members.length)}</td><td class="n">${n(T.s.pos)}</td><td class="n">${n(T.s.neu)}</td><td class="n">${n(T.s.neg)}</td></tr></tbody></table>
+      <p>El equipo respondió ${n(m.answered)} comentarios${m.pending ? ` y quedan ${n(m.pending)} sin responder` : ' y no queda ninguno pendiente'}${m.respRate != null ? ` (tasa de respuesta del ${m.respRate} %)` : ''}${m.medRT != null ? `; la primera respuesta llega en unas ${fmtDec(m.medRT)} horas` : ''}.${T.members.length ? ' Quién respondió: ' + T.members.slice(0, 5).map(x => `${e(x.name)} (${x.n})`).join(', ') + '.' : ''}</p></div>`; }
   if(m.watch.length) b += `<div class="avoid"><h2>Otras marcas y temas</h2><table><thead><tr><th>Término</th><th class="n">Menciones</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
     ${m.watch.map(w => `<tr><td>${e(w.term)}</td><td class="n">${n(w.n)}</td><td class="n">${n(w.s.pos)}</td><td class="n">${n(w.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
   b += `<h2>Comentarios destacados</h2>
@@ -7479,8 +7511,8 @@ function whatsappMessage(m, tone = 'cercano'){
   // comentarios que hablan del criterio (el informe ya trae solo esos); sin criterio, los de las marcas vigiladas
   const about = fq ? c.list : terms.length ? others.filter(x => terms.some(t => normName(x.text).includes(normName(t)) || (x.mentions || []).some(mm => normName(mm).includes(normName(t))))) : others;
   const pos = about.filter(x => x.sentiment === 'positivo'), neg = about.filter(x => x.sentiment === 'negativo');
-  const topBy = arr => { arr = arr.filter(x => !x.isTeam); const k = {}; arr.forEach(x => { const n = x.authorName || ''; if(n) k[n] = (k[n] || 0) + 1; }); return Object.entries(k).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]); };
-  const critics = topBy(neg), fans = topBy(pos);
+  const topBy = arr => { const k = {}; arr.forEach(x => { const n = x.authorName || ''; if(n) k[n] = (k[n] || 0) + 1; }); return Object.entries(k).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]); };
+  const critics = topBy(neg.filter(x => !x.isTeam)), fans = topBy(pos);
   // temas que más aparecen en lo positivo y en lo negativo (sin la propia marca)
   const skip = [...terms.map(t => normName(t).replace(/\s+/g, '')), ...(fq ? focusKeywords(fq) : [])];
   const topWord = arr => (computeStats(arr).words.find(([w]) => !skip.some(s => normName(w).includes(s) || s.includes(normName(w)))) || [])[0];

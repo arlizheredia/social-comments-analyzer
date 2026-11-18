@@ -380,7 +380,10 @@ const TR = () => w.eval('TR');
       L.find(c => c.id === 'e2').isTeam = true; L.find(c => c.id === 'e1').teamAnswered = true;
       const mt = w.computeReportModel(L, true, [{ id:'t', name:'Prueba', date:'2026-11-18', postIds:[] }], [], [], [], { q:'Kanasta24', name:'Kanasta24', total:2 });
       check('El equipo cuenta: aparece en los destacados y en «Quién más comenta» (marcado), y suma en el total', mt.focus.n === 2 && mt.topPos.some(c => c.id === 'e2') && mt.topAuthors.some(a => a.name === 'Yaimara Salinas Goite' && a.team), JSON.stringify({ n:mt.focus.n, destacados:mt.topPos.map(c => c.id) }));
-      check('…pero no entre «Quiénes hablan bien»', !mt.ambassadors.some(a => a.team) && mt.ambassadors.some(a => a.name === 'Sandra Parron'), JSON.stringify(mt.ambassadors.map(a => a.name))); }
+      check('«Quiénes hablan bien» incluye al equipo (marcado) y al público', mt.ambassadors.some(a => a.team && a.name === 'Yaimara Salinas Goite') && mt.ambassadors.some(a => a.name === 'Sandra Parron'), JSON.stringify(mt.ambassadors.map(a => a.name + (a.team ? ' (equipo)' : ''))));
+      check('Desglose equipo / público: 1 comentario del público y 1 respuesta del equipo', mt.split.pub.n === 1 && mt.split.team.n === 1 && mt.split.team.members[0].name === 'Yaimara Salinas Goite' && mt.split.team.s.pos === 1, JSON.stringify(mt.split));
+      const dw = w.reportDocument(mt).body, tx = w.reportText(mt);
+      check('El desglose sale en el Word y en el texto copiado', /<h2>Equipo y público<\/h2>/.test(dw) && /EQUIPO Y PÚBLICO/.test(tx) && /Quién respondió: Yaimara Salinas Goite \(1\)/.test(tx)); }
     // Postura frente a la marca: elogiar a otra marca, preferir otra opción o recomendar no comprar es negativo
     { const L = w.finalize([
         { id:'b1', authorName:'Dinna Ramirez Cuevas', text:'Mi experiencia con Kanasta24 ha sido desagradable: 5 días de tardanza y carne maloliente' },
