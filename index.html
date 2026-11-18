@@ -278,6 +278,12 @@ details.adv[open] summary .ms{transform:rotate(180deg)}
 .searchbar{min-width:0}.searchbar input{flex:1;border:0;outline:none;background:none;color:var(--on-surface);font:400 16px var(--font);min-width:0}
 .searchbar .ms{color:var(--on-surface-variant)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+.fchips{display:contents}
+#fBar.collapsed .fchips,#fBar.collapsed #fPostSep{display:none}
+#fBar.collapsed.fempty{display:none}
+.btn.ftoggle{height:48px;border-radius:24px;padding:0 20px 0 16px}
+.btn.ftoggle[aria-expanded="true"]{background:var(--secondary-container);color:var(--on-secondary-container);border-color:transparent}
+.btn.ftoggle .fcount{margin-left:2px}
 .fchip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 16px;border-radius:8px;border:1px solid var(--outline);background:transparent;color:var(--on-surface-variant);font:500 13px var(--font);cursor:pointer;transition:background .15s}
 .fchip:hover{background:color-mix(in srgb,var(--on-surface) 8%,transparent)}
 .fchip .ms{font-size:18px;display:none;margin-left:-6px}
@@ -1001,6 +1007,21 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 .rcard .rt{font-weight:600;font-size:15px}
 .rcard .rs{font-size:12px;color:var(--on-surface-variant)}
 .rcard .pbar{grid-column:1/-1}
+.rp-cfg .rp-focus{grid-column:1/-1}
+.rep-focus{border:2px solid var(--primary)}
+.rep-focus>h3 .ms{color:var(--primary)}
+.rep-divider{font:500 20px/28px var(--font);margin:28px 0 12px;padding-top:16px;border-top:1px solid var(--outline-variant)}
+.rep-ai-prog{display:grid;gap:8px;margin-top:14px}
+.rep-ai-prog .pbar{max-width:520px}
+.ai-banner{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px 16px;align-items:center;margin:0 0 16px;padding:14px 18px;border-radius:16px;background:var(--pend-bg);color:var(--on-surface);border:1px solid var(--outline-variant)}
+.ai-banner-ic{font-size:28px;color:var(--pend-fg)}
+.ai-banner-t{display:grid;gap:4px;min-width:0}
+.ai-banner-t>span:not(.pbar){font-size:14px;line-height:20px;color:var(--on-surface-variant)}
+.ai-banner-t .pbar{margin-top:6px;background:var(--surface-container-highest,var(--outline-variant))}
+.ai-banner-a{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+@media (max-width:720px){ .ai-banner{grid-template-columns:auto minmax(0,1fr)} .ai-banner-a{grid-column:1/-1} }
+/* Sin IA instalada, las opciones que dependen de ella no se muestran */
+body.no-ai .needs-ai{display:none!important}
 .ai-dl{display:grid;gap:10px;padding:14px 16px;border-radius:12px;background:var(--surface-container);margin:0 0 14px;text-align:left}
 .ai-dl-t{display:grid;gap:2px}
 .ai-dl-a{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -1073,8 +1094,10 @@ select.input.qmode{width:auto;max-width:230px;height:48px;border-radius:24px;pad
 .rp-pick h3{font-size:16px;margin:0 0 4px}
 .rp-pick .hlist{max-height:340px;overflow:auto;margin:12px 0}
 .rp-presets{display:flex;gap:8px;flex-wrap:wrap}
-.rp-cfg{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:8px}
-.rp-cfg .field{flex:1 1 280px}
+.rp-cfg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start;margin-top:12px}
+.rp-cfg .field{min-width:0}
+.rp-cfg .rp-acts{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+@media (max-width:720px){ .rp-cfg{grid-template-columns:minmax(0,1fr)} }
 .rp-cfg .input{height:44px}
 .report{display:flex;flex-direction:column;gap:16px}
 .rep-cover{padding:24px;border-radius:24px;background:var(--primary-container);color:var(--on-primary-container)}
@@ -1202,6 +1225,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
       <button role="menuitem" data-action="tour"><span class="ms">school</span>Ver tutorial de inicio</button>
       <button role="menuitem" data-action="docs"><span class="ms">menu_book</span>Documentación</button>
       <button role="menuitem" data-action="shortcuts"><span class="ms">keyboard</span>Atajos de teclado</button>
+      <button role="menuitem" data-action="ai"><span class="ms">psychology</span>IA de la aplicación</button>
       <hr>
       <button role="menuitem" data-action="theme-light"><span class="ms">light_mode</span>Tema claro</button>
       <button role="menuitem" data-action="theme-dark"><span class="ms">dark_mode</span>Tema oscuro</button>
@@ -1226,6 +1250,12 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
   </nav>
 
   <main id="main" tabindex="-1">
+    <div class="ai-banner hidden" id="aiBanner" role="region" aria-label="Instalación de la IA">
+      <span class="ms ai-banner-ic" aria-hidden="true">psychology</span>
+      <div class="ai-banner-t"><b id="aiBnTitle">Instala la IA para usar la aplicación completa</b><span id="aiBnSub">La búsqueda de comentarios, los informes, las sugerencias de respuesta y el mensaje para WhatsApp necesitan la IA. Se instala una sola vez en este navegador (≈ 620 MB), es gratuita y funciona sin conexión.</span>
+        <span class="pbar hidden" id="aiBnBar" role="progressbar" aria-label="Instalación de la IA" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span></div>
+      <div class="ai-banner-a"><button class="btn filled" id="aiBnBtn"><span class="ms">download</span>Instalar IA</button><a class="hlp" href="#ayuda/ia-local"><span class="ms">help</span>Más información</a></div>
+    </div>
     <!-- ======================= OBTENER ======================= -->
 
     <!-- ================= SEGUIMIENTO ================= -->
@@ -1615,31 +1645,28 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
 
         <div class="tabpanel" id="tp-list" role="tabpanel" aria-labelledby="tab-list">
           <div class="row">
-            <label class="searchbar">
+            <label class="searchbar needs-ai">
               <span class="ms">search</span>
               <input type="search" id="q" placeholder="Buscar en comentarios o autores" aria-label="Buscar comentarios" autocomplete="off">
               <button class="icon-btn sm hidden" id="qClear" aria-label="Borrar búsqueda"><span class="ms">close</span></button>
             </label>
-            <select class="input qmode" id="qMode" aria-label="Tipo de búsqueda" title="Tipo de búsqueda">
-              <option value="terms">Términos</option>
+            <select class="input qmode needs-ai" id="qMode" aria-label="Tipo de búsqueda" title="Tipo de búsqueda">
               <option value="sem">Por significado (IA local)</option>
               <option value="ai">Clasificar con IA</option>
             </select>
-            <div class="seg" role="radiogroup" aria-label="Tipo de vista">
-              <button role="radio" data-lv="conv" aria-checked="true"><span class="ms">forum</span>Conversación</button>
-              <button role="radio" data-lv="table" aria-checked="false"><span class="ms">table_rows</span>Tabla</button>
-            </div>
+            <button class="btn outlined ftoggle" id="fToggle" aria-expanded="false" aria-controls="fChips"><span class="ms">filter_list</span>Filtros<b class="fcount hidden" id="fActiveN"></b></button>
           </div>
-          <div class="sem-bar hidden" id="semBar" role="status" aria-live="polite">
+          <div class="sem-bar hidden needs-ai" id="semBar" role="status" aria-live="polite">
             <span class="ms" id="semIc">psychology</span><span class="sem-txt" id="semTxt"></span>
             <select class="input sm hidden" id="semLevel" aria-label="Precisión de la búsqueda" title="Precisión">
               <option value="0.80">Amplia</option><option value="0.825" selected>Media</option><option value="0.85">Estricta</option>
             </select>
             <button class="btn text sm" id="semClear"><span class="ms">close</span>Quitar</button>
           </div>
-          <div class="filters" role="group" aria-label="Filtros">
+          <div class="filters" id="fBar" role="group" aria-label="Filtros">
             <label class="fpost hidden" id="fPostF"><span class="ms">article</span><select class="input sm" id="fPost" aria-label="Filtrar por publicación"></select></label>
             <span class="fsep hidden" id="fPostSep"></span>
+            <span class="fchips" id="fChips">
             <button class="fchip" data-fg="type" data-fv="comment" aria-pressed="false"><span class="ms">check</span>Comentarios</button>
             <button class="fchip" data-fg="type" data-fv="reply" aria-pressed="false"><span class="ms">check</span>Respuestas</button>
             <span class="fsep"></span>
@@ -1654,6 +1681,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
             <button class="fchip" data-fg="extra" data-fv="noteam" aria-pressed="false" id="fNoTeam" title="Comentarios que ninguna persona de tu equipo ha respondido"><span class="ms">check</span>Sin respuesta del equipo<b class="fcount" id="noTeamCount"></b></button>
             <button class="btn text sm hidden" id="fReset">Quitar filtros</button>
             <a class="hlp" href="#ayuda/filtrar"><span class="ms">help</span>Cómo buscar y filtrar</a>
+            </span>
           </div>
           <div class="assist-bar" id="assistBar">
             <span class="ms ab-ic">support_agent</span>
@@ -2048,7 +2076,8 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 
 > El **seguimiento más reciente** de los elegidos es siempre el **principal**: sus indicadores encabezan el informe y se comparan con el seguimiento anterior (variación ▲/▼). La evolución, la audiencia y los temas cubren todo el periodo elegido.
 
-- **Resumen ejecutivo** automático y, opcionalmente, **Resumen con IA** (usa el modelo gratuito que configures).
+- **Enfoque** (obligatorio): escribe el criterio en el que se centra el informe; por defecto, *Kanasta24 y comentarios relacionados*. La IA busca los comentarios que lo cumplen y el informe muestra primero sus estadísticas: cuántos son y qué parte del total, positivos, neutrales y negativos, evolución por seguimiento, por publicación, quién más habla del tema, embajadores, quiénes más critican, de qué se habla y los comentarios destacados. Después vienen las estadísticas generales de todos los comentarios.
+- **Resumen ejecutivo** automático y **resumen redactado con IA**, que se genera siempre al crear el informe (verás una barra de progreso mientras se redacta).
 - **Indicadores clave**: comentarios únicos, personas, interacciones, comentarios **positivos** y **negativos** y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
 - **Alertas**: publicaciones con muchos negativos, subida de negativos entre fechas y comentarios negativos o preguntas sin responder.
 - **Evolución por seguimiento**: comentarios por fecha y comentarios **nuevos** respecto a los seguimientos anteriores.
@@ -2072,17 +2101,16 @@ Los documentos exportados tienen un formato **sencillo, en blanco y negro y en A
 
 ## Buscar por significado {#busqueda-ia}
 
-En *Resultados › Comentarios*, junto al buscador, elige el tipo de búsqueda:
+La búsqueda de comentarios es **siempre con IA** (requiere [instalar la IA](#ayuda/ia-local)). En *Resultados › Comentarios*, junto al buscador, elige cómo buscar:
 
-- **Términos**: coincidencia de palabras, como siempre.
-- **Por significado (IA local)**: describe el tema (por ejemplo *“se refieren a la empresa Kanasta24 o están relacionados”* o *“quejas por demoras”*) y pulsa [[Intro]]. Usa un modelo multilingüe gratuito que se ejecuta **en tu navegador** (la primera vez descarga unos 120 MB; después funciona sin conexión con los modelos ya guardados). Ajusta la **precisión** (amplia, media o estricta); cada comentario muestra su relevancia.
-- **Clasificar con IA**: el modelo gratuito que configuraste en el asistente (Chrome, Ollama, Gemini, Groq u OpenRouter) decide qué comentarios cumplen el criterio. Más fino para criterios complejos; más lento.
+- **Por significado (IA local)**: describe el tema (por ejemplo *“se refieren a la empresa Kanasta24 o están relacionados”* o *“quejas por demoras”*) y pulsa [[Intro]]. Usa un modelo multilingüe gratuito que se ejecuta **en tu navegador** (forma parte de la instalación de la IA y funciona sin conexión). Ajusta la **precisión** (amplia, media o estricta); cada comentario muestra su relevancia.
+- **Clasificar con IA**: el modelo de IA configurado (la IA de la app u otro proveedor) decide qué comentarios cumplen el criterio. Más fino para criterios complejos; más lento.
 
-Se combina con los filtros de **polaridad** (positivos, neutrales, negativos) y con el resto de chips.
+Se combina con los filtros de **polaridad** (positivos, neutrales, negativos) y con el resto de chips. Para ver los comentarios de una persona escribe `autor:"Nombre Apellido"` y pulsa [[Intro]].
 
 # Configurar la IA gratuita {#ia-config icon=psychology}
 
-La app usa IA para **sugerir respuestas**, **clasificar comentarios por un criterio**, redactar el **resumen del informe** y el **mensaje para WhatsApp**. Por defecto intenta usar la **IA integrada de Chrome**; si tu navegador no la tiene, descarga con un clic la **IA de la app** (sin claves) o elige otro proveedor gratuito en el diálogo de IA ({ms:tune} en el asistente de respuestas o *Redactar con IA*), pulsa **Probar** y después **Guardar**.
+La app usa IA para **sugerir respuestas**, **clasificar comentarios por un criterio**, redactar el **resumen del informe** y el **mensaje para WhatsApp**. Primero hay que **[instalar la IA](#ayuda/ia-local)** (obligatorio, con el aviso de la parte superior). Para redactar textos usa por defecto la **IA de la app**; si quieres, elige otro proveedor gratuito en ⋮ › *IA de la aplicación* ({ms:tune} en el asistente de respuestas o *Redactar con IA*), pulsa **Probar** y después **Guardar**.
 
 | Proveedor | Coste | Clave | Dónde se procesan los comentarios |
 |---|---|---|---|
@@ -2095,17 +2123,18 @@ La app usa IA para **sugerir respuestas**, **clasificar comentarios por un crite
 
 > La **búsqueda por significado** de *Resultados* no necesita configuración: usa su propio modelo gratuito en el navegador.
 
-## IA de la app (descarga con un clic) {#ia-local}
+## Instalar la IA (obligatorio) {#ia-local}
 
-La app puede descargar su propio modelo de IA gratuito, que se ejecuta dentro del navegador en cualquier ordenador: **sin claves, sin cuentas y sin activar opciones de Chrome**. Es la alternativa cuando la IA integrada de Chrome no está disponible.
+La IA es **necesaria** para buscar comentarios, sugerir respuestas, redactar el resumen del informe y el mensaje para WhatsApp. Mientras no esté instalada, esas opciones **no se muestran** y la app enseña un aviso en la parte superior de todas las pantallas.
 
-1. Abre **Configurar IA** (en el asistente de respuestas, la búsqueda por significado o el mensaje para WhatsApp).
-2. En *Proveedor* elige **IA de la app** y pulsa **Descargar e instalar**.
-3. Verás el porcentaje y los MB descargados (≈ 500 MB; con una conexión lenta puede tardar varios minutos). Puedes cerrar el diálogo y seguir trabajando: la descarga continúa y te avisamos al terminar.
-4. Al terminar queda **configurada como proveedor** automáticamente. Desde entonces funciona incluso sin conexión.
+1. Pulsa **Instalar IA** en el aviso (o en ⋮ › *IA de la aplicación* › **Descargar e instalar**).
+2. Se descargan el **modelo de lenguaje** (≈ 500 MB) y el **modelo de búsqueda** (≈ 120 MB). Verás el porcentaje y los MB; con una conexión lenta puede tardar varios minutos. Puedes seguir trabajando mientras tanto: te avisamos al terminar.
+3. Al terminar, el aviso desaparece y todas las opciones de IA quedan disponibles, **sin claves y sin conexión**.
 
-- Para liberar espacio, pulsa **Eliminar modelo** en el mismo lugar.
-- Si se borran los datos del sitio en el navegador, el modelo también se borra y habrá que descargarlo de nuevo.
+- Todo se ejecuta **en tu equipo**: los comentarios no salen del navegador.
+- Se descarga **una sola vez**: queda guardada en el navegador, en el espacio de la propia app (no en la extensión). **Actualizar, reinstalar o quitar la extensión no la borra**, ni tampoco cerrar el navegador o actualizar la app. Al abrir la app se comprueba que los archivos siguen ahí; si ya están, no se descarga nada.
+- Para generar los textos puedes usar otro proveedor (Gemini, Groq…) en ⋮ › *IA de la aplicación*; la instalación sigue siendo necesaria para la búsqueda.
+- Para liberar espacio, pulsa **Desinstalar** en el mismo diálogo. Si se borran los datos del sitio en el navegador, también hay que volver a instalarla.
 - Usa la tarjeta gráfica si el navegador lo permite (WebGPU) y, si no, el procesador (algo más lento).
 - Los comentarios **no salen de tu equipo**.
 - Es un modelo pequeño: redacta bien mensajes y respuestas cortas. Para textos más elaborados puedes cambiar a Gemini o Groq (gratuitos con clave).
@@ -2163,14 +2192,13 @@ Se ejecuta en tu ordenador, sin clave y sin enviar datos. Requisitos: **Chrome d
 # Buscar y filtrar {#filtrar icon=filter_list}
 
 - Escribe en el buscador para filtrar por texto o autor; usa `autor:"Nombre Apellido"` para un autor concreto.
-- Los **chips de filtro** se combinan entre grupos, por ejemplo *Respuestas* + *Negativos*.
-- Pulsa los encabezados de la tabla para ordenar, y marca filas para copiar o exportar solo esas.
+- Pulsa **Filtros** (junto al buscador) para mostrar u ocultar los **chips de filtro**; con el panel oculto, el botón indica cuántos filtros hay activos. Los chips se combinan entre grupos, por ejemplo *Respuestas* + *Negativos*.
+- Cambia el orden con **Ordenar**, y marca comentarios para copiar o exportar solo esos.
 
-## Conversación y tabla {#fi-vistas}
+## Vista de conversación {#fi-vistas}
 
-- **Conversación**: los comentarios como en cada red (burbujas en Facebook, estilo Instagram o TikTok), con respuestas anidadas. Pliega un hilo con *Ocultar respuestas* o usa *Expandir todo* / *Contraer todo*.
-- **Tabla**: todos los campos en columnas; *Agrupar hilos* coloca cada respuesta bajo su comentario.
-- Haz doble clic en una fila o pulsa {ms:info} para ver todos sus datos.
+- Los comentarios se muestran como en cada red (burbujas en Facebook, estilo Instagram o TikTok), con respuestas anidadas. Pliega un hilo con *Ocultar respuestas* o usa *Expandir todo* / *Contraer todo*.
+- Pulsa **Detalles** en un comentario para ver todos sus datos. Para tenerlos en columnas, exporta a Excel o CSV.
 
 # Asistente de respuestas {#asistente icon=support_agent}
 
@@ -2188,7 +2216,7 @@ Antes de responder, el asistente comprueba que haya una **sesión de Facebook ac
 ## Equipo {#as-equipo}
 
 - Añade personas desde la lista *Personas en estos comentarios*, escribiendo su nombre, o desde el detalle de un comentario (**Añadir al equipo**).
-- Los comentarios **pendientes** se distinguen por su **fondo ámbar** (con una barra a la izquierda) en la conversación y en la tabla.
+- Los comentarios **pendientes** se distinguen por su **fondo ámbar** (con una barra a la izquierda) en la conversación.
 - Un comentario está **respondido** cuando alguien del equipo contesta en su hilo (o lo menciona en una respuesta posterior del mismo hilo). Sus mensajes llevan la insignia *Equipo*.
 - Por defecto, el **autor de la publicación** (tu página o cuenta) cuenta como equipo.
 - **A los miembros del equipo no se les responde**: sus comentarios nunca son pendientes, no muestran el botón de responder y el asistente los omite (también si añades a alguien mientras respondes).
@@ -2417,7 +2445,7 @@ Cada comentario incluye su **plataforma**.
     <div class="rp-grid">
       <div class="rp-cat">
         <div class="rp-cat-head"><b>Respuestas</b><span><button class="btn text sm" id="rpEditCat"><span class="ms">edit</span>Catálogo</button></span></div>
-        <div class="rp-ai"><button class="btn tonal sm" id="rpAi"><span class="ms">auto_awesome</span>Sugerir con IA</button><button class="icon-btn sm" id="rpAiCfg" aria-label="Configurar IA" title="Configurar IA"><span class="ms">tune</span></button><span class="small muted" id="rpAiState"></span></div>
+        <div class="rp-ai needs-ai"><button class="btn tonal sm" id="rpAi"><span class="ms">auto_awesome</span>Sugerir con IA</button><button class="icon-btn sm" id="rpAiCfg" aria-label="Configurar IA" title="Configurar IA"><span class="ms">tune</span></button><span class="small muted" id="rpAiState"></span></div>
         <label class="searchbar sm"><span class="ms">search</span><input type="search" id="rpSearch" placeholder="Buscar respuesta" aria-label="Buscar respuesta" autocomplete="off"></label>
         <div class="rp-opts" id="rpOpts" role="listbox" aria-label="Respuestas del catálogo"></div>
       </div>
@@ -2464,7 +2492,7 @@ Cada comentario incluye su **plataforma**.
     <div class="ai-dl hidden" id="aiDlF">
       <div class="ai-dl-t"><b id="aiDlTitle">Modelo no descargado</b><span class="small muted" id="aiDlSub">Se descarga una sola vez (≈ 500 MB) y queda guardado en este navegador. Después funciona sin conexión y sin claves.</span></div>
       <span class="pbar hidden" id="aiDlBar" role="progressbar" aria-label="Descarga del modelo" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span>
-      <div class="ai-dl-a"><button class="btn filled" id="aiDlBtn"><span class="ms">download</span>Descargar e instalar</button><button class="btn text hidden" id="aiDlDel"><span class="ms">delete</span>Eliminar modelo</button></div>
+      <div class="ai-dl-a"><button class="btn filled" id="aiDlBtn"><span class="ms">download</span>Descargar e instalar</button><button class="btn text hidden" id="aiDlDel"><span class="ms">delete</span>Desinstalar</button></div>
     </div>
     <div class="field" id="aiUrlF"><label for="aiUrl">URL del servidor</label><input class="input" id="aiUrl" placeholder="http://localhost:11434/v1"></div>
     <div class="field" id="aiKeyF"><label for="aiKey">Clave de API</label><input class="input" id="aiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Pega aquí tu clave">
@@ -2576,7 +2604,7 @@ Cada comentario incluye su **plataforma**.
     <div class="ed-tools"><span class="hint" id="waAiState"></span><span class="hint rp-hint"><span id="waChars">0</span> caracteres</span></div>
   </div>
   <div class="dlg-actions">
-    <button class="btn text" id="waAi" style="margin-right:auto"><span class="ms">auto_awesome</span>Redactar con IA</button>
+    <button class="btn text needs-ai" id="waAi" style="margin-right:auto"><span class="ms">auto_awesome</span>Redactar con IA</button>
     <button class="btn tonal" id="waOpen"><span class="ms">send</span>Abrir en WhatsApp</button>
     <button class="btn filled" id="waCopy"><span class="ms">content_copy</span>Copiar mensaje</button>
   </div>
@@ -2692,6 +2720,18 @@ function fbExtractor(){
   function root(){
     var dlg = Array.prototype.slice.call(document.querySelectorAll('div[role="dialog"]')).filter(function(d){ return d.querySelector('div[role="article"]'); });
     return dlg.length ? dlg[dlg.length - 1] : document;
+  }
+  function scrollNudge(){
+    var arts = articles(), seen = new Set();
+    arts.slice(-2).forEach(function(a){
+      var p = a.parentElement;
+      while (p && p !== document.body){
+        var s = getComputedStyle(p);
+        if (/(auto|scroll)/.test(s.overflowY) && p.scrollHeight > p.clientHeight + 10 && !seen.has(p)){ seen.add(p); p.scrollTop = Math.max(0, p.scrollTop - p.clientHeight); try { p.dispatchEvent(new Event('scroll')); } catch(e){} }
+        p = p.parentElement;
+      }
+    });
+    try { window.scrollBy(0, -window.innerHeight); } catch(e){}
   }
   function scrollAll(){
     var arts = TT ? ttNodes() : IG ? igTimes() : articles(); var seen = new Set();
@@ -3040,6 +3080,20 @@ function fbExtractor(){
     for (var i = 0; i < els.length; i++){ var m = (els[i].textContent || '').match(/(\d[\d.,]*\s*(?:k|mil|m)?)/i); if (m){ var n = parseCount(m[1]); if (n) return n; } }
     return 0;
   }
+  var FB_TOTAL_RE = /(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?|kommentare?|commenti)\b/i;
+  function fbTotal(){
+    var best = 0;
+    Array.prototype.slice.call(document.querySelectorAll('[aria-label]')).forEach(function(e){
+      var l = e.getAttribute('aria-label') || ''; if (l.length > 80 || !/(coment|comment|kommentar)/i.test(l)) return;
+      var m = l.match(FB_TOTAL_RE); if (m && e.offsetParent){ var n = parseCount(m[1]); if (n > best) best = n; }
+    });
+    if (!best) Array.prototype.slice.call(document.querySelectorAll('span,div[role="button"]')).forEach(function(e){
+      var t = (e.innerText || '').trim(); if (t.length > 30 || !e.offsetParent) return;
+      var m = t.match(/^(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?)$/i); if (m){ var n = parseCount(m[1]); if (n > best) best = n; }
+    });
+    return best;
+  }
+  function netTotal(){ return TT ? ttTotal() : IG ? 0 : fbTotal(); }
   function ttHandle(a){ var m = ((a && a.getAttribute('href')) || '').match(/^\/@([^/?#]+)/); return m ? decodeURIComponent(m[1]) : ''; }
   function ttLevel(n){ var e = n.querySelector('[data-e2e^="comment-level-"]'); var m = e ? (e.getAttribute('data-e2e') || '').match(/(\d+)$/) : null; return m ? +m[1] : 0; }
   function ttExtractOne(n){
@@ -3237,6 +3291,8 @@ function fbExtractor(){
       botonesRespuestas: document.querySelectorAll('[data-e2e^="view-more"],p[class*="ReplyActionText"]').length,
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
+    var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
+    if (!TT && !IG && onOriginal) Object.assign(data.diag, { totalSegunFacebook: netTot, botonesPulsados: pressed.slice(0, 40) });
     if (!TT && !IG) Object.assign(data.diag, { articulos: document.querySelectorAll('div[role="article"]').length, articulosComentario: articles().length,
       enlacesComentario: document.querySelectorAll('a[href*="comment_id="]').length, cargando: loadingVisible(), dialogos: document.querySelectorAll('div[role="dialog"]').length,
       botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || (b.innerText || '').trim()).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
@@ -3262,7 +3318,7 @@ function fbExtractor(){
     window.__fbcx = false;
   }
   (async function(){
-    var clicks = new Map(), idle = 0, round = 0;
+    var clicks = new Map(), idle = 0, round = 0, lastCollected = 0;
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
     // En cuanto aparece el botón de comentarios se abre la sección (los reels no muestran comentarios sin pulsarlo).
     // Si no hay botón, se espera a que la red pinte los comentarios (Instagram sin sesión tarda 10–15 s) o a la pantalla de acceso.
@@ -3312,7 +3368,7 @@ function fbExtractor(){
         var t = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
-        if (ck && (ck.n >= (ck.t === t ? 4 : 60))) return false;
+        if (ck && (ck.all >= 80 || (ck.n >= (ck.t === t ? 4 : 60) && !(countNow() > ck.c)))) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -3328,20 +3384,27 @@ function fbExtractor(){
         idle = 0;
         for (var i = 0; i < btns.length && !stop && postKey() === startKey; i++){
           var b = btns[i], bt = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
-          var prev = clicks.get(b); clicks.set(b, { n: prev && prev.t === bt ? prev.n + 1 : (prev ? prev.n + 1 : 1), t: bt });
+          var prev = clicks.get(b);
+          // si desde la última pulsación llegaron comentarios nuevos, el botón sigue cargando: se cuenta como progreso
+          var grew = prev && countNow() > prev.c;
+          clicks.set(b, { n: prev && !grew ? prev.n + 1 : 1, all: (prev ? prev.all : 0) + 1, t: bt, c: countNow() });
           if (bt && pressed.length < 60) pressed.push(bt.replace(/\d+/g, 'N'));
           try { b.scrollIntoView({ block: 'center' }); b.click(); } catch(e){}
           await sleep(450 + Math.random() * 450);
         }
       } else {
         var before = countNow();
-        idle++; scrollAll(); await sleep(TT ? 1800 : 1300);
-        var after = countNow(), total = TT ? ttTotal() : 0;
-        if (after > before) idle = 0;                       // siguen llegando comentarios: continuar
-        if (idle >= (total && after < total ? 8 : 4)) break;
+        idle++;
+        if (!TT && !IG && idle % 3 === 0) scrollNudge();     // subir y volver a bajar: algunas listas solo cargan al detectar desplazamiento
+        scrollAll(); await sleep(TT ? 1800 : 1300);
+        var after = countNow(), total = netTotal();
+        if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
+        lastCollected = collected.length;
+        // el total de la red incluye respuestas y a veces comentarios ocultos o eliminados: se acepta un 3 % de diferencia
+        if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)) break;
       }
       snapshot();   // recoger en cada ronda mientras se sigue en la publicación original
-      var tot = TT ? ttTotal() : 0;
+      var tot = netTotal();
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
       if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });
     }
@@ -3652,7 +3715,7 @@ function fromExtractor(obj){
   const author = obj.postAuthor ? (platform!=='facebook' ? '@'+String(obj.postAuthor).replace(/^@/,'') : obj.postAuthor) : '';
   // Instagram publica la fecha exacta (atributo datetime); Facebook solo tiempos relativos.
   const exact = c => c.datetime && !isNaN(Date.parse(c.datetime)) ? new Date(c.datetime).toISOString() : null;
-  return { meta:{ url:obj.url, title: caption ? caption.slice(0,160) : obj.title, postAuthor:author, postDate: obj.postDate||'', extractedAt:obj.extractedAt, source:'Extractor de navegador', platform },
+  return { meta:{ url:obj.url, title: caption ? caption.slice(0,160) : obj.title, postAuthor:author, postDate: obj.postDate||'', extractedAt:obj.extractedAt, source:'Extractor de navegador', platform, netTotal:+obj.total || 0 },
     comments:raw.map(c=>({
       id:c.id, parentId:c.parentId, authorName:c.authorName, authorId:c.authorId, authorUrl:c.authorUrl, authorAvatar:c.authorAvatar,
       badges:c.badges, text:c.text, createdAt: exact(c) || parseFbDate(c.dateText, base) || parseFbDate(c.labelDate, base), dateText:c.dateText, dateApprox: !exact(c),
@@ -4104,7 +4167,9 @@ function fbLogout(){
 /* ---------- filtrado / orden ---------- */
 function applyFilters(){
   computeTeam(); renderAssistBar();
-  let q = S.sem ? '' : $('#q').value.trim().toLowerCase(), authorQ = null;
+  // la búsqueda de texto es siempre con IA (al pulsar Intro); aquí solo se aplica el atajo autor:"Nombre"
+  let q = '', authorQ = null; const qRaw = $('#q').value.trim().toLowerCase();
+  const am0 = qRaw.match(/autor:("([^"]+)"|(\S+))/); if(am0) q = am0[0];
   const am = q.match(/autor:("([^"]+)"|(\S+))/);
   if(am){ authorQ = (am[2]||am[3]).toLowerCase(); q = q.replace(am[0],'').trim(); }
   const F=S.f;
@@ -4542,11 +4607,6 @@ function renderConv(slice, q){
     : noRowsHtml();
   const hc = $('#convChkPage'); if(hc) hc.indeterminate = !all && some;
 }
-function setListView(v){
-  S.listView = v; PREF.set('listView', v);
-  $$('.seg [data-lv]').forEach(b=>{ b.setAttribute('aria-checked', b.dataset.lv===v); b.tabIndex = b.dataset.lv===v?0:-1; });
-  S.page=1; renderTable();
-}
 function renderTable(){
   applyFilters();
   const conv = S.listView==='conv';
@@ -4600,9 +4660,17 @@ function renderTable(){
   $('#chkPage').checked = slice.length>0 && slice.every(c=>S.selected.has(c.id));
   $('#chkPage').indeterminate = !$('#chkPage').checked && slice.some(c=>S.selected.has(c.id));
   $$('.fchip[data-fg]').forEach(ch=>ch.setAttribute('aria-pressed', S.f[ch.dataset.fg].has(ch.dataset.fv)));
-  renderPostFilter();
+  renderPostFilter(); renderFilterToggle();
   $('#fReset').classList.toggle('hidden', !Object.values(S.f).some(s=>s.size));
   $('#qClear').classList.toggle('hidden', !$('#q').value);
+}
+// Botón «Filtros»: despliega u oculta los chips; plegado, indica cuántos filtros hay activos
+function renderFilterToggle(){
+  const open = PREF.get('filtersOpen', '0') === '1', n = S.f.type.size + S.f.sent.size + S.f.extra.size;
+  $('#fBar').classList.toggle('collapsed', !open); $('#fBar').classList.toggle('fempty', $('#fPostF').classList.contains('hidden'));
+  $('#fToggle').setAttribute('aria-expanded', String(open));
+  $('#fToggle').title = open ? 'Ocultar filtros' : 'Mostrar filtros' + (n ? ` (${n} activo${n === 1 ? '' : 's'})` : '');
+  const b = $('#fActiveN'); b.textContent = n; b.classList.toggle('hidden', !n);
 }
 // Selector de publicación: aparece cuando se ven comentarios de varias publicaciones (seguimientos)
 function renderPostFilter(){
@@ -4968,7 +5036,7 @@ const AI_PROV = {
 };
 const AI = {
   // Si el proveedor guardado no se puede usar (p. ej. Chrome sin Gemini Nano o sin clave) y la IA de la app está descargada, se usa esta.
-  cfg(){ const c = { prov:'chrome', tone:'cordial', n:3, brand:'', keys:{}, models:{}, url:'', ...jsonPref('ai', {}) }; if(!aiConfigured(c) && localReady()) c.prov = 'local'; return c; },
+  cfg(){ const c = { prov:'local', tone:'cordial', n:3, brand:'', keys:{}, models:{}, url:'', ...jsonPref('ai', {}) }; if(!aiConfigured(c) && localReady()) c.prov = 'local'; return c; },
   save(c){ PREF.set('ai', JSON.stringify(c)); },
   chromeApi(){ return self.LanguageModel || null; }
 };
@@ -5003,14 +5071,14 @@ function aiParse(txt, n){
   return txt.split(/\n+/).map(s => s.replace(/^\s*(\d+[.)]|[-*•])\s*/, '').replace(/^["“]|["”]$/g, '').trim()).filter(s => s.length > 8).slice(0, n);
 }
 // Si el proveedor elegido falla (sin conexión, límite gratuito, Chrome sin modelo…) y la IA de la app está descargada, responde esta.
-async function aiRequest(cfg, sys, user, signal){
-  if(cfg.prov === 'local') return localGenerate(sys, user, signal);
+async function aiRequest(cfg, sys, user, signal, onProgress){
+  if(cfg.prov === 'local') return localGenerate(sys, user, signal, onProgress);
   try{ return await aiRequestProv(cfg, sys, user, signal); }
   catch(e){
     if(e.name === 'AbortError' || (signal && signal.aborted) || !localReady()) throw e;
     console.warn('IA: ' + AI_PROV[cfg.prov].name + ' falló, se usa la IA de la app:', e.message);
     toast(AI_PROV[cfg.prov].name + ' no respondió; se usa la IA de la app');
-    return localGenerate(sys, user, signal);
+    return localGenerate(sys, user, signal, onProgress);
   }
 }
 async function aiRequestProv(cfg, sys, user, signal){
@@ -5051,11 +5119,78 @@ const LLM = { model:'onnx-community/Qwen2.5-0.5B-Instruct', gen:null, loading:nu
 const LLM_CACHE = 'transformers-cache';
 function localReady(){ return PREF.get('aiLocal', '') === '1'; }
 // Comprueba que los archivos del modelo siguen en la caché del navegador (se pueden borrar al limpiar los datos del sitio)
-async function localCheck(){
-  if(!localReady()) return false;
-  try{ const k = await (await caches.open(LLM_CACHE)).keys(); if(k.some(r => r.url.includes(LLM.model) && /\.onnx/.test(r.url))) return true; }catch(e){ return true; }
-  PREF.set('aiLocal', ''); return false;
+// La IA se instala una sola vez por navegador (en el almacenamiento de la propia app, independiente de la extensión)
+// y la misma configuración sirve para todos los procesos. Para saber si está instalada se revisan los archivos
+// guardados en la caché del navegador: así no se vuelve a descargar nada que ya esté.
+const AISTATE = { checked:false, llm:false, sem:false, llmTypes:[], semTypes:[] };
+// archivo ONNX → variante (dtype) de Transformers.js
+const ONNX_DTYPE = { 'model.onnx':'fp32', 'model_fp16.onnx':'fp16', 'model_q4.onnx':'q4', 'model_q4f16.onnx':'q4f16', 'model_quantized.onnx':'q8', 'model_int8.onnx':'int8', 'model_uint8.onnx':'uint8', 'model_bnb4.onnx':'bnb4' };
+async function aiScanCache(){
+  try{
+    const urls = (await (await caches.open(LLM_CACHE)).keys()).map(r => decodeURIComponent(r.url));
+    const has = (m, re) => urls.some(u => u.includes('/' + m + '/') && re.test(u));
+    // variantes del modelo ya guardadas (cualquiera sirve: no hace falta descargar otra)
+    const types = m => [...new Set(urls.filter(u => u.includes('/' + m + '/')).map(u => (u.match(/\/onnx\/(model[a-z0-9_]*\.onnx)(\?|$)/) || [])[1]).filter(f => f && ONNX_DTYPE[f]).map(f => ONNX_DTYPE[f]))];
+    const base = m => has(m, /\/tokenizer\.json(\?|$)/) && has(m, /\/config\.json(\?|$)/);
+    AISTATE.llmTypes = types(LLM.model); AISTATE.semTypes = types(SEM.model);
+    AISTATE.llm = base(LLM.model) && AISTATE.llmTypes.length > 0;
+    AISTATE.sem = base(SEM.model) && AISTATE.semTypes.length > 0;
+    PREF.set('aiLocal', AISTATE.llm ? '1' : ''); PREF.set('aiSem', AISTATE.sem ? '1' : '');
+  }catch(e){ console.warn('IA: no se pudo revisar la caché', e); AISTATE.err = String(e && e.stack || e); AISTATE.llm = localReady(); AISTATE.sem = PREF.get('aiSem', '') === '1'; }   // sin acceso a la caché se confía en las marcas
+  AISTATE.checked = true;
+  return aiInstalled();
 }
+async function localCheck(){ const ok = await aiScanCache(); renderAiState(); return ok; }
+// IA instalada = modelo de lenguaje (sugerencias, resúmenes, clasificación) + modelo de búsqueda por significado
+function aiInstalled(){ return localReady() && PREF.get('aiSem', '') === '1'; }
+const AIINST = { busy:false, pct:0, mb:[0, 0], err:'' };
+const AI_SIZE = { sem:118e6, llm:512e6 };   // tamaños aproximados para el progreso combinado
+async function installAI(){
+  if(AIINST.busy) return;
+  if(!navigator.onLine){ toast('Sin conexión: conéctate a internet para instalar la IA'); return; }
+  Object.assign(AIINST, { busy:true, pct:0, err:'' }); renderAiState();
+  await aiScanCache();
+  if(aiInstalled()){ AIINST.busy = false; AIINST.pct = 100; renderAiState(); toast('La IA ya estaba instalada en este navegador'); return; }
+  try{ await navigator.storage?.persist?.(); }catch(e){}   // que el navegador no la borre para liberar espacio
+  const need = { sem:PREF.get('aiSem', '') !== '1', llm:!localReady() };
+  const total = (need.sem ? AI_SIZE.sem : 0) + (need.llm ? AI_SIZE.llm : 0);
+  const upd = (done) => { AIINST.mb = [done / 1e6, total / 1e6]; AIINST.pct = Math.min(99, Math.floor(done / total * 100)); renderAiState(); };
+  try{
+    const base = need.sem ? AI_SIZE.sem : 0;
+    if(need.sem){
+      SEM.onProgress = a => upd(a[1] ? a[0] / a[1] * AI_SIZE.sem : 0);
+      await semLoad();
+      PREF.set('aiSem', '1');
+    }
+    upd(base);
+    if(need.llm){
+      LLM.onProgress = () => upd(base + (LLM.mb ? LLM.mb[0] / LLM.mb[1] : 0) * AI_SIZE.llm);
+      await localDownload();
+    }
+    AISTATE.llm = AISTATE.sem = true;
+    const c = AI.cfg(); if(!aiConfigured(c) || c.prov === 'chrome'){ c.prov = 'local'; AI.save(c); }
+    AIINST.pct = 100; toast('IA instalada: ya puedes usar todas las funciones');
+    notifyDesk?.('IA instalada', 'La IA de la aplicación está lista para usar.');
+  }catch(e){ AIINST.err = e.message || String(e); toast('No se pudo instalar la IA'); }
+  finally{ AIINST.busy = false; SEM.onProgress = null; LLM.onProgress = null; renderAiState(); }
+}
+// Refleja el estado de la IA en toda la app: aviso global, opciones visibles y diálogo de IA
+function renderAiState(){
+  const ok = aiInstalled();
+  document.body.classList.toggle('no-ai', !ok);
+  const bn = $('#aiBanner'); if(!bn) return;
+  bn.classList.toggle('hidden', ok);
+  $('#aiBnTitle').textContent = AIINST.busy ? `Instalando la IA… ${AIINST.pct} %` : AIINST.err ? 'No se pudo instalar la IA' : 'Instala la IA para usar la aplicación completa';
+  $('#aiBnSub').textContent = AIINST.busy ? (AIINST.mb[1] ? `${fmtN(Math.round(AIINST.mb[0]))} de ${fmtN(Math.round(AIINST.mb[1]))} MB. Puedes seguir trabajando mientras se descarga; te avisaremos al terminar.` : 'Preparando la descarga…')
+    : AIINST.err ? AIINST.err + ' Comprueba la conexión y vuelve a intentarlo.'
+    : 'La búsqueda de comentarios, los informes, las sugerencias de respuesta y el mensaje para WhatsApp necesitan la IA. Se instala una sola vez en este navegador (≈ 620 MB), es gratuita y funciona sin conexión.';
+  const bar = $('#aiBnBar'); bar.classList.toggle('hidden', !AIINST.busy); bar.classList.toggle('indet', AIINST.busy && !AIINST.pct);
+  bar.firstElementChild.style.width = AIINST.pct + '%'; bar.setAttribute('aria-valuenow', String(AIINST.pct));
+  const b = $('#aiBnBtn'); b.disabled = AIINST.busy;
+  b.innerHTML = AIINST.busy ? '<span class="ms">downloading</span>Instalando…' : AIINST.err ? '<span class="ms">refresh</span>Reintentar' : '<span class="ms">download</span>Instalar IA';
+  if($('#aiDlg')?.open && $('#aiProv').value === 'local') aiDlRender();
+}
+function aiNeedInstall(){ toast('Primero instala la IA (aviso en la parte superior)'); $('#aiBanner')?.scrollIntoView({ behavior:'smooth', block:'start' }); $('#aiBnBtn')?.focus(); }
 async function localDownload(){
   const gen = await localModel();
   PREF.set('aiLocal', '1');
@@ -5065,9 +5200,11 @@ async function localDownload(){
 async function localDelete(){
   try{ const cache = await caches.open(LLM_CACHE); await Promise.all((await cache.keys()).filter(r => r.url.includes(LLM.model)).map(r => cache.delete(r))); }catch(e){}
   LLM.gen = null; LLM.loading = null; PREF.set('aiLocal', '');
-  const c = AI.cfg(); if(c.prov === 'local'){ c.prov = 'chrome'; AI.save(c); }
+  try{ const cache = await caches.open(LLM_CACHE); await Promise.all((await cache.keys()).filter(r => r.url.includes(SEM.model)).map(r => cache.delete(r))); }catch(e){}
+  SEM.pipe = null; SEM.loading = null; PREF.set('aiSem', '');
+  renderAiState();
 }
-function aiStatusText(t){ ['#rpAiState', '#waAiState', '#aiStatus'].forEach(s => { const e = $(s); if(e && e.offsetParent && !(s === '#aiStatus' && !$('#aiDlF').classList.contains('hidden'))) e.textContent = t; }); }
+function aiStatusText(t){ ['#rpAiState', '#waAiState', '#repAiState', '#aiStatus'].forEach(s => { const e = $(s); if(e && e.offsetParent && !(s === '#aiStatus' && !$('#aiDlF').classList.contains('hidden'))) e.textContent = t; }); }
 async function localModel(){
   if(LLM.gen) return LLM.gen;
   LLM.loading ||= (async () => {
@@ -5079,18 +5216,31 @@ async function localModel(){
     const progress_callback = pr => {
       if(pr.status === 'progress' && pr.total){ files[pr.file] = [pr.loaded, pr.total]; const a = Object.values(files).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); LLM.pct = Math.min(99, Math.floor(a[0] / a[1] * 100)); LLM.mb = [a[0] / 1e6, a[1] / 1e6]; aiStatusText(`Cargando la IA de la app… ${LLM.pct} %`); LLM.onProgress?.(); }
     };
-    try{ LLM.gen = await T.pipeline('text-generation', LLM.model, { dtype:device === 'webgpu' ? 'q4f16' : 'quantized', device, progress_callback }); }
-    catch(e){ if(device !== 'webgpu') throw e; LLM.gen = await T.pipeline('text-generation', LLM.model, { dtype:'quantized', device:'wasm', progress_callback }); }
-    return LLM.gen;
+    // primero las variantes ya descargadas (en el orden que mejor funciona en este equipo); si ninguna sirve, se descarga la recomendada
+    if(!AISTATE.checked) await aiScanCache();
+    const pref = device === 'webgpu' ? ['q4f16', 'q4', 'fp16', 'q8', 'int8', 'uint8', 'bnb4', 'fp32'] : ['q4', 'q8', 'int8', 'uint8', 'bnb4', 'q4f16', 'fp32', 'fp16'];
+    const cached = pref.filter(d => AISTATE.llmTypes.includes(d));
+    const tries = [...cached.map(d => ({ dtype:d, device:device === 'webgpu' && /f16/.test(d) ? 'webgpu' : device })), ...(cached.length ? [] : [{ dtype:device === 'webgpu' ? 'q4f16' : 'q8', device }])];
+    if(device === 'webgpu') tries.push(...cached.filter(d => !/f16/.test(d)).map(d => ({ dtype:d, device:'wasm' })));
+    if(!tries.some(t => t.dtype === 'q8' && t.device === 'wasm')) tries.push({ dtype:'q8', device:'wasm' });   // último recurso
+    let lastErr;
+    for(const t of tries){
+      try{ LLM.gen = await T.pipeline('text-generation', LLM.model, { ...t, progress_callback }); LLM.dtype = t.dtype; LLM.device = t.device; return LLM.gen; }
+      catch(e){ lastErr = e; console.warn('IA: no se pudo cargar la variante', t, e); }
+    }
+    throw lastErr;
   })().catch(e => { LLM.loading = null; throw new Error('No se pudo cargar la IA de la app: ' + (e.message || e) + (navigator.onLine ? '' : ' (sin conexión)')); });
   return LLM.loading;
 }
-async function localGenerate(sys, user, signal){
-  if(!localReady()) throw new Error('La IA de la app no está descargada: ábrela en Configurar IA y pulsa “Descargar e instalar”.');
+async function localGenerate(sys, user, signal, onProgress){
+  if(!localReady()) throw new Error('La IA no está instalada: pulsa «Instalar IA» en el aviso de la parte superior.');
   const gen = await localModel();
   if(signal && signal.aborted) throw Object.assign(new Error('Cancelado'), { name:'AbortError' });
   aiStatusText('Redactando con la IA de la app…');
-  const out = await gen([{ role:'system', content:sys }, { role:'user', content:user }], { max_new_tokens:420, do_sample:true, temperature:.7, top_p:.9, repetition_penalty:1.1 });
+  const MAX = 420, opts = { max_new_tokens:MAX, do_sample:true, temperature:.7, top_p:.9, repetition_penalty:1.1 };
+  // progreso real: se cuentan los fragmentos que el modelo va escribiendo
+  if(onProgress){ try{ const T = await import(SEM.lib); let n = 0; opts.streamer = new T.TextStreamer(gen.tokenizer, { skip_prompt:true, skip_special_tokens:true, callback_function:() => { n++; onProgress(Math.min(.97, n / MAX)); } }); }catch(e){} }
+  const out = await gen([{ role:'system', content:sys }, { role:'user', content:user }], opts);
   const g = out[0].generated_text;
   return Array.isArray(g) ? (g[g.length - 1].content || '') : String(g || '');
 }
@@ -5152,30 +5302,24 @@ function aiCfgSync(){
     : `Para generar sugerencias se envían a <b>${esc(P.name)}</b> el texto del comentario, el nombre de su autor y el de la publicación. En los niveles gratuitos el proveedor puede usar esos datos para mejorar sus modelos: revisa sus condiciones.`;
 }
 function aiDlRender(){
-  const busy = !!LLM.loading && !LLM.gen && !localReady(), ready = localReady();
-  $('#aiDlTitle').textContent = ready ? 'IA de la app instalada' : busy ? `Descargando el modelo… ${LLM.pct} %` : 'Modelo no descargado';
-  $('#aiDlSub').textContent = ready ? 'Lista para usar en este navegador, también sin conexión. Se guardó como proveedor de IA.'
-    : busy ? (LLM.mb ? `${fmtN(Math.round(LLM.mb[0]))} de ${fmtN(Math.round(LLM.mb[1]))} MB. Puedes cerrar este diálogo y seguir trabajando: la descarga continúa.` : 'Preparando la descarga…')
-    : 'Se descarga una sola vez (≈ 500 MB) y queda guardado en este navegador. Después funciona sin conexión y sin claves.';
-  const bar = $('#aiDlBar'); bar.classList.toggle('hidden', !busy); bar.classList.toggle('indet', busy && !LLM.pct);
-  bar.firstElementChild.style.width = LLM.pct + '%'; bar.setAttribute('aria-valuenow', String(LLM.pct));
+  const busy = AIINST.busy, ready = aiInstalled(), pct = AIINST.pct;
+  $('#aiDlTitle').textContent = ready ? 'IA de la app instalada' : busy ? `Instalando la IA… ${pct} %` : 'IA no instalada';
+  $('#aiDlSub').textContent = ready ? 'Lista para usar en este navegador, también sin conexión.'
+    : busy ? (AIINST.mb[1] ? `${fmtN(Math.round(AIINST.mb[0]))} de ${fmtN(Math.round(AIINST.mb[1]))} MB. Puedes cerrar este diálogo y seguir trabajando: la descarga continúa.` : 'Preparando la descarga…')
+    : 'Se instala una sola vez (≈ 620 MB: modelo de lenguaje y modelo de búsqueda) y queda guardada en este navegador. Después funciona sin conexión y sin claves.';
+  const bar = $('#aiDlBar'); bar.classList.toggle('hidden', !busy); bar.classList.toggle('indet', busy && !pct);
+  bar.firstElementChild.style.width = pct + '%'; bar.setAttribute('aria-valuenow', String(pct));
   $('#aiDlBtn').classList.toggle('hidden', ready); $('#aiDlBtn').disabled = busy;
   $('#aiDlBtn').innerHTML = busy ? '<span class="ms">downloading</span>Descargando…' : '<span class="ms">download</span>Descargar e instalar';
   $('#aiDlDel').classList.toggle('hidden', !ready);
 }
 async function aiDlStart(){
-  if(!navigator.onLine){ setStatus('#aiStatus', 'Sin conexión: conéctate a internet para descargar el modelo.', true); return; }
-  LLM.pct = 0; LLM.mb = null; LLM.onProgress = () => { if($('#aiDlg').open) aiDlRender(); };
   setStatus('#aiStatus', '');
-  const run = localDownload(); aiDlRender();
-  try{
-    await run;
-    const c = AI.cfg(); $('#aiProv').value = c.prov; aiCfgSync();
-    setStatus('#aiStatus', '✓ IA de la app instalada y configurada.');
-    toast('IA de la app instalada: ya puedes usarla');
-    notifyDesk?.('IA de la app instalada', 'El modelo se descargó y ya está listo para usar.');
-  }catch(e){ setStatus('#aiStatus', e.message, true, 'ia-local'); toast('No se pudo descargar la IA de la app'); }
-  finally{ LLM.onProgress = null; if($('#aiDlg').open) aiDlRender(); }
+  await installAI();
+  if(!$('#aiDlg').open) return;
+  if(aiInstalled()){ const c = AI.cfg(); $('#aiProv').value = c.prov; aiCfgSync(); setStatus('#aiStatus', '✓ IA instalada y configurada.'); }
+  else if(AIINST.err) setStatus('#aiStatus', AIINST.err, true, 'ia-local');
+  aiDlRender();
 }
 function aiCfgRead(){
   const c = AI.cfg(), prov = $('#aiProv').value;
@@ -5190,12 +5334,13 @@ function initAi(){
   $('#aiProv').onchange = aiCfgSync;
   $('#aiDlBtn').onclick = aiDlStart;
   $('#aiDlDel').onclick = async () => {
-    if(!await askConfirm({ title:'¿Eliminar la IA de la app?', text:'Se borrará el modelo descargado (≈ 500 MB) de este navegador. Podrás volver a descargarlo cuando quieras.', ok:'Eliminar', danger:true })) return;
-    await localDelete(); $('#aiProv').value = 'local'; aiCfgSync(); setStatus('#aiStatus', 'Modelo eliminado.');
+    if(!await askConfirm({ title:'¿Desinstalar la IA?', text:'Se borrarán los modelos descargados (≈ 620 MB) de este navegador. Las funciones de IA dejarán de estar disponibles hasta que la vuelvas a instalar.', ok:'Desinstalar', danger:true })) return;
+    await localDelete(); $('#aiProv').value = 'local'; aiCfgSync(); setStatus('#aiStatus', 'IA desinstalada.');
   };
-  localCheck();
+  $('#aiBnBtn').onclick = installAI;
+  renderAiState(); localCheck();
   $('#aiSave').onclick = () => { const c = aiCfgRead();
-    if(c.prov === 'local' && !localReady()){ if(!LLM.loading) aiDlStart(); else setStatus('#aiStatus', 'La descarga está en curso; al terminar quedará configurada.'); return; }
+    if(c.prov === 'local' && !aiInstalled()){ if(!AIINST.busy) aiDlStart(); else setStatus('#aiStatus', 'La instalación está en curso; al terminar quedará configurada.'); return; }
     AI.save(c); $('#aiDlg').close(); toast('Configuración de IA guardada');
     if($('#replyDlg').open && aiConfigured(c) && !RP.ai) aiSuggest(); };
   $('#aiTest').onclick = async () => {
@@ -5494,7 +5639,7 @@ function renderPosts(){
 }
 
 /* ---------- Extensión de Chrome ---------- */
-const EXT_LATEST = '1.3.1';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
+const EXT_LATEST = '1.3.2';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 const EXT = { version:null, waiters:new Map(), jobs:new Map() };
 // pausa entre publicaciones por defecto: 6 s (variable)
 if(PREF.get('eoGap') === null) PREF.set('eoGap', '6');
@@ -5595,6 +5740,12 @@ async function saveTrack(start){
 // Publicaciones terminadas sin ningún comentario y aviso visible para listas
 const emptyPosts = t => t.postIds.filter(id => t.items[id] && t.items[id].status === 'done' && !t.items[id].count);
 // "N comentarios" o, si no hay ninguno, solo la advertencia (sin "0 comentarios")
+// Comentarios extraídos de una publicación; si la red indica bastantes más, se avisa (su total incluye respuestas y a veces comentarios ocultos)
+function itemCountTxt(it){
+  const n = it.count || 0, tot = it.total || 0;
+  if(tot && n < tot * 0.9 && tot - n >= 3) return `${fmtN(n)} de ${fmtN(tot)} comentarios <span class="warn-chip" title="La red indica ${fmtN(tot)} comentarios (incluye respuestas y a veces comentarios ocultos o eliminados). Reintenta la publicación para completar la extracción."><span class="ms">warning</span>Incompleta</span>`;
+  return countTxt(n, 'comentario', 'comentarios');
+}
 function commentsTxt(t){
   const pr = trackProgress(t), w = emptyWarn(t);
   if(!pr.comments && w) return w.replace(/^ · /, '');
@@ -5653,7 +5804,7 @@ function renderRunDetail(){
       const sub = it.status === 'running' && it.retry ? `<span class="warn-txt"><span class="ms">autorenew</span>${it.retry.offline ? 'Sin conexión: esperando a que vuelva para el ' : 'Reintento '}${it.retry.attempt} de ${it.retry.max}${it.retry.offline ? '' : ' en ' + fmtSecs(it.retry.left)}</span> · último error: ${esc(it.retry.error.slice(0, 140))}`
         : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`)
         : it.status === 'done' && !it.count ? `<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: la extracción no encontró ninguno. Reinténtala con <span class="ms" style="font-size:15px">refresh</span>.</span>`
-        : it.status === 'done' ? `${countTxt(it.count, 'comentario', 'comentarios')} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
+        : it.status === 'done' ? `${itemCountTxt(it)} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
         : it.status === 'error' ? esc(it.error || 'Error') : it.status === 'skipped' ? 'Omitida' : 'Pendiente';
       const pp = it.status === 'running' && it.total ? Math.min(100, Math.round((it.count || 0) / it.total * 100)) : 0;
       return `<div class="ritem" data-ipid="${esc(id)}">
@@ -5799,7 +5950,7 @@ async function runTracking(tid){
       if(r.skipped){ it.status = 'skipped'; }
       else if(r.stopped || (RUN.stopReq && !r.parsed)){ it.status = 'pending'; }
       else if(RUN.stopReq && r.partial){ it.status = 'pending'; }   // detenido a mitad: se repetirá al continuar
-      else { await storeResult(t, p, r.parsed, r.method, r.partial); }
+      else { if(r.parsed?.meta?.netTotal) it.total = r.parsed.meta.netTotal; await storeResult(t, p, r.parsed, r.method, r.partial); }
     }catch(e){
       if(e.name === 'AbortError' || (RUN.stopReq && !RUN.halt)){ it.status = 'pending'; }
       else {
@@ -5881,7 +6032,7 @@ function renderHistory(){
       <div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
       <div class="hsent" data-hsent="${esc(t.id)}"></div>
       <div class="pacts"><button class="icon-btn sm" data-hact="view" aria-label="Ver comentarios por publicación" title="Ver comentarios por publicación"><span class="ms">forum</span></button>
-        <button class="icon-btn sm" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
+        <button class="icon-btn sm needs-ai" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
         <button class="icon-btn sm" data-hact="open" aria-label="Ver publicaciones" title="Ver publicaciones"><span class="ms">list</span></button>
         <button class="icon-btn sm" data-hact="del" aria-label="Eliminar del historial" title="Eliminar del historial"><span class="ms">delete</span></button></div>
     </div>`;
@@ -5996,7 +6147,7 @@ function showHistoryDetail(t){
   const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="small muted">${esc(fmtDay(t.date))} · <span class="stchip done"><span class="ms">task_alt</span>Completado</span> · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
     <div class="rd-acts"><button class="btn filled" data-hd="report"><span class="ms">analytics</span>Crear informe</button><button class="btn text" data-hd="reopen"><span class="ms">replay</span>Reabrir</button><button class="icon-btn" data-hd="close" aria-label="Cerrar" title="Cerrar"><span class="ms">close</span></button></div></div>
     ${t.postIds.map(id => { const p = TR.posts.find(x => x.id === id) || { url:'', platform:'facebook', name:'(eliminada de la lista)' }, it = t.items[id];
-      return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' && !it.count ? '<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: reabre el seguimiento y reintenta esta publicación</span>' : it.status === 'done' ? countTxt(it.count, 'comentario', 'comentarios') : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
+      return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' && !it.count ? '<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: reabre el seguimiento y reintenta esta publicación</span>' : it.status === 'done' ? itemCountTxt(it) : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
         <div class="ri-acts">${it.status === 'done' ? `<button class="btn text sm" data-hdv="${esc(id)}"><span class="ms">forum</span>Ver comentarios</button>` : ''}</div></div>`; }).join('')}</div>`;
   let box = $('#histDetail'); if(!box){ box = document.createElement('div'); box.id = 'histDetail'; $('#sp-hist').appendChild(box); }
   box.innerHTML = html; box.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -6047,17 +6198,26 @@ function renderReportPicker(){
     <h3>Elige los seguimientos del informe</h3><p class="small muted" style="margin:0">El informe combina sus comentarios sin duplicar los de una misma publicación y compara la evolución entre fechas.</p>
     <div class="rp-presets" style="margin-top:12px"><button class="fchip" data-rpp="7">Últimos 7 días</button><button class="fchip" data-rpp="30">Últimos 30 días</button><button class="fchip" data-rpp="all">Todos</button><button class="fchip" data-rpp="none">Ninguno</button></div>
     <div class="hlist">${done.map(t => { const pr = trackProgress(t); return `<label class="hrow${sel.has(t.id) ? ' sel' : ''}"><input type="checkbox" class="rpsel" value="${esc(t.id)}" ${sel.has(t.id) ? 'checked' : ''}><div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div></label>`; }).join('')}</div>
-    <div class="rp-cfg"><label class="field"><span class="lbl">Marcas o temas a vigilar (separados por comas)</span><input class="input" id="repTerms" value="${esc(PREF.get('repTerms', ''))}" placeholder="Ej.: Kanasta24, envío, precio, atención"></label>
-      <label class="field" style="flex:1 1 200px"><span class="lbl">Elaborado por</span><input class="input" id="repAuthor" value="${esc(PREF.get('repAuthor', ''))}" placeholder="Nombre de quien firma el informe"></label>
-      <label class="field" style="flex:1 1 200px"><span class="lbl">Cliente / marca</span><input class="input" id="repClient" value="${esc(PREF.get('repClient', ''))}" placeholder="Ej.: Kanasta24"></label>
-      <button class="btn filled" id="repGo"><span class="ms">analytics</span>Generar informe</button>${REP.model ? '<button class="btn text" id="repCancel">Cancelar</button>' : ''}</div>
+    <div class="rp-cfg"><label class="field rp-focus"><span class="lbl">Enfoque del informe (obligatorio)</span><input class="input" id="repFocus" value="${esc(reportFocus())}" placeholder="Ej.: ${esc(FOCUS_DEFAULT)}" maxlength="200" required aria-describedby="repFocusHint"><span class="hint" id="repFocusHint">La IA buscará los comentarios que cumplan este criterio y el informe se centrará en ellos, además de las estadísticas generales.</span></label>
+      <label class="field"><span class="lbl">Temas a vigilar (opcional)</span><input class="input" id="repTerms" value="${esc(reportTerms())}" placeholder="Ej.: Kanasta24, envío, precio" aria-describedby="repTermsHint"><span class="hint" id="repTermsHint">Separados por comas.</span></label>
+      <label class="field"><span class="lbl">Elaborado por</span><input class="input" id="repAuthor" value="${esc(PREF.get('repAuthor', ''))}" placeholder="Nombre de quien firma el informe"></label>
+      <label class="field"><span class="lbl">Cliente / marca</span><input class="input" id="repClient" value="${esc(PREF.get('repClient', ''))}" placeholder="Ej.: Kanasta24"></label>
+      <div class="rp-acts">${REP.model ? '<button class="btn text" id="repCancel">Cancelar</button>' : ''}<button class="btn filled needs-ai" id="repGo"><span class="ms">analytics</span>Generar informe</button></div></div>
   </div>` : `<div class="empty-mini"><span class="ms">analytics</span>Todavía no hay seguimientos completados. Cuando termines alguno en <a href="#seguimiento">Seguimiento</a>, podrás elegirlo aquí para crear el informe.</div>`;
 }
 function openReport(tids, from){ PREF.set('repSel', JSON.stringify(tids)); REP.editing = false; REP.from = from || 'hist'; go('informes'); generateReport(tids); }
 async function generateReport(tids){
   if(!tids.length){ toast('Elige al menos un seguimiento'); return; }
-  $('#repOut').innerHTML = '<div class="empty-mini"><span class="ms" style="animation:spin 1.4s linear infinite">progress_activity</span>Analizando comentarios…</div>';
-  try{ REP.model = await buildReport(tids, (PREF.get('repTerms', '') || '').split(',').map(s => s.trim()).filter(Boolean)); REP.editing = false; renderReportPicker(); renderReport(); }
+  if(!aiInstalled()){ aiNeedInstall(); $('#repOut').innerHTML = '<div class="empty-mini"><span class="ms">psychology</span>Los informes usan la IA para encontrar los comentarios del enfoque: instálala con el aviso de la parte superior.</div>'; return; }
+  const fq = reportFocus();
+  const prog = (txt, pct) => { $('#repOut').innerHTML = `<div class="empty-mini rep-gen" role="status" aria-live="polite"><span class="ms" style="animation:spin 1.4s linear infinite">progress_activity</span><div style="display:grid;gap:8px;min-width:min(420px,70vw)"><span>${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></div></div>`; };
+  prog(`Buscando con IA los comentarios sobre «${fq}»…`, null);
+  REP.ai = null;
+  try{
+    REP.model = await buildReport(tids, reportTerms().split(',').map(s => s.trim()).filter(Boolean), fq, (a, b) => prog(`Buscando con IA los comentarios sobre «${fq}»… ${Math.round(a / b * 100)} %`, Math.round(a / b * 100)));
+    REP.editing = false; renderReportPicker(); renderReport();
+    reportAI();   // el resumen con IA se genera siempre
+  }
   catch(e){ $('#repOut').innerHTML = `<div class="empty-mini"><span class="ms">error</span>${esc(e.message)}</div>`; }
 }
 // Calcula el pendiente/atendido del equipo sobre una lista cualquiera (reutiliza la lógica del asistente)
@@ -6069,22 +6229,60 @@ function teamOn(list){
 }
 const nssOf = s => s.total ? Math.round((s.pos - s.neg) / s.total * 100) : 0;
 const sentOf = list => { const s = { total:list.length, pos:0, neg:0, neu:0 }; list.forEach(c => c.sentiment === 'positivo' ? s.pos++ : c.sentiment === 'negativo' ? s.neg++ : s.neu++); return s; };
-async function buildReport(tids, terms){
+// Enfoque del informe: criterio con el que la IA selecciona los comentarios en los que se centra el análisis
+const FOCUS_DEFAULT = 'Kanasta24 y comentarios relacionados', FOCUS_TH = .825;
+// temas a vigilar: «Kanasta24» por defecto (se aplica una vez a lo guardado antes); si el usuario lo vacía, queda vacío
+function reportTerms(){ if(PREF.get('repTermsV2', '') !== '1'){ PREF.set('repTerms', 'Kanasta24'); PREF.set('repTermsV2', '1'); } return PREF.get('repTerms', 'Kanasta24'); }
+function reportFocus(){ return (PREF.get('repFocus', '') || FOCUS_DEFAULT).trim(); }
+const FOCUS_STOP = new Set('comentario comentarios relacionados relacionadas relacionado relacionada sobre hablan habla mencionan menciona refieren refiere todo todos todas cosas temas tema para como desde hacia entre esta este estos estas'.split(' '));
+// palabras clave del criterio (p. ej. «kanasta24» y «kanasta»): si un comentario las contiene, cumple el criterio
+function focusKeywords(q){
+  const ws = normName(q).split(/[^a-z0-9ñ]+/).filter(w => w.length >= 4 && !FOCUS_STOP.has(w));
+  return [...new Set(ws.flatMap(w => { const b = w.replace(/\d+$/, ''); return b.length >= 4 && b !== w ? [w, b] : [w]; }))];
+}
+const fkey = (postId, c) => (postId || '') + '|' + normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160);
+async function focusMatch(list, q, onProg){
+  const kws = focusKeywords(q), keys = new Set(), items = list.filter(c => c.text && c.text.trim());
+  if(!items.length) return keys;
+  const [qv] = await semEmbed([q], 'query');
+  const vs = await semEmbed(items.map(c => c.text), 'passage', onProg);
+  items.forEach((c, i) => { const t = normName(c.text + ' ' + (c.mentions || []).join(' ')); if(kws.some(k => t.includes(k)) || dot(qv, vs[i]) >= FOCUS_TH) keys.add(fkey(c._ref?.postId, c)); });
+  return keys;
+}
+function computeFocus(list, q){
+  const all = list.filter(c => !c.isTeam), fl = all.filter(c => c._focus), s = sentOf(fl);
+  const au = {}; fl.forEach(c => { const k = c.authorName || '(desconocido)'; const a = au[k] ||= { name:k, n:0, pos:0, neg:0, reacts:0 }; a.n++; a.reacts += c.reactions || 0; if(c.sentiment === 'positivo') a.pos++; if(c.sentiment === 'negativo') a.neg++; });
+  const authors = Object.values(au);
+  const bp = {}; list.forEach(c => { if(c.isTeam) return; const k = c._ref?.postId || 'x'; const b = bp[k] ||= { id:k, label:c._post || '(sin nombre)', platform:c.platform, total:0, items:[] }; b.total++; if(c._focus) b.items.push(c); });
+  const posts = Object.values(bp).map(b => ({ id:b.id, label:b.label, platform:b.platform, total:b.total, n:b.items.length, pct:b.total ? Math.round(b.items.length / b.total * 100) : 0, s:sentOf(b.items) })).sort((a, b) => b.n - a.n || b.total - a.total);
+  const byReact = arr => [...arr].sort((a, b) => (b.reactions || 0) - (a.reactions || 0) || b.text.length - a.text.length);
+  const kws = focusKeywords(q);
+  const words = computeStats(fl).words.filter(([w]) => { const n = normName(w); return !kws.some(k => n.includes(k) || k.includes(n)); }).slice(0, 10);
+  return { q, list:fl, n:fl.length, total:all.length, pct:all.length ? Math.round(fl.length / all.length * 100) : 0, s, authorsN:authors.length,
+    topAuthors:[...authors].sort((a, b) => b.n - a.n || b.reacts - a.reacts).slice(0, 8),
+    ambassadors:authors.filter(a => a.pos >= 1 && a.pos > a.neg).sort((a, b) => b.pos - a.pos || b.n - a.n).slice(0, 6),
+    critics:authors.filter(a => a.neg >= 1 && a.neg >= a.pos).sort((a, b) => b.neg - a.neg || b.n - a.n).slice(0, 6),
+    posts, words, topPos:byReact(fl.filter(c => c.sentiment === 'positivo')).slice(0, 4), topNeg:byReact(fl.filter(c => c.sentiment === 'negativo')).slice(0, 4),
+    openQ:byReact(fl.filter(c => c.isQuestion && c.needsTeam)).slice(0, 6), pending:fl.filter(c => c.needsTeam).length, openNeg:fl.filter(c => c.sentiment === 'negativo' && c.needsTeam).length };
+}
+async function buildReport(tids, terms, focusQ, onProg){
   const g = await gatherComments(tids);
   if(!g.comments.length) throw new Error('Los seguimientos elegidos no tienen comentarios.');
   const list = finalize(g.comments.map((c, i) => ({ ...c, id:c.id || ('r' + i) })), { platform:g.platform });
+  const focus = focusQ ? { q:focusQ, keys:await focusMatch(list, focusQ, onProg) } : null;
   const team = teamOn(list);
   const tracks = g.tracks, first = tracks[0], last = tracks[tracks.length - 1];
   // Evolución por fecha de seguimiento
   const seen = new Set(), byDate = [];
   for(const t of tracks){
-    const rs = await DB.resultsOf(t.id); let total = 0, nw = 0; const day = [];
-    rs.forEach(r => r.comments.forEach(c => { total++; const k = r.postId + '|' + (c.id && !/^(x|local)-/.test(c.id) ? c.id : normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160)); if(!seen.has(k)){ seen.add(k); nw++; } day.push(sentiment(c.text || '').label); }));
-    byDate.push({ t, total, nw, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => t.items[id].status === 'done').length });
+    const rs = await DB.resultsOf(t.id); let total = 0, nw = 0, fn = 0, fpos = 0, fneg = 0; const day = [];
+    rs.forEach(r => r.comments.forEach(c => { total++; const k = r.postId + '|' + (c.id && !/^(x|local)-/.test(c.id) ? c.id : normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160)); if(!seen.has(k)){ seen.add(k); nw++; } const sl = sentiment(c.text || '').label; day.push(sl);
+      if(focus && focus.keys.has(fkey(r.postId, c))){ fn++; if(sl === 'positivo') fpos++; if(sl === 'negativo') fneg++; } }));
+    byDate.push({ t, total, nw, fn, fpos, fneg, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => t.items[id].status === 'done').length });
   }
-  const m = computeReportModel(list, team, tracks, byDate, terms, tids);
+  const m = computeReportModel(list, team, tracks, byDate, terms, tids, focus);
   // Seguimiento principal = el más reciente; se compara con el anterior
-  const snap = async t => { const gg = await gatherComments([t.id]); if(!gg.comments.length) return null; const l = finalize(gg.comments.map((c, i) => ({ ...c, id:c.id || ('s' + i) })), { platform:gg.platform }); return computeReportModel(l, teamOn(l), [t], [], terms, [t.id]); };
+  const snap = async t => { const gg = await gatherComments([t.id]); if(!gg.comments.length) return null; const l = finalize(gg.comments.map((c, i) => ({ ...c, id:c.id || ('s' + i) })), { platform:gg.platform }); return computeReportModel(l, teamOn(l), [t], [], terms, [t.id], focus); };
   m.cur = await snap(last) || m;
   m.prevT = tracks.length > 1 ? tracks[tracks.length - 2] : null;
   m.prev = m.prevT ? await snap(m.prevT) : null;
@@ -6092,14 +6290,19 @@ async function buildReport(tids, terms){
   m.prevNew = byDate.length > 1 ? byDate[byDate.length - 2].nw : null;
   m.cmp = compareRows(m);
   m.postCmp = comparePosts(m);
-  m.summary = [...compareSummary(m), ...m.summary];
+  const fl = m.summary.fl || 0;
+  m.summary = [...m.summary.slice(0, fl), ...compareSummary(m), ...m.summary.slice(fl)];
   return m;
 }
 // Filas de la comparativa: seguimiento más reciente frente al anterior
 function compareRows(m){
   const c = m.cur, p = m.prev;
   const negP = x => x && x.s.total ? Math.round(x.s.neg / x.s.total * 100) : null;
-  const rows = [
+  const rows = [];
+  if(c.focus) rows.push({ k:'Comentarios sobre el enfoque', a:c.focus.n, b:p && p.focus ? p.focus.n : null, good:'up', focus:true },
+    { k:'Positivos sobre el enfoque', a:c.focus.s.pos, b:p && p.focus ? p.focus.s.pos : null, good:'up', focus:true },
+    { k:'Negativos sobre el enfoque', a:c.focus.s.neg, b:p && p.focus ? p.focus.s.neg : null, good:'down', focus:true });
+  rows.push(
     { k:'Comentarios', a:c.list.length, b:p && p.list.length, good:'up' },
     { k:'Comentarios nuevos', a:m.curNew, b:m.prevNew, good:'up' },
     { k:'Personas que comentan', a:c.authorsN, b:p && p.authorsN, good:'up' },
@@ -6107,7 +6310,7 @@ function compareRows(m){
     { k:'Positivos', a:c.s.pos, b:p && p.s.pos, good:'up' },
     { k:'Negativos', a:c.s.neg, b:p && p.s.neg, good:'down' },
     { k:'Preguntas', a:c.st.q, b:p && p.st.q, good:'down' }
-  ];
+  );
   if(c.team) rows.push({ k:'Pendientes de respuesta', a:c.pending, b:p && p.pending, good:'down' }, { k:'Tasa de respuesta del equipo', a:c.respRate, b:p && p.respRate, good:'up', pct:true });
   return rows.map(r => {
     const has = r.b != null && r.a != null, d = has ? r.a - r.b : null;
@@ -6123,14 +6326,15 @@ function comparePosts(m){
 }
 function compareSummary(m){
   const t = m.last, c = m.cur, out = [];
-  if(!m.prev){ out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), con ${countTxt(c.list.length, 'comentario', 'comentarios')}: ${fmtN(c.s.pos)} positivos y ${fmtN(c.s.neg)} negativos.`); return out; }
+  if(!m.prev){ out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), con ${countTxt(c.list.length, 'comentario', 'comentarios')}: ${countTxt(c.s.pos, 'positivo', 'positivos')} y ${countTxt(c.s.neg, 'negativo', 'negativos')}.`); return out; }
   const d = c.list.length - m.prev.list.length;
-  out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), comparado con «${m.prevT.name}» (${fmtDay(m.prevT.date)}). Tiene ${countTxt(c.list.length, 'comentario', 'comentarios')} (${d === 0 ? 'igual que el anterior' : sign(d) + ' frente al anterior'}), ${countTxt(m.curNew, 'nuevo', 'nuevos')}: ${fmtN(c.s.pos)} positivos y ${fmtN(c.s.neg)} negativos (antes, ${fmtN(m.prev.s.pos)} y ${fmtN(m.prev.s.neg)}).`);
+  out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), comparado con «${m.prevT.name}» (${fmtDay(m.prevT.date)}). Tiene ${countTxt(c.list.length, 'comentario', 'comentarios')} (${d === 0 ? 'igual que el anterior' : sign(d) + ' frente al anterior'}), ${countTxt(m.curNew, 'nuevo', 'nuevos')}: ${countTxt(c.s.pos, 'positivo', 'positivos')} y ${countTxt(c.s.neg, 'negativo', 'negativos')} (antes, ${fmtN(m.prev.s.pos)} y ${fmtN(m.prev.s.neg)}).`);
   return out;
 }
 // Cálculo del informe a partir de una lista de comentarios ya finalizada (seguimientos o los datos de Resultados)
-function computeReportModel(list, team, tracks, byDate, terms, tids){
+function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const first = tracks[0], last = tracks[tracks.length - 1];
+  if(focus) list.forEach(c => { c._focus = focus.keys.has(fkey(c._ref?.postId, c)); });
   const st = computeStats(list), s = sentOf(list);
   const nonTeam = list.filter(c => !c.isTeam);
   const answered = nonTeam.filter(c => c.teamAnswered && (!c.parentId || c.needsTeam === false)).length, pending = nonTeam.filter(c => c.needsTeam).length;
@@ -6166,14 +6370,16 @@ function computeReportModel(list, team, tracks, byDate, terms, tids){
   const negShare = d => d.total ? Math.round(d.neg / d.total * 100) : 0;
   const m = { tids, tracks, first, last, list, st, s, nss:nssOf(s), team, answered, pending, respRate:(answered + pending) ? Math.round(answered / (answered + pending) * 100) : null, medRT, rtN:rts.length,
     byDate, posts, platRows, topAuthors, ambassadors, detractors, influencers, recurring, authorsN:authors.length, watch, topPos, topNeg, openQ, openNeg,
-    negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date() };
+    negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? computeFocus(list, focus.q) : null };
   // por defecto el principal es el propio conjunto (sin seguimiento anterior); buildReport lo sustituye por el más reciente
   m.cur = m; m.prev = null; m.prevT = null; m.curNew = list.length; m.prevNew = null; m.cmp = compareRows(m); m.postCmp = [];
   m.alerts = reportAlerts(m); m.recs = reportRecs(m); m.summary = reportSummary(m);
   return m;
 }
 function reportAlerts(m){
-  const a = [];
+  const a = [], f = m.focus;
+  if(f && f.n >= 3 && f.s.neg / f.n >= .3) a.push({ lvl:'high', txt:`El ${Math.round(f.s.neg / f.n * 100)} % de los comentarios sobre «${f.q}» son negativos (${fmtN(f.s.neg)} de ${fmtN(f.n)}).` });
+  if(f && m.team && f.openNeg) a.push({ lvl:'high', txt:`${countTxt(f.openNeg, 'comentario negativo sobre el enfoque sigue', 'comentarios negativos sobre el enfoque siguen')} sin respuesta del equipo.` });
   const emptyT = m.tracks.filter(t => t.postIds && t.postIds.length && !trackProgress(t).comments), emptyP = m.tracks.reduce((s, t) => s + (t.postIds ? emptyPosts(t).length : 0), 0);
   if(emptyT.length) a.push({ lvl:'high', txt:`${countTxt(emptyT.length, 'seguimiento no tiene', 'seguimientos no tienen')} comentarios (${emptyT.map(t => t.name).join(', ')}): sus datos no cuentan en este informe. Reintenta su extracción.` });
   else if(emptyP) a.push({ lvl:'mid', txt:`${countTxt(emptyP, 'publicación de los seguimientos quedó', 'publicaciones de los seguimientos quedaron')} sin comentarios: revisa su extracción.` });
@@ -6186,7 +6392,12 @@ function reportAlerts(m){
   return a;
 }
 function reportRecs(m){
-  const r = [];
+  const r = [], f = m.focus;
+  if(f && f.n){
+    if(m.team && (f.openNeg || f.openQ.length)) r.push(`Atender primero lo relacionado con «${f.q}»: ${[f.openNeg ? countTxt(f.openNeg, 'comentario negativo', 'comentarios negativos') : '', f.openQ.length ? countTxt(f.openQ.length, 'pregunta', 'preguntas') : ''].filter(Boolean).join(' y ')} sin respuesta.`);
+    if(f.critics.length) r.push(`Contactar a quienes más critican sobre el enfoque (${f.critics.slice(0, 3).map(a => a.name).join(', ')}) para entender y resolver sus casos.`);
+    if(f.ambassadors.length) r.push(`Reconocer a los embajadores del enfoque (${f.ambassadors.slice(0, 3).map(a => a.name).join(', ')}) y aprovechar sus opiniones como testimonio.`);
+  }
   if(m.team && m.pending) r.push(`Responder primero los ${fmtN(m.openNeg)} negativos y las preguntas pendientes con el asistente de respuestas (filtro “Sin respuesta del equipo”).`);
   if(!m.team) r.push('Definir el equipo en Resultados › Comentarios › Equipo para medir la tasa y el tiempo de respuesta.');
   if(m.detractors.length) r.push(`Contactar por privado a los detractores más activos (${m.detractors.slice(0, 3).map(a => a.name).join(', ')}) para resolver su caso antes de que escale.`);
@@ -6199,24 +6410,57 @@ function reportRecs(m){
   return r;
 }
 function reportSummary(m){
-  const out = [];
+  const out = [], f = m.focus;
+  if(f){
+    out.push(f.n ? `Enfoque «${f.q}»: ${countTxt(f.n, 'comentario se relaciona', 'comentarios se relacionan')} con el criterio (${f.pct} % de ${fmtN(f.total)}): ${countTxt(f.s.pos, 'positivo', 'positivos')}, ${countTxt(f.s.neu, 'neutral', 'neutrales')} y ${countTxt(f.s.neg, 'negativo', 'negativos')}.` : `Enfoque «${f.q}»: ningún comentario cumple el criterio en el periodo analizado.`);
+    if(f.critics.length) out.push(`Sobre el enfoque, quienes más critican son ${f.critics.slice(0, 3).map(a => a.name).join(', ')}; ${f.ambassadors.length ? 'los principales embajadores, ' + f.ambassadors.slice(0, 3).map(a => a.name).join(', ') : 'no hay embajadores destacados'}.`);
+    else if(f.ambassadors.length) out.push(`Sobre el enfoque destacan como embajadores ${f.ambassadors.slice(0, 3).map(a => a.name).join(', ')}.`);
+    if(f.words.length) out.push(`Dentro del enfoque se habla sobre todo de: ${f.words.slice(0, 5).map(w => w[0]).join(', ')}.`);
+  }
+  out.fl = out.length;   // líneas del enfoque: van siempre primero
   const span = m.tracks.length === 1 ? 'el ' + fmtDay(m.first.date) : 'del ' + fmtDay(m.first.date) + ' al ' + fmtDay(m.last.date);
   out.push(`Se analizaron ${countTxt(m.list.length, 'comentario único', 'comentarios únicos')} de ${countTxt(m.posts.length, 'publicación', 'publicaciones')} en ${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')} (${span}), escritos por ${countTxt(m.authorsN, 'persona', 'personas')}.`);
   out.push(`El sentimiento es ${m.nss >= 20 ? 'favorable' : m.nss <= -10 ? 'desfavorable' : 'mixto'}: ${countTxt(m.s.pos, 'comentario positivo', 'comentarios positivos')} y ${countTxt(m.s.neg, 'negativo', 'negativos')}.`);
   if(m.byDate.length > 1){ const d = m.byDate[m.byDate.length - 1].nw; out.push(`En el último seguimiento aparecieron ${countTxt(d, 'comentario nuevo', 'comentarios nuevos')}; la proporción de negativos pasó de ${m.negFirst} % a ${m.negLast} %.`); }
   if(m.team) out.push(`El equipo respondió ${m.respRate != null ? m.respRate + ' %' : '—'} de los comentarios que lo requerían; quedan ${countTxt(m.pending, 'pendiente', 'pendientes')}${m.medRT != null ? ` y la mediana de primera respuesta es de ${fmtDec(m.medRT)} h` : ''}.`);
   if(m.posts[0]) out.push(`La publicación con más conversación fue “${m.posts[0].label}” (${countTxt(m.posts[0].total, 'comentario', 'comentarios')}).`);
-  if(m.watch.length){ const w = [...m.watch].sort((a, b) => b.n - a.n)[0]; if(w.n) out.push(`“${w.term}” aparece en ${countTxt(w.n, 'comentario', 'comentarios')} (${w.pct} %): ${fmtN(w.s.pos)} positivos y ${fmtN(w.s.neg)} negativos.`); }
+  if(m.watch.length){ const w = [...m.watch].sort((a, b) => b.n - a.n)[0]; if(w.n) out.push(`“${w.term}” aparece en ${countTxt(w.n, 'comentario', 'comentarios')} (${w.pct} %): ${countTxt(w.s.pos, 'positivo', 'positivos')} y ${countTxt(w.s.neg, 'negativo', 'negativos')}.`); }
   return out;
 }
 const miniSeg = s => s.total ? `<span class="mini-seg" title="${s.pos} positivos · ${s.neu} neutrales · ${s.neg} negativos">${[['var(--viz-neg)', s.neg], ['var(--viz-neu)', s.neu], ['var(--viz-pos)', s.pos]].filter(x => x[1]).map(([c, v]) => `<i style="flex:${v} 1 0;background:${c}"></i>`).join('')}</span>` : '';
 const sign = n => (n > 0 ? '+' : '') + n;
 function qItem(c){ return `<div class="qitem"><b>${esc(c.authorName || '(desconocido)')}</b>: ${esc(c.text.slice(0, 280))}${c.text.length > 280 ? '…' : ''}<div class="qm">${esc(c._post || '')} · ${esc(platName(c.platform))}${c.reactions ? ' · ' + fmtN(c.reactions) + ' reacciones' : ''}${c._date ? ' · ' + esc(fmtDay(c._date)) : ''}</div></div>`; }
+// Sección principal del informe: estadísticas de los comentarios que cumplen el enfoque
+function focusSection(m){
+  const f = m.focus; if(!f) return '';
+  const kpi = (k, v, d) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d || '&nbsp;'}</div></div>`;
+  if(!f.n) return `<section class="card rep-sec rep-focus"><h3><span class="ms">center_focus_strong</span>Enfoque: «${esc(f.q)}»</h3><p class="sub">Ningún comentario cumple el criterio en el periodo analizado. Prueba con un enfoque más amplio en <b>Cambiar selección</b>.</p></section>`;
+  const tbl = (head, rows) => `<div class="rtable-wrap"><table class="rtable"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  const people = (arr, k, lbl) => arr.length ? tbl(`<th>Persona</th><th class="num">${lbl}</th><th class="num">Sobre el enfoque</th>`, arr.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a[k]}</td><td class="num">${a.n}</td></tr>`).join('')) : '<p class="small muted">No hay casos destacados.</p>';
+  return `<section class="card rep-sec rep-focus"><h3><span class="ms">center_focus_strong</span>Enfoque: «${esc(f.q)}»</h3><p class="sub">Comentarios que la IA relacionó con el criterio: es la parte principal del informe.</p>
+    <div class="kpis">${kpi('Comentarios relacionados', fmtN(f.n), `${f.pct} % de ${fmtN(f.total)} comentarios`)}${kpi('Positivos', fmtN(f.s.pos), pctTxt(f.s.pos, f.n))}${kpi('Neutrales', fmtN(f.s.neu), pctTxt(f.s.neu, f.n))}${kpi('Negativos', fmtN(f.s.neg), pctTxt(f.s.neg, f.n))}${kpi('Personas', fmtN(f.authorsN), 'que hablan del enfoque')}${m.team ? kpi('Sin respuesta del equipo', fmtN(f.pending), f.openNeg ? countTxt(f.openNeg, 'negativo', 'negativos') : '') : ''}</div>
+    <div style="margin:12px 0 4px">${miniSeg(f.s)}</div>
+    ${m.byDate.length > 1 ? `<h4 class="viz-h4" style="margin-top:16px">Evolución por seguimiento</h4>${tbl('<th>Fecha</th><th>Seguimiento</th><th class="num">Relacionados</th><th class="num">% del total</th><th class="num">Positivos</th><th class="num">Negativos</th>', m.byDate.map(d => `<tr><td>${esc(fmtDay(d.t.date))}</td><td>${esc(d.t.name)}</td><td class="num"><b>${fmtN(d.fn || 0)}</b></td><td class="num">${d.total ? Math.round((d.fn || 0) / d.total * 100) : 0} %</td><td class="num">${fmtN(d.fpos || 0)}</td><td class="num">${fmtN(d.fneg || 0)}</td></tr>`).join(''))}` : ''}
+    <h4 class="viz-h4" style="margin-top:16px">Por publicación</h4>${tbl('<th>Publicación</th><th>Red</th><th class="num">Relacionados</th><th class="num">% de sus comentarios</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th>', f.posts.map(p => `<tr><td>${esc(p.label)}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num"><b>${fmtN(p.n)}</b></td><td class="num">${p.pct} %</td><td class="sent">${miniSeg(p.s)}</td><td class="num">${fmtN(p.s.pos)}</td><td class="num">${fmtN(p.s.neg)}</td></tr>`).join(''))}
+    <div class="rep-grid" style="margin-top:16px">
+      <div class="viz-card"><h4 class="viz-h4">Quién más habla del enfoque</h4>${rankedBars(f.topAuthors.map(a => ({ l:a.name, v:a.n })), 'rfauthor', { unit:'comentarios' })}</div>
+      <div class="viz-card"><h4 class="viz-h4">De qué se habla dentro del enfoque</h4>${f.words.length ? rankedBars(f.words.map(([w, n]) => ({ l:w, v:n })), 'rfword') : '<p class="small muted">Sin temas destacados.</p>'}</div>
+    </div>
+    <div class="rep-grid" style="margin-top:16px">
+      <div><h4 class="viz-h4">Embajadores del enfoque</h4>${people(f.ambassadors, 'pos', 'Positivos')}</div>
+      <div><h4 class="viz-h4">Quiénes más critican</h4>${people(f.critics, 'neg', 'Negativos')}</div>
+    </div>
+    <div class="rep-grid" style="margin-top:16px">
+      <div><h4 class="viz-h4">Comentarios positivos destacados</h4><div class="qlist">${f.topPos.map(qItem).join('') || '<p class="small muted">Sin comentarios positivos.</p>'}</div></div>
+      <div><h4 class="viz-h4">Comentarios negativos destacados</h4><div class="qlist">${f.topNeg.map(qItem).join('') || '<p class="small muted">Sin comentarios negativos.</p>'}</div></div>
+    </div>
+    ${m.team && f.openQ.length ? `<h4 class="viz-h4" style="margin-top:16px">Preguntas sin responder sobre el enfoque</h4><div class="qlist">${f.openQ.map(qItem).join('')}</div>` : ''}
+  </section>`;
+}
 function renderReport(){
   const m = REP.model; if(!m) return;
   renderRepCrumbs();
   $('#repActs').innerHTML = `<button class="btn text" id="repEdit"><span class="ms">tune</span>Cambiar selección</button>
-    <button class="btn text" id="repAI"><span class="ms">auto_awesome</span>Resumen con IA</button>
     <button class="btn text" id="repWa"><span class="ms">chat</span>Mensaje para WhatsApp</button>
     <button class="btn tonal" id="repCopy"><span class="ms">content_copy</span>Copiar texto</button>
     <button class="btn filled" data-menu="repExpMenu" aria-haspopup="menu" aria-expanded="false"><span class="ms">download</span>Exportar</button>
@@ -6231,8 +6475,10 @@ function renderReport(){
   const kpi = (k, v, d, cls = '') => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d ${cls}">${d || '&nbsp;'}</div></div>`;
   const dNeg = m.byDate.length > 1 ? m.negLast - m.negFirst : null;
   $('#repOut').innerHTML = `<div class="report" id="reportDoc">
-    <div class="rep-cover"><h2>Informe de comentarios</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · generado el ${esc(m.generatedAt.toLocaleString('es'))}</p></div>
-    <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen ejecutivo</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div id="repAiOut"></div></section>
+    <div class="rep-cover"><h2>Informe de comentarios</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · generado el ${esc(m.generatedAt.toLocaleString('es'))}</p>${m.focus ? `<p><b>Enfoque:</b> «${esc(m.focus.q)}»</p>` : ''}</div>
+    <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen ejecutivo</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div id="repAiOut">${REP.ai ? `<h4 class="viz-h4" style="margin-top:14px">Análisis redactado con IA</h4><div class="rep-ai">${esc(REP.ai)}</div>` : ''}</div></section>
+    ${focusSection(m)}
+    ${m.focus ? '<h2 class="rep-divider">Estadísticas generales de todos los comentarios</h2>' : ''}
     <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores clave · seguimiento más reciente</h3><p class="sub">«${esc(m.last.name)}» (${esc(fmtDay(m.last.date))})${m.prev ? ` comparado con «${esc(m.prevT.name)}» (${esc(fmtDay(m.prevT.date))})` : ''}.</p>
       <div class="kpis">${m.cmp.map(r => kpi(r.k, r.A, m.prev ? (r.D === '—' ? 'sin dato anterior' : r.D + ' frente al anterior') : '', r.tone)).join('')}
         ${kpi('Primera respuesta (mediana)', m.cur.medRT != null ? fmtDec(m.cur.medRT) + ' h' : '—', m.cur.medRT != null ? `sobre ${fmtN(m.cur.rtN)} casos con fecha exacta` : 'requiere fechas exactas (API)')}
@@ -6282,7 +6528,23 @@ function renderReport(){
 function reportText(m){
   const L = [], H = t => { L.push('', t.toUpperCase(), '-'.repeat(Math.min(60, t.length))); };
   L.push('INFORME DE COMENTARIOS', m.tracks.length === 1 ? `${m.first.name} · ${fmtDay(m.first.date)}` : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`, `Generado el ${m.generatedAt.toLocaleString('es')}`);
+  if(m.focus) L.push(`Enfoque: «${m.focus.q}»`);
   H('Resumen ejecutivo'); m.summary.forEach(x => L.push('• ' + x)); if(REP.ai) L.push('', REP.ai);
+  const f = m.focus;
+  if(f){
+    H(`Enfoque: «${f.q}»`);
+    L.push(`Comentarios relacionados: ${fmtN(f.n)} de ${fmtN(f.total)} (${f.pct} %)`, `Sentimiento: ${countTxt(f.s.pos, 'positivo', 'positivos')}, ${countTxt(f.s.neu, 'neutral', 'neutrales')} y ${countTxt(f.s.neg, 'negativo', 'negativos')}`, `Personas que hablan del enfoque: ${fmtN(f.authorsN)}`);
+    if(m.team) L.push(`Sin respuesta del equipo: ${fmtN(f.pending)}`);
+    if(m.byDate.length > 1) m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.fn || 0)} relacionados (${countTxt(d.fpos || 0, 'positivo', 'positivos')} y ${countTxt(d.fneg || 0, 'negativo', 'negativos')})`));
+    f.posts.filter(p => p.n).forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.n)} relacionados (${p.pct} % de sus comentarios)`));
+    if(f.topAuthors.length) L.push('Quién más habla del enfoque: ' + f.topAuthors.slice(0, 5).map(a => `${a.name} (${a.n})`).join(', '));
+    if(f.ambassadors.length) L.push('Embajadores: ' + f.ambassadors.map(a => `${a.name} (${a.pos} positivos)`).join(', '));
+    if(f.critics.length) L.push('Quiénes más critican: ' + f.critics.map(a => `${a.name} (${a.neg} negativos)`).join(', '));
+    if(f.words.length) L.push('Temas dentro del enfoque: ' + f.words.slice(0, 8).map(([w, n]) => `${w} (${n})`).join(', '));
+    f.topNeg.forEach(c => L.push(`• Negativo · ${c.authorName}: ${c.text.slice(0, 240)}`));
+    f.topPos.forEach(c => L.push(`• Positivo · ${c.authorName}: ${c.text.slice(0, 240)}`));
+    H('Estadísticas generales');
+  }
   H('Seguimiento más reciente' + (m.prev ? ' frente al anterior' : ''));
   L.push(`Principal: ${m.last.name} (${fmtDay(m.last.date)})` + (m.prev ? ` · Comparado con: ${m.prevT.name} (${fmtDay(m.prevT.date)})` : ''));
   m.cmp.forEach(r => L.push(`${r.k}: ${r.A}` + (m.prev ? ` (anterior ${r.B}; variación ${r.D})` : '')));
@@ -6292,13 +6554,13 @@ function reportText(m){
     `Sentimiento: ${fmtN(m.s.pos)} positivos, ${fmtN(m.s.neu)} neutrales y ${fmtN(m.s.neg)} negativos (${pctTxt(m.s.pos, m.s.total)} positivos, ${pctTxt(m.s.neu, m.s.total)} neutrales, ${pctTxt(m.s.neg, m.s.total)} negativos)`, `Preguntas: ${fmtN(m.st.q)}`,
     `Tasa de respuesta del equipo: ${m.team && m.respRate != null ? m.respRate + ' %' : '—'}${m.team ? ` (${fmtN(m.pending)} pendientes)` : ''}`, `Primera respuesta (mediana): ${m.medRT != null ? fmtDec(m.medRT) + ' h' : '—'}`);
   H('Alertas'); m.alerts.forEach(a => L.push('• ' + a.txt));
-  if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, ${fmtN(d.pos)} positivos y ${fmtN(d.neg)} negativos`)); }
-  H('Publicaciones'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.total)} comentarios, ${fmtN(p.authors)} personas, ${fmtN(p.s.pos)} positivos y ${fmtN(p.s.neg)} negativos${m.team ? `, ${fmtN(p.pending)} pendientes` : ''}`));
+  if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, ${countTxt(d.pos, 'positivo', 'positivos')} y ${countTxt(d.neg, 'negativo', 'negativos')}`)); }
+  H('Publicaciones'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.total)} comentarios, ${fmtN(p.authors)} personas, ${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')}${m.team ? `, ${fmtN(p.pending)} pendientes` : ''}`));
   H('Quién más comenta'); m.topAuthors.forEach((a, i) => L.push(`${i + 1}. ${a.name}: ${a.n} comentarios`));
   if(m.ambassadors.length){ H('Embajadores'); m.ambassadors.forEach(a => L.push(`• ${a.name} (${a.pos} positivos de ${a.n})`)); }
   if(m.detractors.length){ H('Detractores'); m.detractors.forEach(a => L.push(`• ${a.name} (${a.neg} negativos de ${a.n})`)); }
   H('Temas más mencionados'); L.push(m.st.words.slice(0, 15).map(([w, n]) => `${w} (${n})`).join(', '));
-  if(m.watch.length){ H('Marcas y temas vigilados'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones (${w.pct} %): ${fmtN(w.s.pos)} positivos y ${fmtN(w.s.neg)} negativos`)); }
+  if(m.watch.length){ H('Marcas y temas vigilados'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones (${w.pct} %): ${countTxt(w.s.pos, 'positivo', 'positivos')} y ${countTxt(w.s.neg, 'negativo', 'negativos')}`)); }
   H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`));
   H('Comentarios positivos destacados'); m.topPos.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`));
   if(m.team && m.openQ.length){ H('Preguntas sin responder'); m.openQ.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`)); }
@@ -6325,6 +6587,32 @@ const DOC_CSS = `.scadoc,.scadoc *{color:#000!important;background:#fff!importan
   .scadoc .small{font-size:10pt}
   .scadoc .q{margin:0 0 5pt}
   .scadoc .avoid,.scadoc tr,.scadoc li{page-break-inside:avoid;break-inside:avoid}`;
+function focusDoc(m){
+  const f = m.focus; if(!f) return '';
+  const e = esc, n = fmtN;
+  const UL = items => items.map(x => `<p class="li">•&nbsp;&nbsp;${x}</p>`).join('');
+  const quote = c => `<p class="q avoid"><b>${e(c.authorName || '(desconocido)')}</b> (${e(platName(c.platform))}${c.reactions ? ', ' + n(c.reactions) + ' reacciones' : ''}): «${e(c.text.slice(0, 300))}${c.text.length > 300 ? '…' : ''}»</p>`;
+  if(!f.n) return `<h2>Enfoque: «${e(f.q)}»</h2><p>Ningún comentario cumple el criterio en el periodo analizado.</p>`;
+  let b = `<div class="avoid"><h2>Enfoque: «${e(f.q)}»</h2><p>Comentarios que la IA relacionó con el criterio; es la parte principal de este informe.</p>
+  <table><tbody>
+    <tr><td>Comentarios relacionados</td><td class="n"><b>${n(f.n)}</b></td><td>${f.pct} % de ${n(f.total)} comentarios</td></tr>
+    <tr><td>Positivos</td><td class="n">${n(f.s.pos)}</td><td>${pctTxt(f.s.pos, f.n)}</td></tr>
+    <tr><td>Neutrales</td><td class="n">${n(f.s.neu)}</td><td>${pctTxt(f.s.neu, f.n)}</td></tr>
+    <tr><td>Negativos</td><td class="n">${n(f.s.neg)}</td><td>${pctTxt(f.s.neg, f.n)}</td></tr>
+    <tr><td>Personas que hablan del enfoque</td><td class="n">${n(f.authorsN)}</td><td></td></tr>
+    ${m.team ? `<tr><td>Sin respuesta del equipo</td><td class="n">${n(f.pending)}</td><td>${f.openNeg ? countTxt(f.openNeg, 'negativo', 'negativos') : ''}</td></tr>` : ''}
+  </tbody></table></div>`;
+  if(m.byDate.length > 1) b += `<div class="avoid"><h3>Evolución por seguimiento</h3><table><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="n">Relacionados</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>${m.byDate.map(d => `<tr><td>${e(fmtDay(d.t.date))}</td><td>${e(d.t.name)}</td><td class="n">${n(d.fn || 0)}</td><td class="n">${n(d.fpos || 0)}</td><td class="n">${n(d.fneg || 0)}</td></tr>`).join('')}</tbody></table></div>`;
+  b += `<div class="avoid"><h3>Por publicación</h3><table><thead><tr><th>Publicación</th><th class="n">Relacionados</th><th class="n">% de sus comentarios</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>${f.posts.map(p => `<tr><td>${e(p.label)}</td><td class="n">${n(p.n)}</td><td class="n">${p.pct} %</td><td class="n">${n(p.s.pos)}</td><td class="n">${n(p.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
+  if(f.topAuthors.length) b += `<div class="avoid"><h3>Quién más habla del enfoque</h3>${UL(f.topAuthors.map(a => `${e(a.name)}: ${countTxt(a.n, 'comentario', 'comentarios')}`))}</div>`;
+  if(f.ambassadors.length) b += `<div class="avoid"><h3>Embajadores del enfoque</h3>${UL(f.ambassadors.map(a => `${e(a.name)} (${countTxt(a.pos, 'positivo', 'positivos')})`))}</div>`;
+  if(f.critics.length) b += `<div class="avoid"><h3>Quiénes más critican</h3>${UL(f.critics.map(a => `${e(a.name)} (${countTxt(a.neg, 'negativo', 'negativos')})`))}</div>`;
+  if(f.words.length) b += `<h3>De qué se habla dentro del enfoque</h3><p>${f.words.slice(0, 10).map(([w, c]) => `${e(w)} (${c})`).join(', ')}</p>`;
+  if(f.topNeg.length) b += `<h3>Comentarios negativos destacados</h3>${f.topNeg.map(quote).join('')}`;
+  if(f.topPos.length) b += `<h3>Comentarios positivos destacados</h3>${f.topPos.map(quote).join('')}`;
+  if(m.team && f.openQ.length) b += `<h3>Preguntas sin responder sobre el enfoque</h3>${f.openQ.map(quote).join('')}`;
+  return b;
+}
 function reportDocument(m){
   const e = esc, n = fmtN;
   const UL = items => items.map(x => `<p class="li">•&nbsp;&nbsp;${x}</p>`).join('');
@@ -6341,10 +6629,13 @@ function reportDocument(m){
     ${author ? `<p><b>Elaborado por:</b> ${e(author)}</p>` : ''}
     ${brand ? `<p><b>Cliente / marca:</b> ${e(brand)}</p>` : ''}
     <p><b>Periodo analizado:</b> ${e(period)} (${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')}, ${countTxt(m.posts.length, 'publicación', 'publicaciones')})</p>
+    ${m.focus ? `<p><b>Enfoque:</b> «${e(m.focus.q)}»</p>` : ''}
   </div>
   <h2>Resumen</h2>
   ${m.summary.map(x => `<p>${e(x)}</p>`).join('')}
   ${REP.ai ? `<p>${e(REP.ai).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>')}</p>` : ''}
+  ${focusDoc(m)}
+  ${m.focus ? '<h2>Estadísticas generales de todos los comentarios</h2>' : ''}
   <div class="avoid"><h2>Indicadores del seguimiento más reciente</h2>
   <p><b>Seguimiento principal:</b> ${e(m.last.name)} (${e(fmtDay(m.last.date))})${m.prev ? ` · <b>comparado con:</b> ${e(m.prevT.name)} (${e(fmtDay(m.prevT.date))})` : ''}</p>
   <table><thead><tr><th>Indicador</th><th class="n">${e(fmtDay(m.last.date))}</th>${m.prev ? `<th class="n">${e(fmtDay(m.prevT.date))}</th><th class="n">Variación</th>` : ''}</tr></thead><tbody>
@@ -6371,7 +6662,7 @@ function reportDocument(m){
   b += `<h2>Detalle por publicación</h2>
   ${m.posts.map((p, i) => `<div class="avoid"><h3>${i + 1}. ${e(p.label)}</h3>
     <p><b>Red:</b> ${e(platName(p.platform))} · <b>Comentarios:</b> ${n(p.total)} · <b>Personas:</b> ${n(p.authors)} · <b>Reacciones:</b> ${n(p.reacts)}<br>
-    <b>Sentimiento:</b> ${sentTxt(p.s)} (${n(p.s.pos)} positivos y ${n(p.s.neg)} negativos)${m.team ? ` · <b>Pendientes de respuesta:</b> ${n(p.pending)}` : ''}${p.topWord ? ` · <b>Tema principal:</b> ${e(p.topWord)}` : ''}</p></div>`).join('')}`;
+    <b>Sentimiento:</b> ${sentTxt(p.s)} (${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')})${m.team ? ` · <b>Pendientes de respuesta:</b> ${n(p.pending)}` : ''}${p.topWord ? ` · <b>Tema principal:</b> ${e(p.topWord)}` : ''}</p></div>`).join('')}`;
   if(m.platRows.length > 1) b += `<div class="avoid"><h2>Por red social</h2><table><thead><tr><th>Red</th><th class="n">Comentarios</th><th class="n">Personas</th><th class="n">Reacciones</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
     ${m.platRows.map(r => `<tr><td>${e(platName(r.k))}</td><td class="n">${n(r.total)}</td><td class="n">${n(r.authors)}</td><td class="n">${n(r.reacts)}</td><td class="n">${n(r.s.pos)}</td><td class="n">${n(r.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
   b += `<h2>Audiencia</h2>
@@ -6407,7 +6698,7 @@ function downloadWord(d, name){
 function resultsReportModel(list){
   const items = finalize(list.map((c, i) => ({ ...c, id:c.id || ('r' + i), _post:c._post || S.meta.title || 'Publicación', _date:c._date || todayISO(), _postAuthor:c._postAuthor || S.meta.postAuthor || '' })), { platform:S.meta.platform, postAuthor:S.meta.postAuthor });
   const team = teamOn(items);
-  const terms = (PREF.get('repTerms', '') || '').split(',').map(x => x.trim()).filter(Boolean);
+  const terms = reportTerms().split(',').map(x => x.trim()).filter(Boolean);
   const day = (S.meta.extractedAt || new Date().toISOString()).slice(0, 10);
   return computeReportModel(items, team, [{ id:'resultados', name:S.meta.title || 'Análisis de comentarios', date:day, postIds:[] }], [], terms, []);
 }
@@ -6458,25 +6749,36 @@ async function reportCopy(){
 }
 async function reportAI(){
   const m = REP.model, cfg = AI.cfg();
-  if(!aiConfigured(cfg)){ openAiCfg(); toast('Configura primero un modelo de IA gratuito'); return; }
-  const out = $('#repAiOut'); out.innerHTML = '<p class="small muted"><span class="ms sm" style="animation:spin 1.4s linear infinite;vertical-align:-4px">progress_activity</span> Redactando el resumen con ' + esc(AI_PROV[cfg.prov].name) + '…</p>';
-  const facts = reportText(m).slice(0, 6000);
-  const sys = 'Eres un consultor senior de marketing digital y comunicación. Redactas resúmenes ejecutivos claros y accionables en español, sin inventar datos.';
-  const user = `A partir de este informe de comentarios en redes sociales, escribe un resumen ejecutivo de 2 o 3 párrafos breves: situación de la reputación, causas principales de los comentarios negativos, oportunidades y 3 acciones prioritarias. Usa solo los datos dados.\n\n${facts}`;
+  if(REP.aiBusy || !m) return;
+  const out = $('#repAiOut'); if(!out) return;
+  if(!aiConfigured(cfg)){ out.innerHTML = '<p class="small muted">El resumen con IA aparecerá cuando la IA esté instalada.</p>'; return; }
+  REP.aiBusy = true;
+  const t0 = Date.now(), local = cfg.prov === 'local';
+  const prog = (txt, pct) => { const o = $('#repAiOut'); if(!o) return; o.innerHTML = `<div class="rep-ai-prog" role="status" aria-live="polite"><span class="small muted" id="repAiState">${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-label="Progreso del resumen con IA" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></div>`; };
+  prog(`Redactando el resumen con IA (${AI_PROV[cfg.prov].name})…${local ? ' En tu equipo puede tardar uno o dos minutos.' : ''}`, local ? 0 : null);
+  // el modelo de la app es pequeño y se ejecuta en tu equipo: se le da un resumen más corto para que responda en un tiempo razonable
+  const facts = reportText(m).slice(0, local ? 2200 : 6000), f = m.focus;
+  const sys = 'Eres un consultor senior de marketing digital y comunicación. Redactas resúmenes ejecutivos claros y accionables en español, sin inventar datos ni usar tecnicismos.';
+  const user = `A partir de este informe de comentarios en redes sociales, escribe un resumen ejecutivo de 2 o 3 párrafos breves.${f ? ` Céntrate sobre todo en el enfoque «${f.q}»: qué se dice, el tono de esos comentarios, quiénes critican y quiénes defienden.` : ''} Incluye la situación general, las causas de los comentarios negativos, oportunidades y 3 acciones prioritarias. Usa solo los datos dados.\n\n${facts}`;
   try{
-    let txt = await aiRequest(cfg, sys, user);
+    let txt = await aiRequest(cfg, sys, user, null, local ? (x => prog(`Redactando el resumen con IA… ${Math.round(x * 100)} %`, Math.round(x * 100))) : null);
     txt = String(txt || '').replace(/^```\w*\n?|```$/g, '').trim();
     try{ const j = JSON.parse(txt); txt = j.resumen || j.summary || Object.values(j).join('\n\n'); }catch(e){}
     REP.ai = txt;
-    out.innerHTML = `<h4 class="viz-h4" style="margin-top:14px">Análisis redactado con IA (${esc(AI_PROV[cfg.prov].name)})</h4><div class="rep-ai">${esc(txt)}</div><p class="small muted">Generado automáticamente: revísalo antes de compartirlo.</p>`;
-  }catch(e){ out.innerHTML = `<p class="small" style="color:var(--error)">IA: ${esc(e.message)}</p>`; }
+    if(!txt) throw new Error('La IA no devolvió texto. Inténtalo de nuevo.');
+    const o = $('#repAiOut'); if(o) o.innerHTML = `<h4 class="viz-h4" style="margin-top:14px">Análisis redactado con IA (${esc(AI_PROV[cfg.prov].name)})</h4><div class="rep-ai">${esc(txt)}</div><p class="small muted">Generado automáticamente en ${Math.max(1, Math.round((Date.now() - t0) / 1000))} s: revísalo antes de compartirlo.</p>`;
+    toast('Resumen con IA listo');
+  }catch(e){ const o = $('#repAiOut'); if(o) o.innerHTML = `<p class="small" style="color:var(--error)">No se pudo redactar el resumen con IA: ${esc(e.message)}</p><button class="btn tonal sm" id="repAiRetry"><span class="ms">refresh</span>Reintentar</button>`; }
+  finally{ REP.aiBusy = false; }
 }
 function initReports(){
   $('#repPicker').addEventListener('click', e => {
     const pr = e.target.closest('[data-rpp]');
     if(pr){ const k = pr.dataset.rpp, lim = k === 'all' || k === 'none' ? null : new Date(Date.now() - (+k) * 864e5).toISOString().slice(0, 10);
       $$('.rpsel').forEach(c => { const t = TR.tracks.find(x => x.id === c.value); c.checked = k === 'none' ? false : !lim || (t && t.date >= lim); c.closest('.hrow').classList.toggle('sel', c.checked); }); }
-    if(e.target.id === 'repGo' || e.target.closest('#repGo')){ const ids = $$('.rpsel').filter(c => c.checked).map(c => c.value); PREF.set('repSel', JSON.stringify(ids)); PREF.set('repTerms', $('#repTerms').value); PREF.set('repAuthor', $('#repAuthor').value.trim()); PREF.set('repClient', $('#repClient').value.trim()); REP.from = 'nav'; generateReport(ids); }
+    if(e.target.id === 'repGo' || e.target.closest('#repGo')){ const ids = $$('.rpsel').filter(c => c.checked).map(c => c.value);
+      const fq = $('#repFocus').value.trim(); if(!fq){ toast('Escribe el enfoque del informe'); $('#repFocus').focus(); return; } PREF.set('repFocus', fq);
+      PREF.set('repSel', JSON.stringify(ids)); PREF.set('repTerms', $('#repTerms').value); PREF.set('repAuthor', $('#repAuthor').value.trim()); PREF.set('repClient', $('#repClient').value.trim()); REP.from = 'nav'; generateReport(ids); }
     if(e.target.closest('#repCancel')){ REP.editing = false; renderReportPicker(); }
   });
   $('#repPicker').addEventListener('change', e => { if(e.target.classList.contains('rpsel')) e.target.closest('.hrow').classList.toggle('sel', e.target.checked); });
@@ -6484,7 +6786,7 @@ function initReports(){
     if(e.target.closest('#repEdit')){ REP.editing = true; renderReportPicker(); renderRepCrumbs(); $('#repPicker').scrollIntoView({ behavior:'smooth' }); }
     if(e.target.closest('#repCopy')) reportCopy();
     if(e.target.closest('#repWa')) openWaDlg();
-    if(e.target.closest('#repAI')) reportAI();
+    if(e.target.closest('#repAiRetry')) reportAI();
     const x = e.target.closest('[data-rexp]'); if(x){ closeMenus(); reportExport(x.dataset.rexp); }
   });
   $('#repOut').addEventListener('click', e => { if(e.target.closest('#repOpenList') && REP.model) viewTrackingsComments(REP.model.tids, 'informe').then(() => selectTab('list')); });
@@ -6505,9 +6807,12 @@ async function semLoad(){
     const T = await import(SEM.lib);
     T.env.allowLocalModels = false;
     const files = {};
-    SEM.pipe = await T.pipeline('feature-extraction', SEM.model, { dtype:'q8', progress_callback:p => {
-      if(p.status === 'progress' && p.total){ files[p.file] = [p.loaded, p.total]; const a = Object.values(files).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); semStatus(`Descargando el modelo de búsqueda (solo la primera vez)… ${Math.round(a[0] / a[1] * 100)} %`, true); }
+    if(!AISTATE.checked) await aiScanCache();
+    const semDtype = AISTATE.semTypes.includes('q8') ? 'q8' : (AISTATE.semTypes[0] || 'q8');
+    SEM.pipe = await T.pipeline('feature-extraction', SEM.model, { dtype:semDtype, progress_callback:p => {
+      if(p.status === 'progress' && p.total){ files[p.file] = [p.loaded, p.total]; const a = Object.values(files).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); SEM.mb = a; if(SEM.onProgress) SEM.onProgress(a); else semStatus(`Cargando el modelo de búsqueda… ${Math.round(a[0] / a[1] * 100)} %`, true); }
     } });
+    PREF.set('aiSem', '1');
     return SEM.pipe;
   })().catch(e => { SEM.loading = null; throw e; });
   return SEM.loading;
@@ -6535,7 +6840,7 @@ async function runSemantic(q){
     S.sem = { q, mode:'sem', scores:new Map() };
     list.forEach((c, i) => { let s = dot(qv, vs[i]); const t = normName(c.text); if(qn.length && qn.every(w => t.includes(w))) s = Math.max(s, .99); S.sem.scores.set(c.id, s); });
     semApply();
-  }catch(e){ semStatus('No se pudo usar la búsqueda por significado: ' + (e.message || e) + '. Prueba “Clasificar con IA” o la búsqueda por términos.', false); S.sem = null; }
+  }catch(e){ semStatus('No se pudo usar la búsqueda por significado: ' + (e.message || e) + '. Prueba “Clasificar con IA”.', false); S.sem = null; }
 }
 function semApply(){
   if(!S.sem) return;
@@ -6567,11 +6872,16 @@ async function runAIClassify(q){
 }
 function semClear(){ S.sem = null; $('#semBar').classList.add('hidden'); S.page = 1; renderTable(); }
 function initSemantic(){
-  $('#qMode').value = PREF.get('qMode', 'terms');
-  const ph = () => { const m = $('#qMode').value; $('#q').placeholder = m === 'terms' ? 'Buscar en comentarios o autores' : m === 'sem' ? 'Describe el tema y pulsa Intro (p. ej.: quejas por demoras en la entrega)' : 'Criterio para la IA y pulsa Intro (p. ej.: se refieren a Kanasta24)'; };
+  $('#qMode').value = PREF.get('qMode', 'sem') === 'ai' ? 'ai' : 'sem';
+  const ph = () => { const m = $('#qMode').value; $('#q').placeholder = m === 'sem' ? 'Describe el tema y pulsa Intro (p. ej.: quejas por demoras en la entrega)' : 'Criterio para la IA y pulsa Intro (p. ej.: se refieren a Kanasta24)'; };
   ph();
-  $('#qMode').onchange = () => { PREF.set('qMode', $('#qMode').value); ph(); if($('#qMode').value === 'terms') semClear(); $('#q').focus(); };
-  $('#q').addEventListener('keydown', e => { if(e.key !== 'Enter') return; const m = $('#qMode').value, v = $('#q').value.trim(); if(m === 'terms' || !v) return; e.preventDefault(); m === 'sem' ? runSemantic(v) : runAIClassify(v); });
+  $('#qMode').onchange = () => { PREF.set('qMode', $('#qMode').value); ph(); semClear(); $('#q').focus(); };
+  $('#q').addEventListener('keydown', e => {
+    if(e.key !== 'Enter') return; const m = $('#qMode').value, v = $('#q').value.trim(); if(!v) return; e.preventDefault();
+    if(/^autor:/i.test(v)){ S.page = 1; renderTable(); return; }   // atajo de filtro por autor
+    if(!aiInstalled()){ aiNeedInstall(); return; }
+    m === 'sem' ? runSemantic(v) : runAIClassify(v);
+  });
   $('#semClear').onclick = () => { semClear(); $('#q').value = ''; };
   $('#semLevel').onchange = semApply;
 }
@@ -6703,19 +7013,19 @@ window.addEventListener('message', e => {
 
 /* ---------- Mensaje para WhatsApp: valoración personal breve sobre el informe ---------- */
 function whatsappMessage(m, tone = 'cercano'){
-  const c = m.cur || m, terms = (m.terms || []).filter(Boolean);
+  const c = m.cur || m, terms = (m.terms || []).filter(Boolean), fq = m.focus ? m.focus.q : '';
   const brand = PREF.get('repClient', '') || terms[0] || '';
-  const crit = terms.length ? terms.join(', ') : '';
+  const crit = fq || (terms.length ? terms.join(', ') : '');
   const day = d => new Date(d + 'T12:00:00').toLocaleDateString('es', { weekday:'long', day:'numeric', month:'long' });
   const people = arr => arr.length === 1 ? arr[0] : arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
   const others = c.list.filter(x => !x.isTeam);
   // comentarios que hablan del criterio (marcas o temas vigilados); sin criterio, todos
-  const about = terms.length ? others.filter(x => terms.some(t => normName(x.text).includes(normName(t)) || (x.mentions || []).some(mm => normName(mm).includes(normName(t))))) : others;
+  const about = fq ? others.filter(x => x._focus) : terms.length ? others.filter(x => terms.some(t => normName(x.text).includes(normName(t)) || (x.mentions || []).some(mm => normName(mm).includes(normName(t))))) : others;
   const pos = about.filter(x => x.sentiment === 'positivo'), neg = about.filter(x => x.sentiment === 'negativo');
   const topBy = arr => { const k = {}; arr.forEach(x => { const n = x.authorName || ''; if(n) k[n] = (k[n] || 0) + 1; }); return Object.entries(k).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]); };
   const critics = topBy(neg), fans = topBy(pos);
   // temas que más aparecen en lo positivo y en lo negativo (sin la propia marca)
-  const skip = terms.map(t => normName(t).replace(/\s+/g, ''));
+  const skip = [...terms.map(t => normName(t).replace(/\s+/g, '')), ...(fq ? focusKeywords(fq) : [])];
   const topWord = arr => (computeStats(arr).words.find(([w]) => !skip.some(s => normName(w).includes(s) || s.includes(normName(w)))) || [])[0];
   const likeW = pos.length ? topWord(pos) : '', badW = neg.length ? topWord(neg) : '';
   const pendNeg = c.team ? others.filter(x => x.sentiment === 'negativo' && x.needsTeam).length : 0;
@@ -7291,6 +7601,7 @@ function filterHelp(raw){
       if(a==='tour') openOnboarding();
       if(a==='docs') go('ayuda');
       if(a==='shortcuts') go('ayuda','atajos');
+      if(a==='ai') openAiCfg();
       if(a==='theme-light') setTheme('light');
       if(a==='theme-dark') setTheme('dark');
       if(a==='theme-system') setTheme('system');
@@ -7410,6 +7721,7 @@ function filterHelp(raw){
   };
   let qt; $('#q').oninput = ()=>{ clearTimeout(qt); qt=setTimeout(()=>{ S.page=1; renderTable(); },150); };
   $('#qClear').onclick = ()=>{ $('#q').value=''; S.page=1; renderTable(); $('#q').focus(); };
+  $('#fToggle').onclick = () => { PREF.set('filtersOpen', PREF.get('filtersOpen', '0') === '1' ? '0' : '1'); renderFilterToggle(); if(PREF.get('filtersOpen') === '1') $('#fChips .fchip')?.focus(); };
   $('#fPost').onchange = e => { S.f.post.clear(); if(e.target.value) S.f.post.add(e.target.value); S.page = 1; renderTable(); };
   $$('.fchip[data-fg]').forEach(ch=>ch.onclick=()=>{ const set=S.f[ch.dataset.fg]; set.has(ch.dataset.fv)?set.delete(ch.dataset.fv):set.add(ch.dataset.fv); S.page=1; renderTable(); });
   $('#fReset').onclick = ()=>{ Object.values(S.f).forEach(s=>s.clear()); S.page=1; renderTable(); };
@@ -7430,8 +7742,6 @@ function filterHelp(raw){
     if(act==='reply') openReply(c, c.needsTeam ? S.rows.filter(x => x.needsTeam) : null);
   });
   // vista conversación
-  $$('.seg [data-lv]').forEach(b=>b.onclick=()=>setListView(b.dataset.lv));
-  $('.seg').addEventListener('keydown', e=>{ if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ e.preventDefault(); const n=S.listView==='conv'?'table':'conv'; setListView(n); $(`.seg [data-lv="${n}"]`).focus(); } });
   $('#convSort').onchange = e=>{ const [key,dir]=e.target.value.split(':'); S.sort={key,dir}; S.page=1; renderTable(); };
   $('#convExpandAll').onclick = ()=>{ S.collapsed.clear(); renderTable(); };
   $('#convCollapseAll').onclick = ()=>{ S.collapsed = new Set(Object.keys(S.kids)); renderTable(); };
@@ -7461,8 +7771,7 @@ function filterHelp(raw){
   $('#conv').addEventListener('keydown', e=>{
     if((e.key==='Enter'||e.key===' ') && e.target.classList.contains('bubble')){ e.preventDefault(); showDetail(S.comments.find(x=>x.id===e.target.closest('.cnode').dataset.id)); }
   });
-  S.listView = PREF.get('listView','conv')==='table' ? 'table' : 'conv';
-  $$('.seg [data-lv]').forEach(b=>{ b.setAttribute('aria-checked', b.dataset.lv===S.listView); b.tabIndex = b.dataset.lv===S.listView?0:-1; });
+  S.listView = 'conv';   // vista única: Conversación
 
   $('#tbody').addEventListener('dblclick', e=>{ const tr=e.target.closest('tr[data-id]'); if(tr && !e.target.closest('a,button,input')) showDetail(S.comments.find(x=>x.id===tr.dataset.id)); });
 

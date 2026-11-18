@@ -214,6 +214,18 @@ const TR = () => w.eval('TR');
     check('El visor abre todos los comentarios del seguimiento con el selector de publicación', !d.getElementById('fPostF').classList.contains('hidden') && fp.options.length === 3 && /Todas las publicaciones \(9\)/.test(fp.options[0].textContent) && w.eval('S.comments.length') === 9, [...fp.options].map(o => o.textContent).join(' | '));
     fp.value = fbId; fp.dispatchEvent(new Event('change')); await wait(150);
     check('Al elegir una publicación solo se ven sus comentarios', w.eval('S.filtered.length') === 6 && w.eval(`S.filtered.every(c => c._ref.postId === '${fbId}')`) && d.getElementById('fPostF').classList.contains('on') && !d.getElementById('fReset').classList.contains('hidden'), w.eval('S.filtered.length') + ' de ' + allN);
+    // Filtros plegables y vista única
+    w.selectTab('list'); w.localStorage.removeItem('fbca:filtersOpen'); w.renderTable(); await wait(80);
+    const flt = d.getElementById('fBar');
+    check('Los chips de filtro están ocultos por defecto y el selector de publicación sigue visible', flt.classList.contains('collapsed') && d.getElementById('fChips').querySelector('.fchip').offsetParent === null && d.getElementById('fPostF').offsetParent !== null, JSON.stringify({ cls:flt.className, chip:!!d.querySelector('#fChips .fchip').offsetParent, post:!!d.getElementById('fPostF').offsetParent, postCls:d.getElementById('fPostF').className, multi:w.eval('S.meta.multi'), hash:w.location.hash }));
+    w.eval("S.f.sent.add('negativo'); renderTable()"); await wait(50);
+    check('Plegado, el botón «Filtros» indica cuántos filtros hay activos', d.getElementById('fActiveN').textContent === '1' && !d.getElementById('fActiveN').classList.contains('hidden'));
+    d.getElementById('fToggle').click(); await wait(50);
+    check('«Filtros» despliega los chips', !flt.classList.contains('collapsed') && d.getElementById('fToggle').getAttribute('aria-expanded') === 'true' && d.querySelector('#fChips .fchip').offsetParent !== null);
+    d.getElementById('fToggle').click(); await wait(50);
+    w.eval("S.f.sent.delete('negativo'); renderTable()");
+    check('Ya no hay vista de Tabla: solo Conversación', !d.querySelector('[data-lv]') && w.eval('S.listView') === 'conv' && d.getElementById('tableWrap').classList.contains('hidden'));
+    check('Una extracción incompleta se avisa con «N de total»', /9 de 114 comentarios/.test(w.itemCountTxt({ count:9, total:114 })) && /Incompleta/.test(w.itemCountTxt({ count:9, total:114 })) && w.itemCountTxt({ count:112, total:114 }) === '112 comentarios');
     d.getElementById('fReset').click(); await wait(150);
     check('“Quitar filtros” vuelve a todas las publicaciones', fp.value === '' && w.eval('S.filtered.length') === 9);
     const cr2 = d.getElementById('resCrumbs').textContent.replace(/\s+/g, ' ');
@@ -223,9 +235,12 @@ const TR = () => w.eval('TR');
     w.download = dlBak;
     check('Resultados: “Informe Word (.doc)” en el menú Exportar genera el documento', !!d.querySelector('[data-exp="word"]') && filesR.some(f => /\.doc$/.test(f.name)), filesR.map(f => f.name).join(', '));
 
-    // 6. Informe con dos seguimientos
-    d.getElementById('qMode') && 0;
-    w.localStorage.setItem('fbca:repTerms', 'Kanasta24, envío');
+    // 6. Informe con dos seguimientos (requiere la IA: se simula instalada)
+    w.localStorage.setItem('fbca:aiLocal', '1'); w.localStorage.setItem('fbca:aiSem', '1'); w.renderAiState();
+    const VOC0 = ['kanasta', 'pedido', 'envio', 'entrega', 'servicio', 'precio'];
+    w.eval(`window.__semBak = semEmbed; semEmbed = async (texts) => texts.map(t => { const n = normName(t); const v = ${JSON.stringify(VOC0)}.map(k => n.includes(k) ? 1 : 0); const s = Math.hypot(...v) || 1; return v.map(x => x / s); });
+      window.__aiBak = aiRequest; window.__aiN = 0; aiRequest = async () => { window.__aiN++; await new Promise(r => setTimeout(r, 700)); return 'La reputación sobre Kanasta24 es favorable. Conviene responder las preguntas pendientes.'; }`);
+    w.localStorage.setItem('fbca:repTermsV2', '1'); w.localStorage.setItem('fbca:repTerms', 'Kanasta24, envío'); w.localStorage.removeItem('fbca:repFocus');
     w.openReport([t1.id, t2.id]);
     await until(() => w.eval('REP.model') && d.getElementById('reportDoc'), 30000);
     const m = w.eval('REP.model');
@@ -235,13 +250,27 @@ const TR = () => w.eval('TR');
     const cRow = m.cmp.find(r => r.k === 'Comentarios');
     check('Comparativa: el principal es el más reciente (9 comentarios) frente al anterior (15)', m.last.name === 'Martes' && m.prevT.name === 'Lunes' && cRow.a === 9 && cRow.b === 15 && /▼ -6/.test(cRow.D), JSON.stringify(cRow));
     check('Comparativa por publicación y sección propia', m.postCmp.length === 2 && /Comparativa con el seguimiento anterior/.test(d.getElementById('reportDoc').textContent));
-    check('El resumen empieza por el seguimiento principal', /^Seguimiento principal: «Martes»/.test(m.summary[0]), m.summary[0]);
+    check('El resumen empieza por el enfoque y después el seguimiento principal', /^Enfoque «Kanasta24 y comentarios relacionados»/.test(m.summary[0]) && m.summary.some(x => /^Seguimiento principal: «Martes»/.test(x)), m.summary.slice(0, 2).join(' | '));
+    const kanN = m.list.filter(c => !c.isTeam && /kanasta/i.test(c.text)).length;
+    check('Enfoque por defecto «Kanasta24 y comentarios relacionados»: la IA selecciona los comentarios relacionados', m.focus && m.focus.q === 'Kanasta24 y comentarios relacionados' && m.focus.n === kanN && kanN > 0 && m.focus.list.every(c => /kanasta/i.test(c.text)), m.focus && (m.focus.n + ' de ' + m.focus.total + ' (esperados ' + kanN + ')'));
+    const rdoc = d.getElementById('reportDoc').textContent;
+    check('El informe muestra primero la sección del enfoque y después las estadísticas generales', rdoc.indexOf('Enfoque: «Kanasta24') > -1 && rdoc.indexOf('Enfoque: «Kanasta24') < rdoc.indexOf('Estadísticas generales de todos los comentarios'));
+    check('La comparativa empieza por los comentarios sobre el enfoque', m.cmp[0].k === 'Comentarios sobre el enfoque' && m.cmp[0].a === m.cur.focus.n);
+    check('Texto y Word incluyen el enfoque', /ENFOQUE: «KANASTA24/.test(w.reportText(m)) && /Enfoque: «Kanasta24/.test(w.reportDocument(m).body));
     check('El informe habla de positivos y negativos, sin “índice neto”', /Comentarios positivos/.test(d.getElementById('reportDoc').textContent) && !/índice neto/i.test(d.getElementById('reportDoc').textContent));
     const kan = m.watch.find(x => x.term === 'Kanasta24');
     check('Temas vigilados: “Kanasta24” se cuenta en sus menciones', kan && kan.n >= 4, kan && JSON.stringify({ n:kan.n, pct:kan.pct, nss:kan.nss }));
     check('Quién más comenta: Ana López encabeza la lista', m.topAuthors[0].name === 'Ana López', m.topAuthors.slice(0, 3).map(a => a.name + ' ' + a.n).join(', '));
     check('Hay resumen ejecutivo y recomendaciones', m.summary.length >= 3 && m.recs.length >= 2);
     check('El gráfico de evolución por seguimiento se dibuja', !!d.querySelector('#repChartDates svg'));
+
+    // 6a. El resumen con IA se genera siempre, con indicador de progreso
+    check('No hay botón «Resumen con IA»: el resumen se genera solo', !d.getElementById('repAI'));
+    const progVisible = !!d.querySelector('#repAiOut .pbar') || /Análisis redactado con IA/.test(d.getElementById('repAiOut').textContent);
+    check('Mientras se redacta el resumen con IA se ve una barra de progreso', progVisible, d.getElementById('repAiOut').textContent.slice(0, 80));
+    await until(() => /reputación sobre Kanasta24/.test(d.getElementById('repAiOut').textContent), 5000).catch(() => {});
+    check('Al terminar aparece el resumen redactado con IA (una sola petición)', /reputación sobre Kanasta24/.test(d.getElementById('repAiOut').textContent) && w.eval('__aiN') === 1, 'peticiones: ' + w.eval('__aiN'));
+    w.eval(`aiRequest = __aiBak`);
 
     // 6b. Mensaje para WhatsApp
     d.getElementById('repWa').click(); await wait(150);
@@ -251,28 +280,43 @@ const TR = () => w.eval('TR');
     const wa2 = d.getElementById('waText').value;
     check('El tono “Muy breve” genera un mensaje más corto', wa2.length < wa1.length && /seguimiento anterior/.test(wa2) && !/índice neto/i.test(wa2), wa2.length + ' frente a ' + wa1.length + ' caracteres');
     d.getElementById('waDlg').close();
-    // IA de la app: no es la opción por defecto; se descarga desde el diálogo y queda configurada
-    w.localStorage.removeItem('fbca:ai'); w.localStorage.removeItem('fbca:aiLocal');
-    check('La IA de la app no es el proveedor por defecto ni está lista sin descargarla', w.eval('AI.cfg().prov') === 'chrome' && !w.eval("aiConfigured({ ...AI.cfg(), prov:'local' })"));
-    // librería simulada: emite progreso y devuelve un generador
-    const fakeLib = 'data:text/javascript,' + encodeURIComponent(`export const env = {}; export async function pipeline(task, model, o){ for(let i = 1; i <= 4; i++){ await new Promise(r => setTimeout(r, 120)); o.progress_callback({ status:'progress', file:'onnx/model.onnx', loaded:i * 125e6, total:500e6 }); } return async msgs => [{ generated_text:[...msgs, { role:'assistant', content:'["Gracias por escribirnos"]' }] }]; }`);
-    const realLib = w.eval('SEM.lib'); w.eval('SEM.lib = ' + JSON.stringify(fakeLib));
-    w.eval('openAiCfg()'); await wait(100);
-    check('Sin IA disponible, el diálogo muestra “IA de la app” con “Descargar e instalar”', d.getElementById('aiProv').value === 'local' && !d.getElementById('aiDlF').classList.contains('hidden') && !d.getElementById('aiDlBtn').classList.contains('hidden'));
-    d.getElementById('aiDlBtn').click(); await wait(300);
-    const midTxt = d.getElementById('aiDlTitle').textContent;
-    check('Durante la descarga se ve el porcentaje y la barra de progreso', /Descargando el modelo… \d+ %/.test(midTxt) && !d.getElementById('aiDlBar').classList.contains('hidden') && d.getElementById('aiDlBtn').disabled, midTxt);
-    await until(() => /instalada/.test(d.getElementById('aiDlTitle').textContent), 5000).catch(() => {});
-    check('Al terminar queda instalada y configurada como proveedor', w.localStorage.getItem('fbca:aiLocal') === '1' && w.eval('AI.cfg().prov') === 'local' && w.eval('aiConfigured()') && !d.getElementById('aiDlDel').classList.contains('hidden'), d.getElementById('aiDlTitle').textContent);
+    // IA obligatoria: sin instalar se avisa en toda la app y se ocultan sus opciones
+    for(const k of ['fbca:ai', 'fbca:aiLocal', 'fbca:aiSem']) w.localStorage.removeItem(k);
+    w.renderAiState(); await wait(50);
+    const vis = id => { const el = d.getElementById(id); return !!el && el.offsetParent !== null; };
+    check('Sin la IA instalada aparece el aviso global de instalación', vis('aiBanner') && /Instala la IA/.test(d.getElementById('aiBanner').textContent) && d.body.classList.contains('no-ai'));
+    const repBtnShown = () => { const b = d.querySelector('#histList [data-hact="report"]'); return !!b && getComputedStyle(b).display !== 'none'; };
+    check('Sin la IA instalada no se muestran sus opciones (informe del seguimiento)', !repBtnShown());
+    // librería simulada: modelo de búsqueda (feature-extraction) y modelo de lenguaje, con progreso
+    const fakeLib = 'data:text/javascript,' + encodeURIComponent(`export const env = {}; export async function pipeline(task, model, o){ if(!['auto','fp32','fp16','q8','int8','uint8','q4','bnb4','q4f16'].includes(o.dtype)) throw new Error('Invalid dtype: ' + o.dtype); for(let i = 1; i <= 4; i++){ await new Promise(r => setTimeout(r, 120)); o.progress_callback({ status:'progress', file:'onnx/model.onnx', loaded:i * 25e6, total:100e6 }); } if(task === 'feature-extraction') return async xs => ({ tolist:() => xs.map(() => [1, 0]) }); return async msgs => [{ generated_text:[...msgs, { role:'assistant', content:'["Gracias por escribirnos"]' }] }]; }`);
+    const realLib = w.eval('SEM.lib'); w.eval('SEM.lib = ' + JSON.stringify(fakeLib) + '; SEM.pipe = null; SEM.loading = null; LLM.gen = null; LLM.loading = null');
+    d.getElementById('aiBnBtn').click(); await wait(250);
+    const midTxt = d.getElementById('aiBnTitle').textContent;
+    check('«Instalar IA» muestra el porcentaje y la barra de progreso en el aviso', /Instalando la IA… \d+ %/.test(midTxt) && !d.getElementById('aiBnBar').classList.contains('hidden') && d.getElementById('aiBnBtn').disabled, midTxt);
+    await until(() => w.eval('aiInstalled()') && !w.eval('AIINST.busy'), 6000).catch(() => {});
+    check('Al terminar instala ambos modelos, oculta el aviso y deja la IA configurada', w.localStorage.getItem('fbca:aiLocal') === '1' && w.localStorage.getItem('fbca:aiSem') === '1' && !vis('aiBanner') && !d.body.classList.contains('no-ai') && w.eval('AI.cfg().prov') === 'local', midTxt);
+    check('Con la IA instalada se muestran sus opciones', repBtnShown());
     const gen = await w.eval("aiRequest(AI.cfg(), 'sys', 'user')");
     check('La IA de la app genera texto', /Gracias por escribirnos/.test(gen), gen);
     w.localStorage.setItem('fbca:ai', JSON.stringify({ prov:'gemini', keys:{} }));
     check('Un proveedor sin clave recurre a la IA de la app instalada', w.eval('AI.cfg().prov') === 'local');
+    w.localStorage.removeItem('fbca:ai');
+    w.eval('openAiCfg()'); await wait(100);
+    check('El diálogo de IA indica que está instalada y permite desinstalarla', /instalada/.test(d.getElementById('aiDlTitle').textContent) && !d.getElementById('aiDlDel').classList.contains('hidden'));
     d.getElementById('aiDlDel').click(); await wait(150);
     d.getElementById('cfOk').click(); await wait(300);
-    check('“Eliminar modelo” la desinstala', w.localStorage.getItem('fbca:aiLocal') !== '1' && !d.getElementById('aiDlBtn').classList.contains('hidden'));
+    check('«Desinstalar» quita la IA y vuelve el aviso', !w.eval('aiInstalled()') && d.body.classList.contains('no-ai') && !d.getElementById('aiBanner').classList.contains('hidden'));
     d.getElementById('aiDlg').close();
-    w.eval('SEM.lib = ' + JSON.stringify(realLib)); w.localStorage.removeItem('fbca:ai');
+    w.eval('SEM.lib = ' + JSON.stringify(realLib) + '; SEM.pipe = null; SEM.loading = null');
+    // La instalación se detecta por los archivos guardados (aunque se pierdan las marcas): no se vuelve a descargar
+    await w.eval(`(async () => { const c = await caches.open('transformers-cache'); for(const [m, f] of [[LLM.model, 'onnx/model_quantized.onnx'], [SEM.model, 'onnx/model_quantized.onnx']]) for(const x of [f, 'tokenizer.json', 'config.json']) await c.put('https://huggingface.co/' + m + '/resolve/main/' + x, new Response('x')); localStorage.removeItem('fbca:aiLocal'); localStorage.removeItem('fbca:aiSem'); return 1; })()`);
+    check('La IA instalada se detecta por sus archivos aunque se borren las marcas', await w.eval('aiScanCache()') === true);
+    await w.eval(`(async () => { const c = await caches.open('transformers-cache'); await c.delete('https://huggingface.co/' + LLM.model + '/resolve/main/onnx/model_quantized.onnx'); await c.put('https://huggingface.co/' + LLM.model + '/resolve/main/onnx/model_q4.onnx', new Response('x')); return 1; })()`);
+    check('Una variante descargada antes (q4) también cuenta como instalada y se reutiliza', await w.eval('aiScanCache()') === true && w.eval('AISTATE.llmTypes').includes('q4'), JSON.stringify(w.eval('AISTATE.llmTypes')));
+    const n0 = w.eval('__fetchN = 0, window.__f0 = fetch, fetch = (...a) => { __fetchN++; return __f0(...a); }, 0');
+    await w.eval('installAI()');
+    check('«Instalar IA» con la IA ya descargada no descarga nada', w.eval('__fetchN') === 0 && /ya estaba instalada/.test(d.getElementById('snackMsg').textContent), d.getElementById('snackMsg').textContent);
+    await w.eval(`(async () => { fetch = __f0; const c = await caches.open('transformers-cache'); for(const k of await c.keys()) await c.delete(k); localStorage.removeItem('fbca:aiLocal'); localStorage.removeItem('fbca:aiSem'); renderAiState(); return 1; })()`);
 
     // 7. Exportaciones
     const txt = w.reportText(m);
@@ -290,12 +334,17 @@ const TR = () => w.eval('TR');
     const pdfLoaded = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js').then(() => typeof w.html2pdf === 'function', () => false);
     check('PDF: la librería de PDF carga desde cdnjs', pdfLoaded);
 
+    w.eval('semEmbed = __semBak');
     // 8. Ver comentarios del informe y búsqueda por significado (modelo simulado: bolsa de palabras)
     await w.viewTrackingsComments([t1.id, t2.id]); w.selectTab('list'); await wait(200);
     check('Ver varios seguimientos juntos en Resultados', w.eval('S.comments.length') === 16 && w.eval('S.meta.multi') === true);
     const VOC = ['kanasta', 'kanasta24', 'pedido', 'envio', 'envios', 'entrega', 'tardanza', 'llego', 'servicio', 'precio'];
     const normName = w.eval('normName');
     w.semEmbed = async (texts, kind) => texts.map(t => { const n = normName(t); let v = VOC.map(k => n.includes(k) ? 1 : 0); if(/kanasta/.test(n)) v[0] = v[1] = 1; const s = Math.hypot(...v) || 1; return v.map(x => x / s); });
+    w.localStorage.setItem('fbca:aiLocal', '1'); w.localStorage.setItem('fbca:aiSem', '1'); w.renderAiState();
+    check('La búsqueda es siempre con IA: no existe la opción «Términos»', ![...d.getElementById('qMode').options].some(o => o.value === 'terms') && d.getElementById('qMode').value === 'sem');
+    d.getElementById('q').value = 'servicio'; w.renderTable(); await wait(50);
+    check('Escribir sin pulsar Intro no filtra por palabras', w.eval('S.filtered.length') === w.eval('S.comments.length'));
     d.getElementById('qMode').value = 'sem'; d.getElementById('qMode').dispatchEvent(new Event('change'));
     d.getElementById('q').value = 'Kanasta24';
     d.getElementById('q').dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));

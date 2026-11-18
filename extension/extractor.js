@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// Extensión 1.3.1
+// Extensión 1.3.2
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -93,6 +93,18 @@ function fbExtractor(){
   function root(){
     var dlg = Array.prototype.slice.call(document.querySelectorAll('div[role="dialog"]')).filter(function(d){ return d.querySelector('div[role="article"]'); });
     return dlg.length ? dlg[dlg.length - 1] : document;
+  }
+  function scrollNudge(){
+    var arts = articles(), seen = new Set();
+    arts.slice(-2).forEach(function(a){
+      var p = a.parentElement;
+      while (p && p !== document.body){
+        var s = getComputedStyle(p);
+        if (/(auto|scroll)/.test(s.overflowY) && p.scrollHeight > p.clientHeight + 10 && !seen.has(p)){ seen.add(p); p.scrollTop = Math.max(0, p.scrollTop - p.clientHeight); try { p.dispatchEvent(new Event('scroll')); } catch(e){} }
+        p = p.parentElement;
+      }
+    });
+    try { window.scrollBy(0, -window.innerHeight); } catch(e){}
   }
   function scrollAll(){
     var arts = TT ? ttNodes() : IG ? igTimes() : articles(); var seen = new Set();
@@ -441,6 +453,20 @@ function fbExtractor(){
     for (var i = 0; i < els.length; i++){ var m = (els[i].textContent || '').match(/(\d[\d.,]*\s*(?:k|mil|m)?)/i); if (m){ var n = parseCount(m[1]); if (n) return n; } }
     return 0;
   }
+  var FB_TOTAL_RE = /(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?|kommentare?|commenti)\b/i;
+  function fbTotal(){
+    var best = 0;
+    Array.prototype.slice.call(document.querySelectorAll('[aria-label]')).forEach(function(e){
+      var l = e.getAttribute('aria-label') || ''; if (l.length > 80 || !/(coment|comment|kommentar)/i.test(l)) return;
+      var m = l.match(FB_TOTAL_RE); if (m && e.offsetParent){ var n = parseCount(m[1]); if (n > best) best = n; }
+    });
+    if (!best) Array.prototype.slice.call(document.querySelectorAll('span,div[role="button"]')).forEach(function(e){
+      var t = (e.innerText || '').trim(); if (t.length > 30 || !e.offsetParent) return;
+      var m = t.match(/^(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?)$/i); if (m){ var n = parseCount(m[1]); if (n > best) best = n; }
+    });
+    return best;
+  }
+  function netTotal(){ return TT ? ttTotal() : IG ? 0 : fbTotal(); }
   function ttHandle(a){ var m = ((a && a.getAttribute('href')) || '').match(/^\/@([^/?#]+)/); return m ? decodeURIComponent(m[1]) : ''; }
   function ttLevel(n){ var e = n.querySelector('[data-e2e^="comment-level-"]'); var m = e ? (e.getAttribute('data-e2e') || '').match(/(\d+)$/) : null; return m ? +m[1] : 0; }
   function ttExtractOne(n){
@@ -638,6 +664,8 @@ function fbExtractor(){
       botonesRespuestas: document.querySelectorAll('[data-e2e^="view-more"],p[class*="ReplyActionText"]').length,
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
+    var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
+    if (!TT && !IG && onOriginal) Object.assign(data.diag, { totalSegunFacebook: netTot, botonesPulsados: pressed.slice(0, 40) });
     if (!TT && !IG) Object.assign(data.diag, { articulos: document.querySelectorAll('div[role="article"]').length, articulosComentario: articles().length,
       enlacesComentario: document.querySelectorAll('a[href*="comment_id="]').length, cargando: loadingVisible(), dialogos: document.querySelectorAll('div[role="dialog"]').length,
       botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || (b.innerText || '').trim()).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
@@ -663,7 +691,7 @@ function fbExtractor(){
     window.__fbcx = false;
   }
   (async function(){
-    var clicks = new Map(), idle = 0, round = 0;
+    var clicks = new Map(), idle = 0, round = 0, lastCollected = 0;
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
     // En cuanto aparece el botón de comentarios se abre la sección (los reels no muestran comentarios sin pulsarlo).
     // Si no hay botón, se espera a que la red pinte los comentarios (Instagram sin sesión tarda 10–15 s) o a la pantalla de acceso.
@@ -713,7 +741,7 @@ function fbExtractor(){
         var t = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
-        if (ck && (ck.n >= (ck.t === t ? 4 : 60))) return false;
+        if (ck && (ck.all >= 80 || (ck.n >= (ck.t === t ? 4 : 60) && !(countNow() > ck.c)))) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -729,20 +757,27 @@ function fbExtractor(){
         idle = 0;
         for (var i = 0; i < btns.length && !stop && postKey() === startKey; i++){
           var b = btns[i], bt = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
-          var prev = clicks.get(b); clicks.set(b, { n: prev && prev.t === bt ? prev.n + 1 : (prev ? prev.n + 1 : 1), t: bt });
+          var prev = clicks.get(b);
+          // si desde la última pulsación llegaron comentarios nuevos, el botón sigue cargando: se cuenta como progreso
+          var grew = prev && countNow() > prev.c;
+          clicks.set(b, { n: prev && !grew ? prev.n + 1 : 1, all: (prev ? prev.all : 0) + 1, t: bt, c: countNow() });
           if (bt && pressed.length < 60) pressed.push(bt.replace(/\d+/g, 'N'));
           try { b.scrollIntoView({ block: 'center' }); b.click(); } catch(e){}
           await sleep(450 + Math.random() * 450);
         }
       } else {
         var before = countNow();
-        idle++; scrollAll(); await sleep(TT ? 1800 : 1300);
-        var after = countNow(), total = TT ? ttTotal() : 0;
-        if (after > before) idle = 0;                       // siguen llegando comentarios: continuar
-        if (idle >= (total && after < total ? 8 : 4)) break;
+        idle++;
+        if (!TT && !IG && idle % 3 === 0) scrollNudge();     // subir y volver a bajar: algunas listas solo cargan al detectar desplazamiento
+        scrollAll(); await sleep(TT ? 1800 : 1300);
+        var after = countNow(), total = netTotal();
+        if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
+        lastCollected = collected.length;
+        // el total de la red incluye respuestas y a veces comentarios ocultos o eliminados: se acepta un 3 % de diferencia
+        if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)) break;
       }
       snapshot();   // recoger en cada ronda mientras se sigue en la publicación original
-      var tot = TT ? ttTotal() : 0;
+      var tot = netTotal();
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
       if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });
     }
