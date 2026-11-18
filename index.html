@@ -3678,6 +3678,7 @@ const POS_E = ['❤','😍','🥰','😊','😁','😀','😃','👍','👏','�
 const NEG_E = ['😡','😠','🤬','👎','😢','😭','😞','😒','🙄','💩','😤','😔','😩','😫','🤮','😑'];
 // Más vocabulario negativo habitual en quejas de compras y entregas
 NEG.push('falló','fallo','fallaron','fallan','fallando','desagradable','desagradables','tardanza','tardanzas','demora','demoras','demorado','retraso','retrasos','retrasado','maloliente','malolientes','podrido','podrida','podridos','podridas','vencido','vencida','vencidos','vencidas','roto','rota','rotos','rotas','dañado','dañada','dañados','dañadas','defectuoso','defectuosa','incompleto','incompleta','equivocado','equivocada','apestoso','apestosa','asqueroso','asquerosa','engaño','engañan','engañaron','engañado','engañada','estafaron','estafado','estafada','robaron','robado','irresponsable','irresponsables','incumplen','incumplieron','incumplimiento','pérdida','perdida','perdido','frustrante','frustrado','frustrada','insatisfecho','insatisfecha','descontento','descontenta','inaceptable','desastre','fatal','nefasto','nefasta','mediocre','ineficiente','ineficientes','grosero','grosera','groseros','maltrato','reclamo','reclamación','reclamacion','devolución','devolucion','reembolso','nadie','ignoran','espera','esperando','tardaron','tardan','tarda','demoran','demoraron','jamás','jamas','cobran','cobraron','abusivo','abusivos','olor','hediondo','feo','fea','feos','feas','disgusto','arrepentido','arrepentida','horror','desastroso','desastrosa','awful','terrible','rude','late','delay','delayed','rotten','damaged','refund','worse');
+POS.push('mejores','lo mejor','excelentes','buenisimo','buenísimo','buenisima','buenísima');
 POS.push('puntual','puntuales','eficiente','eficientes','amable','amables','atento','atenta','atentos','personalizada','personalizado','satisfecho','satisfecha','satisfechos','contento','contenta','contentos','fresco','fresca','frescos','frescas','confiable','confiables','seguro','segura','responsables','profesional','profesionales','impecable','encantado','encantada','agradezco','buenísimo','buenisimo','riquísimo','riquisimo','rico','rica','delicioso','deliciosa','ok','fast','friendly','fresh','reliable');
 const POSS = new Set(POS), NEGS = new Set(NEG);
 // Raíces: cubren conjugaciones y derivados (se comparan sin tildes)
@@ -6802,6 +6803,15 @@ async function focusMatch(list, q, onProg){
     const words = normName(c.text).split(/[^a-z0-9ñ]+/).filter(w => w.length > 1).length;
     if(kws.some(k => t.includes(k)) || (words >= 5 && dot(qv, vs[i]) >= FOCUS_TH)) keys.add(fkey(c._ref?.postId, c));
   });
+  // Contexto del hilo: si el equipo de la marca respondió un comentario, ese comentario va dirigido a la marca
+  // («Los mejores» → «Gracias por considerarnos los mejores»); y las respuestas dentro de un hilo de la marca también son de ella.
+  const byId = new Map(list.map(c => [c.id, c]));
+  list.forEach(c => { if(!c.isTeam && c.teamAnswered) keys.add(fkey(c._ref?.postId, c)); });
+  list.forEach(c => {
+    if(c.isTeam || !c.parentId) return;
+    let p = c, g = 0; while(p.parentId && byId.has(p.parentId) && g++ < 12) p = byId.get(p.parentId);
+    if(p !== c && keys.has(fkey(p._ref?.postId, p))) keys.add(fkey(c._ref?.postId, c));
+  });
   return keys;
 }
 // Comentarios del tema: los que cumplen el criterio y las respuestas de tu equipo en esas conversaciones
@@ -6815,8 +6825,8 @@ async function buildReport(tids, terms, focusQ, onProg){
   const g = await gatherComments(tids);
   if(!g.comments.length) throw new Error('Los seguimientos elegidos no tienen comentarios.');
   const list = finalize(g.comments.map((c, i) => ({ ...c, id:c.id || ('r' + i) })), { platform:g.platform });
+  const team = teamOn(list);   // antes de la búsqueda: marca qué comentarios respondió el equipo
   const focus = focusQ ? { q:focusQ, name:focusName(focusQ), keys:await focusMatch(list, focusQ, onProg) } : null;
-  const team = teamOn(list);
   const fl = focus ? focusFilter(list, focus) : list;
   if(focus && !fl.some(c => !c.isTeam)) throw new Error(`ningún comentario habla de ${focus.name} en estos seguimientos. Prueba con un criterio más amplio.`);
   const tracks = g.tracks, first = tracks[0], last = tracks[tracks.length - 1];
@@ -6909,8 +6919,8 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const watch = terms.filter(term => { const n = normName(term).replace(/\s+/g, '').replace(/k/g, 'c').replace(/z/g, 's'); return !fkw.some(k => n.includes(k) || k.includes(n)); }).map(term => { const q = normName(term); const hits = list.filter(c => normName(c.text).includes(q) || (c.mentions || []).some(m => normName(m).includes(q))); const ss = sentOf(hits); return { term, n:hits.length, pct:list.length ? Math.round(hits.length / list.length * 100) : 0, nss:nssOf(ss), s:ss, sample:hits.sort((a, b) => (b.reactions || 0) - (a.reactions || 0))[0] }; }).filter(w => !focus || w.n);   // en un informe por tema solo los que aparecen
   // Destacados
   const byReact = arr => [...arr].sort((a, b) => (b.reactions || 0) - (a.reactions || 0) || b.length - a.length);
-  const topPos = byReact(nonTeam.filter(c => c.sentiment === 'positivo')).slice(0, 4);
-  const topNeg = byReact(nonTeam.filter(c => c.sentiment === 'negativo')).slice(0, 4);
+  const topPos = byReact(nonTeam.filter(c => c.sentiment === 'positivo')).slice(0, 5);
+  const topNeg = byReact(nonTeam.filter(c => c.sentiment === 'negativo')).slice(0, 5);
   const openQ = byReact(nonTeam.filter(c => c.isQuestion && c.needsTeam)).slice(0, 8);
   const openNeg = nonTeam.filter(c => c.sentiment === 'negativo' && c.needsTeam).length;
   // Comparación primer/último seguimiento

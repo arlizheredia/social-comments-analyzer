@@ -362,6 +362,17 @@ const TR = () => w.eval('TR');
     const normName = w.eval('normName');
     w.semEmbed = async (texts, kind) => texts.map(t => { const n = normName(t); let v = VOC.map(k => n.includes(k) ? 1 : 0); if(/kanasta/.test(n)) v[0] = v[1] = 1; const s = Math.hypot(...v) || 1; return v.map(x => x / s); });
     w.localStorage.setItem('fbca:aiLocal', '1'); w.localStorage.setItem('fbca:aiSem', '1'); w.renderAiState();
+    // Criterio con contexto de hilo: lo que respondió el equipo y las respuestas en hilos de la marca también cuentan
+    { const items = [
+        { id:'x1', authorName:'Sandra Parron', text:'Los mejores', teamAnswered:true },
+        { id:'x2', authorName:'Yaimara Salinas Goite', isTeam:true, parentId:'x1', text:'Gracias por considerarnos los mejores; es un orgullo para el equipo de Kanasta24' },
+        { id:'x3', authorName:'Dinna Ramirez Cuevas', text:'Mi experiencia con Kanasta24 ha sido desagradable' },
+        { id:'x4', authorName:'Irina Domecq', parentId:'x3', text:'además prefiero la bodega será más caro pero mejor calidad' },
+        { id:'x5', authorName:'Marta Gil', text:'Qué lindo es Holguín en diciembre' } ];
+      const keys = await w.focusMatch(items, 'Kanasta24 y comentarios relacionados con la marca');
+      const fk = w.eval('fkey'); const has = id => keys.has(fk(undefined, items.find(c => c.id === id)));
+      check('Criterio con contexto: «Los mejores» (respondido por el equipo) y la respuesta de Irina en el hilo de la queja cuentan; lo ajeno no', has('x1') && has('x3') && has('x4') && !has('x5'), JSON.stringify({ x1:has('x1'), x3:has('x3'), x4:has('x4'), x5:has('x5') }));
+      check('«Los mejores» es positivo', w.sentiment('Los mejores').label === 'positivo', w.sentiment('Los mejores').label); }
     // Postura frente a la marca: elogiar a otra marca, preferir otra opción o recomendar no comprar es negativo
     { const L = w.finalize([
         { id:'b1', authorName:'Dinna Ramirez Cuevas', text:'Mi experiencia con Kanasta24 ha sido desagradable: 5 días de tardanza y carne maloliente' },
