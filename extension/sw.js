@@ -6,6 +6,8 @@ const jobs = new Map();           // jobId -> { tabId, port, timer, done }
 let workWindowId = null;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// Mientras hay trabajos, el sistema no se suspende (la pantalla sí puede apagarse): permite dejar el seguimiento trabajando solo
+function keepAwake(){ try { if (jobs.size) chrome.power.requestKeepAwake('system'); else chrome.power.releaseKeepAwake(); } catch (e) {} }
 const send = (job, msg) => { try { (job && job.port ? job.port : [...ports][0])?.postMessage(msg); } catch (e) {} };
 
 chrome.runtime.onConnect.addListener(port => {
@@ -16,35 +18,61 @@ chrome.runtime.onConnect.addListener(port => {
   port.onDisconnect.addListener(() => ports.delete(port));
 });
 
+// ---- Sesiones: solo se comprueba si existe la cookie de sesión de cada red (nunca se lee ni se envía su valor) ----
+const SESSION_COOKIES = { facebook: ['https://www.facebook.com', ['c_user']], instagram: ['https://www.instagram.com', ['sessionid']], tiktok: ['https://www.tiktok.com', ['sessionid', 'sessionid_ss', 'sid_tt']] };
+async function sessions() {
+  const out = { type: 'sessions' };
+  for (const [net, [url, names]] of Object.entries(SESSION_COOKIES)) {
+    out[net] = false;
+    for (const name of names) { try { const c = await chrome.cookies.get({ url, name }); if (c && c.value) { out[net] = true; break; } } catch (e) {} }
+  }
+  return out;
+}
+const SESSION_NAMES = new Set(Object.values(SESSION_COOKIES).flatMap(x => x[1]));
+chrome.cookies.onChanged.addListener(ch => {
+  if (!SESSION_NAMES.has(ch.cookie.name) || !/(facebook|instagram|tiktok)\.com$/.test(ch.cookie.domain)) return;
+  clearTimeout(sessions.t); sessions.t = setTimeout(async () => { const s = await sessions(); ports.forEach(p => { try { p.postMessage(s); } catch (e) {} }); }, 400);
+});
+async function waitReady(tabId, ms) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      if (tab.status === 'complete') return;
+      if (tab.url && /^https:/.test(tab.url)) {
+        const [r] = await chrome.scripting.executeScript({ target: { tabId }, func: () => document.readyState !== 'loading' && !!document.body && document.body.childElementCount > 0 });
+        if (r && r.result) return;
+      }
+    } catch (e) { if (/No tab/i.test(e.message || '')) throw new Error('Se cerró la ventana de la publicación.'); }
+    await sleep(300);
+  }
+  throw new Error('La publicación tardó demasiado en cargar.');
+}
+
 async function onAppMessage(port, msg) {
   if (!msg || !msg.type) return;
   if (msg.type === 'ping') return port.postMessage({ type: 'pong', version: VERSION });
+  if (msg.type === 'sessions') return port.postMessage(await sessions());
   if (msg.type === 'extract') return startJob(port, msg);
   if (msg.type === 'stop') return stopJob(msg.jobId, 'stopped');
 }
 
-// Ventana de trabajo: pequeña en una esquina sin quitar el foco (por defecto), minimizada o normal
+// Ventana de trabajo: siempre con ancho de escritorio (las redes muestran la versión móvil, sin comentarios, en ventanas estrechas).
+//  - "small" (por defecto): detrás de las ventanas del usuario, que recupera el foco
+//  - "minimized": se crea a tamaño de escritorio y después se minimiza
+//  - "normal": a la vista
 async function workWindow(mode) {
   if (workWindowId != null) {
     try { await chrome.windows.get(workWindowId); return workWindowId; } catch (e) { workWindowId = null; }
   }
   let prev = null; try { prev = await chrome.windows.getLastFocused(); } catch (e) {}
-  let opts = { url: 'about:blank', type: 'normal', focused: mode === 'normal' };
-  if (mode === 'minimized') opts = { url: 'about:blank', type: 'normal', state: 'minimized' };
-  else if (mode === 'normal') Object.assign(opts, { width: 1200, height: 900 });
-  else {
-    const W = 560, H = 760;
-    const left = prev && prev.left != null ? Math.max(0, prev.left + prev.width - W - 16) : 40;
-    const top = prev && prev.top != null ? Math.max(0, prev.top + prev.height - H - 16) : 40;
-    Object.assign(opts, { width: W, height: H, left, top });
-  }
-  const w = await chrome.windows.create(opts);
+  const w = await chrome.windows.create({ url: 'about:blank', type: 'normal', focused: mode === 'normal', width: 1280, height: 900 });
   workWindowId = w.id;
+  if (mode === 'minimized') { try { await chrome.windows.update(w.id, { state: 'minimized' }); } catch (e) {} }
   // devolver el foco a la ventana en la que estaba trabajando el usuario
   if (mode !== 'normal' && prev && prev.id !== w.id) { try { await chrome.windows.update(prev.id, { focused: true }); } catch (e) {} }
   return w.id;
 }
-
 function waitComplete(tabId, ms) {
   return new Promise((resolve, reject) => {
     const t = setTimeout(() => { chrome.tabs.onUpdated.removeListener(l); reject(new Error('La publicación tardó demasiado en cargar.')); }, ms);
@@ -57,7 +85,7 @@ function waitComplete(tabId, ms) {
 async function startJob(port, { jobId, url, options = {} }) {
   if (!jobId || !ALLOWED.test(url || '')) return port.postMessage({ type: 'error', jobId, error: 'Enlace no admitido. Solo Facebook, Instagram o TikTok.' });
   const job = { port, tabId: null, done: false };
-  jobs.set(jobId, job);
+  jobs.set(jobId, job); keepAwake();
   try {
     send(job, { type: 'progress', jobId, phase: 'opening' });
     const winId = await workWindow(options.window || (options.visible ? 'normal' : 'small'));
@@ -65,8 +93,9 @@ async function startJob(port, { jobId, url, options = {} }) {
     job.tabId = tab.id;
     // quitar la pestaña en blanco inicial de la ventana de trabajo
     chrome.tabs.query({ windowId: winId }).then(ts => ts.filter(t => t.url === 'about:blank' && t.id !== tab.id).forEach(t => chrome.tabs.remove(t.id).catch(() => {})));
-    await waitComplete(tab.id, 60000);
-    await sleep(options.settleMs || 3500);
+    // se inyecta en cuanto la página es interactiva (sin esperar a todas sus imágenes y vídeos): el extractor ya espera a que aparezca la publicación
+    await waitReady(tab.id, 60000);
+    await sleep(options.settleMs || 700);
     if (job.done) return;
     const now = await chrome.tabs.get(tab.id);
     if (/\/login|\/accounts\/login|checkpoint/i.test(now.url || '')) throw new Error('Inicia sesión en ' + new URL(url).hostname.replace(/^www\./, '') + ' en este navegador y vuelve a intentarlo.');
@@ -102,7 +131,7 @@ function finishJob(jobId, msg, keepOpen) {
   job.done = true; clearTimeout(job.timer);
   send(job, msg);
   if (job.tabId != null && !keepOpen) chrome.tabs.remove(job.tabId).catch(() => {});
-  jobs.delete(jobId);
+  jobs.delete(jobId); keepAwake();
 }
 
 // Mensajes del extractor (desde la pestaña de la red social)

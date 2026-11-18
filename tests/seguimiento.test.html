@@ -50,7 +50,7 @@ function extractorData(url, n, extra = []){
   return { source:'social-dom-extractor', platform:plat, version:3, url, title:'Publicación ' + plat, postAuthor:plat === 'facebook' ? 'Kanasta24' : 'kanasta24', extractedAt:new Date().toISOString(), comments:base.map((c, i) => ({ ...c, order:i })) };
 }
 // Extensión simulada: responde a {source:'sca-app'} como el puente real
-const FAKE = { delay:60, pending:new Map(), stopped:new Set(), calls:[], hold:false, perUrl:{} };
+const FAKE = { delay:60, pending:new Map(), stopped:new Set(), calls:[], hold:false, perUrl:{}, fail:{}, sess:{ facebook:true, instagram:false, tiktok:true } };
 function installFakeExtension(){
   w.document.documentElement.dataset.scaExt = '1.0.0';
   w.addEventListener('message', async e => {
@@ -59,8 +59,11 @@ function installFakeExtension(){
     const reply = x => w.Function('m', 'window.postMessage(m, "*")')(Object.assign({ source:'sca-ext' }, x));
     if(m.type === 'ping') return reply({ type:'pong', version:'1.0.0' });
     if(m.type === 'stop'){ FAKE.stopped.add(m.jobId); return; }
+    if(m.type === 'sessions') return reply(Object.assign({ type:'sessions' }, FAKE.sess));
+    if(m.type === 'preview'){ FAKE.calls.push(m); return; }
     if(m.type !== 'extract') return;
     FAKE.calls.push(m);
+    if(FAKE.fail[m.url] > 0){ FAKE.fail[m.url]--; await wait(20); return reply({ type:'error', jobId:m.jobId, error:'Inicia sesión en facebook.com en este navegador y vuelve a intentarlo.' }); }
     reply({ type:'progress', jobId:m.jobId, phase:'opening' });
     for(let r = 1; r <= 4; r++){
       await wait(FAKE.delay);
@@ -101,11 +104,18 @@ const TR = () => w.eval('TR');
     check('El enlace se guarda sin parámetros de rastreo', ps.find(p => p.platform === 'facebook').url === 'https://www.facebook.com/kanasta24/posts/pfbid0abc123', ps.find(p => p.platform === 'facebook').url);
     check('Los duplicados y enlaces no reconocidos no se añaden', /ya estaba en la lista/.test(d.getElementById('snackMsg').textContent) && /no reconocido/.test(d.getElementById('snackMsg').textContent), d.getElementById('snackMsg').textContent);
     check('La lista muestra las 3 filas', d.querySelectorAll('#postList .prow').length === 3);
+    w.requestSessions(); await until(() => w.eval('SESS.known'), 5000);
+    check('Barra superior: sesiones de Facebook, Instagram y TikTok', !d.getElementById('sessBar').classList.contains('hidden') && [...d.querySelectorAll('#sessBar .sess-i')].map(x => x.getAttribute('aria-label')).join('|') === 'Facebook: conectado|Instagram: sin sesión|TikTok: conectado', [...d.querySelectorAll('#sessBar .sess-i')].map(x => x.getAttribute('aria-label')).join(' · '));
+    check('Añadir publicaciones no abre ventanas ni pide vistas previas', !FAKE.calls.length && !d.querySelector('#postList .pthumb'));
 
     // 2. Crear seguimiento y ejecutarlo con la extensión
     d.getElementById('postAll').click();
     check('La barra de selección aparece con 3 seleccionadas', !d.getElementById('postSelbar').classList.contains('hidden') && /3 publicaciones/.test(d.getElementById('postSelCount').textContent));
     d.getElementById('newTrackBtn').click(); await wait(100);
+    await wait(300);
+    check('Sin sesión en Instagram no se puede iniciar: el diálogo lo indica', d.getElementById('trackStart').disabled && /No es posible iniciar el seguimiento/.test(d.getElementById('trackMethods').textContent) && /Instagram/.test(d.getElementById('trackMethods').textContent) && !!d.querySelector('#trackMethods a[href*="instagram.com/accounts/login"]'), d.getElementById('trackMethods').textContent.slice(0, 220));
+    FAKE.sess.instagram = true; w.requestSessions(); await until(() => !d.getElementById('trackStart').disabled, 5000).catch(() => {});
+    check('Al iniciar sesión en Instagram se habilita “Guardar e iniciar”', !d.getElementById('trackStart').disabled);
     check('El diálogo muestra las publicaciones y el método (extensión)', d.querySelectorAll('#trackPosts .titem').length === 3 && d.querySelectorAll('#trackPosts .mchip.extension').length === 3);
     d.getElementById('trackDate').value = '2026-11-15'; d.getElementById('trackName').value = 'Lunes';
     FAKE.hold = true;
@@ -130,6 +140,7 @@ const TR = () => w.eval('TR');
     const stored = await w.eval('DB').resultsOf(t1.id);
     check('Los comentarios de cada publicación quedan guardados en IndexedDB', stored.length === 3 && stored.every(r => r.comments.length === 5));
     check('La lista aprende el autor de la publicación', TR().posts.every(p => /kanasta24/i.test(p.author)), TR().posts.map(p => p.author).join(', '));
+    await until(() => d.querySelectorAll('#histList .hrow').length === 1, 5000).catch(() => {});
     check('El historial muestra el seguimiento', d.querySelectorAll('#histList .hrow').length === 1 && /Lunes/.test(d.getElementById('histList').textContent));
 
     // 4. Sin extensión no se puede iniciar un seguimiento automático (el marcador no se usa en los seguimientos)
@@ -153,9 +164,64 @@ const TR = () => w.eval('TR');
     const t2 = TR().tracks.find(t => t.name === 'Martes');
     check('El segundo seguimiento termina con la extensión', t2.items[ttId].status === 'done' && t2.items[ttId].count === 3 && t2.items[ttId].method === 'extension', JSON.stringify(t2.items[ttId]));
 
+    // 4a. Continuar un seguimiento exige autenticación activa
+    FAKE.sess.tiktok = false;
+    { const tL = TR().tracks.find(x => x.name === 'Lunes'); tL.status = 'paused'; tL.items[ttId].status = 'pending'; w.runTracking(tL.id); }
+    await until(() => d.getElementById('confirmDlg').open, 5000).catch(() => {});
+    check('Continuar sin sesión en TikTok muestra “No es posible iniciar el seguimiento”', d.getElementById('confirmDlg').open && /No es posible iniciar/.test(d.getElementById('cfTitle').textContent) && /TikTok/.test(d.getElementById('cfText').textContent) && d.getElementById('cfCancel').hidden && !w.eval('TR.running'), d.getElementById('cfText').textContent.slice(0, 200));
+    d.getElementById('cfOk').click(); await wait(100);
+    { const tL = TR().tracks.find(x => x.name === 'Lunes'); tL.status = 'done'; tL.items[ttId].status = 'done'; }
+    FAKE.sess.tiktok = true; w.requestSessions(); await wait(200);
+
+    // 4b. Reintentos automáticos (fallos que no provoca el usuario)
+    w.localStorage.setItem('fbca:eoRetryBase', '0.05'); w.localStorage.setItem('fbca:eoRetries', '10');
+    const igP = TR().posts.find(p => p.platform === 'instagram');
+    FAKE.fail[igP.url] = 3;
+    w.openTrackDlg([igP.id]); d.getElementById('trackDate').value = '2026-11-16'; d.getElementById('trackName').value = 'Reintentos';
+    d.getElementById('trackStart').click();
+    await until(() => { const t = TR().tracks.find(x => x.name === 'Reintentos'); return t && t.status === 'done'; }, 30000);
+    const tR = TR().tracks.find(x => x.name === 'Reintentos');
+    check('Tras 3 fallos de sesión, el 4.º intento extrae los comentarios', tR.items[igP.id].status === 'done' && tR.items[igP.id].count === 5 && tR.items[igP.id].attempts === 4, JSON.stringify({ estado:tR.items[igP.id].status, intentos:tR.items[igP.id].attempts }));
+    FAKE.fail[igP.url] = 99; const callsBefore = FAKE.calls.length;
+    w.openTrackDlg([igP.id, fbId]); d.getElementById('trackDate').value = '2026-11-16'; d.getElementById('trackName').value = 'Sin sesión';
+    d.getElementById('trackStart').click();
+    await until(() => d.querySelector('#runDetail [data-iact="retrynow"]'), 30000);
+    check('Mientras espera muestra “Reintento N de 10” y “Reintentar ahora”', /Reintento \d+ de 10/.test(d.getElementById('runDetail').textContent));
+    await until(() => { const t = TR().tracks.find(x => x.name === 'Sin sesión'); return t && t.status === 'paused' && !TR().running; }, 60000);
+    const tS = TR().tracks.find(x => x.name === 'Sin sesión');
+    check('Con 10 intentos fallidos se detiene todo el proceso de extracción', tS.items[igP.id].status === 'error' && /10 intentos/.test(tS.items[igP.id].error) && tS.items[fbId].status === 'pending' && FAKE.calls.length - callsBefore === 10, JSON.stringify({ ig:tS.items[igP.id].error, fb:tS.items[fbId].status, intentos:FAKE.calls.length - callsBefore }));
+    check('El detalle explica por qué se detuvo', /La extracción se detuvo/.test(d.getElementById('runDetail').textContent));
+    FAKE.fail[igP.url] = 0;
+    d.querySelector('#runDetail [data-ract="start"]').click();
+    await until(() => TR().tracks.find(x => x.name === 'Sin sesión').status === 'done', 30000);
+    check('Al pulsar Continuar se reintenta la publicación con error y termina', tS.items[igP.id].status === 'done' && tS.items[fbId].status === 'done');
+    for(const n of ['Reintentos', 'Sin sesión']){ const t = TR().tracks.find(x => x.name === n); await w.eval(`DB.delTracking('${t.id}')`); }
+    await w.eval('loadTR()'); await wait(100);
+
     // 5. Ver comentarios de una publicación y responder (se guarda en el seguimiento)
     await w.viewResult(t2.id, fbId); await wait(200);
     check('“Ver comentarios” abre la publicación en Resultados', location && w.location.hash === '#resultados' && w.eval('S.comments.length') === 6 && w.eval('S.meta.ref.tid') === t2.id);
+    const crumbs = d.getElementById('resCrumbs');
+    check('Barra de ubicación: Seguimiento › Historial › seguimiento › publicación, con “Volver”', !crumbs.classList.contains('hidden') && /Seguimiento/.test(crumbs.textContent) && /Historial/.test(crumbs.textContent) && /Martes/.test(crumbs.textContent) && !!crumbs.querySelector('[data-crumb-back]'), crumbs.textContent.replace(/\s+/g, ' ').trim());
+    crumbs.querySelector('[data-crumb-back]').click(); await wait(300);
+    check('“Volver” regresa al historial con el seguimiento abierto', w.location.hash === '#seguimiento' && d.getElementById('stab-hist').getAttribute('aria-selected') === 'true' && /Martes/.test((d.getElementById('histDetail') || {}).textContent || ''));
+    // 5b. Visor por publicación desde la fila del historial
+    w.renderHistory(); await wait(100);
+    const hv = d.querySelector(`#histList [data-hid="${t2.id}"] [data-hact="view"]`);
+    check('Cada seguimiento del historial tiene el botón “Ver comentarios por publicación”', !!hv);
+    hv.click(); await until(() => w.location.hash === '#resultados' && w.eval('S.meta.multi'), 3000).catch(() => {});
+    const fp = d.getElementById('fPost'), allN = w.eval('S.rows.length');
+    check('El visor abre todos los comentarios del seguimiento con el selector de publicación', !d.getElementById('fPostF').classList.contains('hidden') && fp.options.length === 3 && /Todas las publicaciones \(9\)/.test(fp.options[0].textContent) && w.eval('S.comments.length') === 9, [...fp.options].map(o => o.textContent).join(' | '));
+    fp.value = fbId; fp.dispatchEvent(new Event('change')); await wait(150);
+    check('Al elegir una publicación solo se ven sus comentarios', w.eval('S.filtered.length') === 6 && w.eval(`S.filtered.every(c => c._ref.postId === '${fbId}')`) && d.getElementById('fPostF').classList.contains('on') && !d.getElementById('fReset').classList.contains('hidden'), w.eval('S.filtered.length') + ' de ' + allN);
+    d.getElementById('fReset').click(); await wait(150);
+    check('“Quitar filtros” vuelve a todas las publicaciones', fp.value === '' && w.eval('S.filtered.length') === 9);
+    const cr2 = d.getElementById('resCrumbs').textContent.replace(/\s+/g, ' ');
+    check('La barra de ubicación no repite el nombre del seguimiento', (cr2.match(/Martes/g) || []).length === 1, cr2.trim());
+    const filesR = []; const dlBak = w.download; w.download = (name, content) => filesR.push({ name, content });
+    await w.viewResult(t2.id, fbId); w.doExport('word'); await wait(200);
+    w.download = dlBak;
+    check('Resultados: “Informe Word (.doc)” en el menú Exportar genera el documento', !!d.querySelector('[data-exp="word"]') && filesR.some(f => /\.doc$/.test(f.name)), filesR.map(f => f.name).join(', '));
 
     // 6. Informe con dos seguimientos
     d.getElementById('qMode') && 0;
@@ -165,23 +231,60 @@ const TR = () => w.eval('TR');
     const m = w.eval('REP.model');
     check('El informe combina sin duplicar: 5+5+5 del lunes y 1 nuevo del martes = 16', m.list.length === 16, 'comentarios únicos: ' + m.list.length);
     check('Evolución por fecha: el martes 9 comentarios (6 de Facebook + 3 de TikTok) y solo 1 nuevo (los de TikTok ya estaban el lunes)', m.byDate.length === 2 && m.byDate[1].total === 9 && m.byDate[1].nw === 1, JSON.stringify(m.byDate.map(x => ({ total:x.total, nuevos:x.nw }))));
-    check('Indicadores clave presentes (8)', d.querySelectorAll('#reportDoc .kpi').length === 8);
-    check('Índice neto de sentimiento calculado', typeof m.nss === 'number' && /Índice neto/.test(d.getElementById('reportDoc').textContent), 'NSS ' + m.nss);
+    check('Indicadores del seguimiento más reciente (Martes) con variación frente al anterior (Lunes)', d.querySelectorAll('#reportDoc .kpi').length >= 8 && /más reciente/.test(d.getElementById('reportDoc').textContent) && /Martes/.test(d.getElementById('reportDoc').textContent) && /frente al anterior/.test(d.getElementById('reportDoc').textContent));
+    const cRow = m.cmp.find(r => r.k === 'Comentarios');
+    check('Comparativa: el principal es el más reciente (9 comentarios) frente al anterior (15)', m.last.name === 'Martes' && m.prevT.name === 'Lunes' && cRow.a === 9 && cRow.b === 15 && /▼ -6/.test(cRow.D), JSON.stringify(cRow));
+    check('Comparativa por publicación y sección propia', m.postCmp.length === 2 && /Comparativa con el seguimiento anterior/.test(d.getElementById('reportDoc').textContent));
+    check('El resumen empieza por el seguimiento principal', /^Seguimiento principal: «Martes»/.test(m.summary[0]), m.summary[0]);
+    check('El informe habla de positivos y negativos, sin “índice neto”', /Comentarios positivos/.test(d.getElementById('reportDoc').textContent) && !/índice neto/i.test(d.getElementById('reportDoc').textContent));
     const kan = m.watch.find(x => x.term === 'Kanasta24');
     check('Temas vigilados: “Kanasta24” se cuenta en sus menciones', kan && kan.n >= 4, kan && JSON.stringify({ n:kan.n, pct:kan.pct, nss:kan.nss }));
     check('Quién más comenta: Ana López encabeza la lista', m.topAuthors[0].name === 'Ana López', m.topAuthors.slice(0, 3).map(a => a.name + ' ' + a.n).join(', '));
     check('Hay resumen ejecutivo y recomendaciones', m.summary.length >= 3 && m.recs.length >= 2);
     check('El gráfico de evolución por seguimiento se dibuja', !!d.querySelector('#repChartDates svg'));
 
+    // 6b. Mensaje para WhatsApp
+    d.getElementById('repWa').click(); await wait(150);
+    const wa1 = d.getElementById('waText').value;
+    check('“Mensaje para WhatsApp” abre el diálogo con una valoración del seguimiento principal', d.getElementById('waDlg').open && /\*Informe de comentarios/.test(wa1) && /Seguimiento del/.test(wa1) && /Analizamos \*9 comentarios\*/.test(wa1) && /positiv/.test(wa1) && /negativ/.test(wa1) && !/índice neto/i.test(wa1) && /informe completo/.test(wa1), wa1.slice(0, 300));
+    d.getElementById('waTone').value = 'breve'; d.getElementById('waTone').dispatchEvent(new Event('change'));
+    const wa2 = d.getElementById('waText').value;
+    check('El tono “Muy breve” genera un mensaje más corto', wa2.length < wa1.length && /seguimiento anterior/.test(wa2) && !/índice neto/i.test(wa2), wa2.length + ' frente a ' + wa1.length + ' caracteres');
+    d.getElementById('waDlg').close();
+    // IA de la app: no es la opción por defecto; se descarga desde el diálogo y queda configurada
+    w.localStorage.removeItem('fbca:ai'); w.localStorage.removeItem('fbca:aiLocal');
+    check('La IA de la app no es el proveedor por defecto ni está lista sin descargarla', w.eval('AI.cfg().prov') === 'chrome' && !w.eval("aiConfigured({ ...AI.cfg(), prov:'local' })"));
+    // librería simulada: emite progreso y devuelve un generador
+    const fakeLib = 'data:text/javascript,' + encodeURIComponent(`export const env = {}; export async function pipeline(task, model, o){ for(let i = 1; i <= 4; i++){ await new Promise(r => setTimeout(r, 120)); o.progress_callback({ status:'progress', file:'onnx/model.onnx', loaded:i * 125e6, total:500e6 }); } return async msgs => [{ generated_text:[...msgs, { role:'assistant', content:'["Gracias por escribirnos"]' }] }]; }`);
+    const realLib = w.eval('SEM.lib'); w.eval('SEM.lib = ' + JSON.stringify(fakeLib));
+    w.eval('openAiCfg()'); await wait(100);
+    check('Sin IA disponible, el diálogo muestra “IA de la app” con “Descargar e instalar”', d.getElementById('aiProv').value === 'local' && !d.getElementById('aiDlF').classList.contains('hidden') && !d.getElementById('aiDlBtn').classList.contains('hidden'));
+    d.getElementById('aiDlBtn').click(); await wait(300);
+    const midTxt = d.getElementById('aiDlTitle').textContent;
+    check('Durante la descarga se ve el porcentaje y la barra de progreso', /Descargando el modelo… \d+ %/.test(midTxt) && !d.getElementById('aiDlBar').classList.contains('hidden') && d.getElementById('aiDlBtn').disabled, midTxt);
+    await until(() => /instalada/.test(d.getElementById('aiDlTitle').textContent), 5000).catch(() => {});
+    check('Al terminar queda instalada y configurada como proveedor', w.localStorage.getItem('fbca:aiLocal') === '1' && w.eval('AI.cfg().prov') === 'local' && w.eval('aiConfigured()') && !d.getElementById('aiDlDel').classList.contains('hidden'), d.getElementById('aiDlTitle').textContent);
+    const gen = await w.eval("aiRequest(AI.cfg(), 'sys', 'user')");
+    check('La IA de la app genera texto', /Gracias por escribirnos/.test(gen), gen);
+    w.localStorage.setItem('fbca:ai', JSON.stringify({ prov:'gemini', keys:{} }));
+    check('Un proveedor sin clave recurre a la IA de la app instalada', w.eval('AI.cfg().prov') === 'local');
+    d.getElementById('aiDlDel').click(); await wait(150);
+    d.getElementById('cfOk').click(); await wait(300);
+    check('“Eliminar modelo” la desinstala', w.localStorage.getItem('fbca:aiLocal') !== '1' && !d.getElementById('aiDlBtn').classList.contains('hidden'));
+    d.getElementById('aiDlg').close();
+    w.eval('SEM.lib = ' + JSON.stringify(realLib)); w.localStorage.removeItem('fbca:ai');
+
     // 7. Exportaciones
     const txt = w.reportText(m);
-    check('Copiar texto: incluye resumen, indicadores, publicaciones y recomendaciones', /RESUMEN EJECUTIVO/.test(txt) && /INDICADORES CLAVE/.test(txt) && /PUBLICACIONES/.test(txt) && /RECOMENDACIONES/.test(txt), txt.slice(0, 200));
+    check('Copiar texto: incluye resumen, indicadores, publicaciones y recomendaciones', /RESUMEN EJECUTIVO/.test(txt) && /SEGUIMIENTO MÁS RECIENTE FRENTE AL ANTERIOR/.test(txt) && /INDICADORES DEL PERIODO COMPLETO/.test(txt) && /PUBLICACIONES/.test(txt) && /RECOMENDACIONES/.test(txt), txt.slice(0, 200));
     const files = []; w.download = (name, content) => files.push({ name, content });
     await w.reportExport('word');
     const doc = files.find(f => /\.doc$/.test(f.name));
     let wordHtml = ''; if(doc) wordHtml = await doc.content.text();
-    check('Word: se descarga un .doc con el informe', !!doc && /urn:schemas-microsoft-com:office:word/.test(wordHtml) && /Resumen ejecutivo/.test(wordHtml), doc ? doc.name + ' · ' + Math.round(wordHtml.length / 1024) + ' KB' : 'sin archivo');
-    check('Word: el gráfico se incluye como imagen PNG', /<img[^>]+data:image\/png/.test(wordHtml));
+    check('Word: se descarga un .doc con el informe', !!doc && /urn:schemas-microsoft-com:office:word/.test(wordHtml) && /Informe de comentarios/.test(wordHtml) && /<h2>Resumen<\/h2>/.test(wordHtml), doc ? doc.name + ' · ' + Math.round(wordHtml.length / 1024) + ' KB' : 'sin archivo');
+    check('Word: documento en blanco y negro con Arial 12 y pie de página numerado', /Arial/.test(wordHtml) && /font-size:12pt/.test(wordHtml) && !/#(0b57d0|1877f2|d93025|188038|e8f0fe)/i.test(wordHtml) && /mso-element:footer/.test(wordHtml) && /NUMPAGES/.test(wordHtml));
+    const docB = w.reportDocument(m);
+    check('Documento del informe: sin colores y con las secciones del modelo', !(docB.body.match(/#[0-9a-f]{3,6}\b|rgb\(/gi) || []).length && /Resumen/.test(docB.body) && /Indicadores del seguimiento más reciente/.test(docB.body) && /Comparativa por publicación/.test(docB.body) && /Detalle por publicación/.test(docB.body) && /Próximos pasos/.test(docB.body));
     await w.reportExport('html');
     check('HTML: se descarga un informe autónomo', files.some(f => /\.html$/.test(f.name) && /<table/.test(f.content)));
     const pdfLoaded = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js').then(() => typeof w.html2pdf === 'function', () => false);
@@ -208,6 +311,32 @@ const TR = () => w.eval('TR');
     files.length = 0; await w.dbExport();
     const bk = files[0] && JSON.parse(files[0].content);
     check('Copia de seguridad con publicaciones, seguimientos y resultados', bk && bk.posts.length === 3 && bk.trackings.length === 2 && bk.results.length === 5, bk && `${bk.posts.length} / ${bk.trackings.length} / ${bk.results.length}`);
+
+    // 9a. Aviso de seguimientos sin comentarios
+    const pid0 = TR().posts[0].id;
+    await w.eval(`(async () => { const t = { id:'t_vacio', name:'Seguimiento vacío', date:'2026-11-17', createdAt:new Date().toISOString(), status:'done', postIds:['${pid0}'], items:{ '${pid0}':{ status:'done', count:0, method:'extension' } } }; await DB.put('trackings', t); await loadTR(); })()`);
+    w.go('seguimiento'); await wait(200); w.selectSegTab('hist'); w.renderHistory(); await wait(100);
+    const rowV = [...d.querySelectorAll('#histList .hrow')].find(r => /Seguimiento vacío/.test(r.textContent));
+    check('El historial avisa de un seguimiento sin comentarios', rowV && /Sin comentarios/.test(rowV.querySelector('.warn-chip') ? rowV.querySelector('.warn-chip').textContent : ''), rowV ? rowV.textContent.replace(/\s+/g, ' ').trim() : 'sin fila');
+    const rowOk = [...d.querySelectorAll('#histList .hrow')].find(r => /Lunes/.test(r.textContent));
+    check('Los seguimientos con comentarios no muestran el aviso', rowOk && !rowOk.querySelector('.warn-chip'));
+    w.showHistoryDetail(TR().tracks.find(t => t.id === 't_vacio')); await wait(100);
+    check('El detalle indica qué publicación quedó sin comentarios', /Sin comentarios/.test(d.getElementById('histDetail').textContent));
+    const mV = await w.buildReport([TR().tracks.find(t => t.name === 'Lunes').id, 't_vacio'], []);
+    check('El informe incluye una alerta por el seguimiento vacío', mV.alerts.some(x => /Seguimiento vacío/.test(x.txt)), mV.alerts.map(x => x.txt).join(' | '));
+    await w.eval(`DB.delTracking('t_vacio').then(loadTR)`); await wait(100);
+
+    // 9b. Confirmación en pantalla (sin avisos nativos del navegador)
+    w.confirm = () => { throw new Error('se usó confirm() nativo'); };
+    w.go('seguimiento'); await wait(200); w.selectSegTab('hist'); await wait(100);
+    const nHist = d.querySelectorAll('#histList .hrow').length;
+    d.querySelector('#histList [data-hact="del"]').click(); await wait(150);
+    check('Eliminar abre el diálogo de confirmación de la app', d.getElementById('confirmDlg').open && /Eliminar del historial/.test(d.getElementById('cfTitle').textContent), d.getElementById('cfText').textContent);
+    d.getElementById('cfCancel').click(); await wait(200);
+    check('“Cancelar” no elimina nada', !d.getElementById('confirmDlg').open && d.querySelectorAll('#histList .hrow').length === nHist);
+    d.querySelector('#histList [data-hact="del"]').click(); await wait(150); d.getElementById('cfOk').click();
+    await until(() => d.querySelectorAll('#histList .hrow').length === nHist - 1);
+    check('“Eliminar” borra el seguimiento del historial', d.querySelectorAll('#histList .hrow').length === nHist - 1);
 
     // 10. Ayuda sincronizada
     ['seguimiento', 'extension', 'ext-instalar', 'informes', 'busqueda-ia'].forEach(id => check('Centro de ayuda: sección “' + id + '”', !!d.getElementById('h-' + id)));

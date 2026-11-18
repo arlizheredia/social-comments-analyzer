@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// Extensión 1.1.1
+// Extensión 1.3.1
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -543,6 +543,8 @@ function fbExtractor(){
   }
   async function openComments(){
     if (visibleCount() > 0) return;
+    // En Instagram el icono de comentarios solo despliega la lista en los reels; en las publicaciones sirve para escribir (y sin sesión abre el acceso)
+    if (IG && !/\/(reel|reels)\//.test(location.pathname)) return;
     // Si la sección ya se está abriendo (marcadores de carga), primero se espera a que termine (máx. ~10 s)
     for (var w0 = 0; w0 < 40 && loadingVisible() && !stop; w0++){ if (w0 === 0) status('Esperando a que carguen los comentarios…', true); await sleep(250); if (visibleCount() > 0){ await sleep(600); return; } }
     if (visibleCount() > 0) return;
@@ -554,7 +556,7 @@ function fbExtractor(){
     for (var i = 0; i < Math.min(btns.length, 3) && !stop; i++){
       try { btns[i].scrollIntoView({ block: 'center' }); btns[i].click(); } catch(e){}
       // esperar a que aparezcan los comentarios y desaparezcan los marcadores de carga (máx. ~12 s)
-      for (var t = 0; t < 48 && !stop; t++){ await sleep(250); var n = visibleCount(); if (n > 0 && (!loadingVisible() || t > 16)) { await sleep(600); return; } }
+      for (var t = 0; t < 60 && !stop; t++){ await sleep(200); var n = visibleCount(); if (n > 0 && (!loadingVisible() || t > 15)) { await sleep(250); return; } }
     }
   }
   // ---- Facebook: cambiar "Más relevantes" por "Todos los comentarios" para no perder ninguno ----
@@ -565,10 +567,10 @@ function fbExtractor(){
     var sortBtn = Array.prototype.slice.call(r.querySelectorAll('div[role="button"],span[role="button"]')).filter(function(b){ return b.offsetParent && SORT_RE.test((b.innerText || '').trim()); })[0];
     if (!sortBtn) return;
     try { sortBtn.click(); } catch(e){ return; }
-    for (var t = 0; t < 12; t++){
-      await sleep(250);
+    for (var t = 0; t < 10; t++){
+      await sleep(150);
       var item = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
-      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); await sleep(1500); return; }
+      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); for (var t2 = 0; t2 < 12; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; } return; }
     }
     try { document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); } catch(e){}
   }
@@ -663,9 +665,36 @@ function fbExtractor(){
   (async function(){
     var clicks = new Map(), idle = 0, round = 0;
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
+    // En cuanto aparece el botón de comentarios se abre la sección (los reels no muestran comentarios sin pulsarlo).
+    // Si no hay botón, se espera a que la red pinte los comentarios (Instagram sin sesión tarda 10–15 s) o a la pantalla de acceso.
+    var canOpen = !(IG && !/\/(reel|reels)\//.test(location.pathname));
+    for (var w1 = 0; w1 < 80 && visibleCount() === 0 && !stop; w1++){
+      if (w1 === 0) status('Buscando la sección de comentarios…', true);
+      if (canOpen && w1 >= 2 && commentButtons().some(function(b){ return b.getAttribute('aria-pressed') !== 'true' && b.getAttribute('aria-expanded') !== 'true'; })) break;
+      await sleep(250);
+    }
+    // Sin sesión, Instagram y Facebook pueden mostrar una pantalla de acceso en lugar de la publicación
+    var loginWall = function(){
+      if (visibleCount() > 0) return false;
+      if (IG) return !!document.querySelector('input[name="username"]');
+      if (!TT) return !!document.querySelector('form[action*="login"] input[name="email"], #login_form, [data-testid="royal_login_form"]') && !articles().length;
+      return false;
+    };
+    // Ventana estrecha: Instagram muestra su versión móvil (enlaces intent://) sin comentarios en la página
+    if (IG && visibleCount() === 0 && document.querySelector('a[href^="intent://"]')){
+      var msg = 'La ventana es demasiado estrecha: Instagram muestra su versión móvil, sin comentarios. Agranda la ventana (o elige “En segundo plano” en las opciones) y reintenta.';
+      if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'error', error: msg }); return; }
+      status('⚠ ' + msg); window.__fbcx = false; return;
+    }
+    if (loginWall()){
+      var net = TT ? 'TikTok' : IG ? 'Instagram' : 'Facebook';
+      if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'error', error: 'No has iniciado sesión en ' + net + ' en este navegador: la red muestra la pantalla de acceso en lugar de la publicación. Inicia sesión y continúa el seguimiento.' }); return; }
+      status('⚠ No has iniciado sesión en ' + net + ': inicia sesión y vuelve a pulsar el marcador.'); window.__fbcx = false; return;
+    }
     await openComments();
     if (!TT && !IG) await fbAllComments();
     startKey = postKey(); snapshot();
+    if (AUTO) AUTO.emit({ type: 'progress', round: 0, count: collected.length, visible: countNow(), note: collected.length ? 'comentarios abiertos' : '' });
     while (!stop && round < 600){
       round++;
       if (AUTO && AUTO.stopRequested){ stop = true; break; }

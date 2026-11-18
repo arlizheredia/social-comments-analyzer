@@ -51,9 +51,10 @@
 
 /* ================== BASE ================== */
 *,*::before,*::after{box-sizing:border-box}
-html,body{margin:0;height:100%}
+html,body{margin:0}
+html{height:100%}body{min-height:100%}   /* min-height: la barra superior sticky sigue fija en toda la página */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{overflow-x:hidden}
+body{overflow-x:clip}   /* clip (no hidden): así la barra superior y el menú lateral siguen fijos al desplazar */
 img,svg{max-width:100%}
 .cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 body{background:var(--surface-dim);color:var(--on-surface);font:400 14px/20px var(--font);-webkit-font-smoothing:antialiased;letter-spacing:.01em}
@@ -222,8 +223,8 @@ details.adv[open] summary .ms{transform:rotate(180deg)}
 .menu{position:absolute;top:calc(100% + 4px);right:0;min-width:240px;background:var(--surface-container);border-radius:8px;box-shadow:var(--elev2);padding:8px 0;z-index:40;display:none}
 .menu.open{display:block;animation:fadein .12s}
 .menu.left{right:auto;left:0}
-.menu button,.menu a{display:flex;align-items:center;gap:12px;width:100%;height:48px;padding:0 16px;border:0;background:none;color:var(--on-surface);font:400 14px var(--font);text-align:left;cursor:pointer;text-decoration:none}
-.menu button:hover,.menu a:hover{background:color-mix(in srgb,var(--on-surface) 8%,transparent)}
+.menu button,.menu a,.menu .menu-file{display:flex;align-items:center;gap:12px;width:100%;height:48px;padding:0 16px;border:0;background:none;color:var(--on-surface);font:400 14px var(--font);text-align:left;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.menu button:hover,.menu a:hover,.menu .menu-file:hover,.menu .menu-file:focus-within{background:color-mix(in srgb,var(--on-surface) 8%,transparent)}
 .menu .ms{font-size:20px;color:var(--on-surface-variant)}
 .menu hr{border:0;height:1px;background:var(--outline-variant);margin:8px 0}
 .menu .mh{font-size:12px;font-weight:500;color:var(--on-surface-variant);padding:4px 16px 8px}
@@ -283,8 +284,14 @@ details.adv[open] summary .ms{transform:rotate(180deg)}
 .fchip[aria-pressed="true"]{background:var(--secondary-container);color:var(--on-secondary-container);border-color:transparent}
 .fchip[aria-pressed="true"] .ms{display:inline-block}
 .fsep{width:1px;background:var(--outline-variant);margin:4px 4px}
+.fsep.hidden{display:none}
+.fpost{display:inline-flex;align-items:center;gap:6px;position:relative}
+.fpost>.ms{position:absolute;left:10px;font-size:18px;color:var(--on-surface-variant);pointer-events:none}
+.filters .fpost select.input{padding-left:36px;background-position:calc(100% - 18px) 13px,calc(100% - 13px) 13px;padding-right:34px;padding-top:0;padding-bottom:0;max-width:min(340px,70vw);height:32px;min-height:32px;border-radius:8px;font-size:13px;font-weight:500}
+.filters .fpost.on select.input{background-color:var(--secondary-container);color:var(--on-secondary-container);border-color:transparent;background-image:linear-gradient(45deg,transparent 50%,var(--on-secondary-container) 50%),linear-gradient(135deg,var(--on-secondary-container) 50%,transparent 50%)}
 .selbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 8px 8px 16px;border-radius:12px;background:var(--secondary-container);color:var(--on-secondary-container);margin-bottom:12px}
-.selbar .btn{--fg:var(--on-secondary-container)}
+.selbar .btn:not(.filled){--fg:var(--on-secondary-container)}
+.selbar .btn.filled{--bg:var(--primary);--fg:var(--on-primary)}
 
 .table-wrap{border:1px solid var(--outline-variant);border-radius:12px;overflow:auto;max-height:70vh}
 table{width:100%;border-collapse:collapse;font-size:14px}
@@ -579,7 +586,7 @@ dialog:has(>.dlg-body)>.dlg-body{flex:1 1 auto;min-height:0;max-height:none}
   .icon-btn.sm{width:40px;height:40px}
   .fchip,.tchip{height:36px}
   .input,select.input,textarea.input,.searchbar input,.help-search input{font-size:16px}
-  .menu button,.menu a{height:52px}
+  .menu button,.menu a,.menu .menu-file{height:52px}
 }
 @media (max-width:720px){
   .appbar{height:56px}
@@ -860,10 +867,11 @@ textarea.input.prose{font-family:var(--font);font-size:14px;line-height:21px;min
 .cnode.pend>.crow{--off:calc(var(--selcol) + min(var(--plvl),1) * (var(--m1) + var(--pad)) + max(var(--plvl) - 1, 0) * (var(--m2) + var(--pad)));
   margin:0 0 0 calc(-1 * var(--off));padding:8px 0 8px var(--off);border-radius:0 14px 14px 0;background:var(--pend-row);box-shadow:inset 3px 0 0 var(--pend-bar)}
 .cnode.pend>.crow>.csel{margin-left:var(--off)}
-.cnode.pend>.crow .bubble{background:var(--pend-bubble)}
+.cnode.pend>.crow .bubble{background:transparent}
 .cnode.ig.pend>.crow .bubble,.cnode.tt.pend>.crow .bubble{background:transparent}
-.cnode.pend>.crow .bubble:hover{background:color-mix(in srgb,var(--on-surface) 6%,var(--pend-bubble))}
-.cnode.pend>.crow .creact{background:var(--pend-bubble)}
+.cnode.pend>.crow .bubble:hover{background:color-mix(in srgb,var(--on-surface) 5%,transparent)}
+.cnode.pend>.crow .creact{background:transparent;box-shadow:none}
+.cnode.pend>.crow .creply.pend{background:transparent;box-shadow:inset 0 0 0 1px currentColor}
 tr.pend>td{background:var(--pend-row)}
 tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 @media (max-width:720px){
@@ -951,9 +959,7 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 .ext-chip.on{border-color:transparent;background:var(--done-bg);color:var(--done-fg)}
 .ext-chip.on i{background:currentColor}
 .ext-chip.old{background:var(--pend-bg);color:var(--pend-fg)}
-.menu a[role=menuitem]{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
-.menu .menu-file{display:flex;align-items:center;gap:12px;cursor:pointer}
-.menu hr{border:0;border-top:1px solid var(--outline-variant);margin:4px 0}
+
 .card.add-post{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;padding:16px;margin-bottom:16px}
 .card.add-post .field .lbl,.field .lbl{font-size:12px;font-weight:500;color:var(--on-surface-variant)}
 .card.add-post .input{height:44px}
@@ -995,6 +1001,10 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 .rcard .rt{font-weight:600;font-size:15px}
 .rcard .rs{font-size:12px;color:var(--on-surface-variant)}
 .rcard .pbar{grid-column:1/-1}
+.ai-dl{display:grid;gap:10px;padding:14px 16px;border-radius:12px;background:var(--surface-container);margin:0 0 14px;text-align:left}
+.ai-dl-t{display:grid;gap:2px}
+.ai-dl-a{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ai-dl .pbar{background:var(--surface-container-highest,var(--outline-variant))}
 .stchip{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 10px;border-radius:12px;font-size:12px;font-weight:600;white-space:nowrap}
 .stchip .ms{font-size:16px}
 .stchip.draft{background:var(--surface-container);color:var(--on-surface-variant)}
@@ -1026,7 +1036,7 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 /* Historial */
 .hrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 8px 12px 12px;border-radius:14px;border:1px solid var(--outline-variant);background:var(--surface)}
 .hrow.sel{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
-.hrow input[type=checkbox]{width:18px;height:18px}
+.hrow input[type=checkbox]{width:18px;height:18px;margin:0}
 .hrow .ht{font-weight:600;font-size:14px}
 .hrow .hs{font-size:12px;color:var(--on-surface-variant)}
 .hrow .hsent{width:140px}
@@ -1082,6 +1092,9 @@ select.input.qmode{width:auto;max-width:230px;height:48px;border-radius:24px;pad
 .kpi .v{font-size:26px;font-weight:500;margin:2px 0;font-variant-numeric:tabular-nums}
 .kpi .d{font-size:12px;color:var(--on-surface-variant)}
 .kpi .d.up{color:var(--success)} .kpi .d.down{color:var(--error)}
+.rtable th.sent,.rtable td.sent{text-align:center;vertical-align:middle}
+.rtable td.sent .mini-seg{margin:0 auto;max-width:140px}
+.rtable td.cmp-up{color:var(--success);font-weight:600} .rtable td.cmp-down{color:var(--error);font-weight:600}
 .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
 .rtable-wrap{overflow:auto;border:1px solid var(--outline-variant);border-radius:12px}
 table.rtable{width:100%;border-collapse:collapse;font-size:13px}
@@ -1106,6 +1119,65 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
   .main,.content,.view{padding:0!important;margin:0!important;max-width:none!important}
   .rep-sec,.rep-cover,.kpi{break-inside:avoid}
 }
+
+/* Navegación: grupos del menú, barra de ubicación y pasos */
+.nav-group{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--on-surface-variant);opacity:.8;margin:4px 0 -6px}
+.nav-sep{width:40px;border-top:1px solid var(--outline-variant);margin:2px 0}
+@media (max-width:720px){ .nav-group,.nav-sep{display:none} }
+.crumbs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;font-size:13px;color:var(--on-surface-variant)}
+.crumbs .btn{height:32px;padding:0 12px 0 8px}
+.crumbs .btn .ms{margin:0}
+.crumbs ol{display:flex;flex-wrap:wrap;align-items:center;gap:4px;list-style:none;margin:0;padding:0}
+.crumbs li{display:inline-flex;align-items:center;gap:4px;max-width:260px}
+.crumbs li+li::before{content:"chevron_right";font-family:"Material Symbols Rounded";font-size:16px;opacity:.7}
+.crumbs li a{color:inherit;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crumbs li a:hover{color:var(--primary);text-decoration:underline}
+.crumbs li[aria-current] span{color:var(--on-surface);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step-n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:700;background:var(--surface-container-high,var(--surface-container));color:var(--on-surface-variant)}
+.tab[aria-selected="true"] .step-n{background:var(--primary);color:var(--on-primary)}
+.tab.tab-link{text-decoration:none;margin-left:auto;color:var(--primary)}
+.tab.tab-link .ms{font-size:16px}
+@media (max-width:720px){ .tab.tab-link{margin-left:0} }
+
+/* Diálogo de confirmación */
+dialog.confirm-dlg{max-width:min(420px,calc(100vw - 32px))}
+textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;line-height:21px}
+.confirm-dlg .cf-body{padding:24px 24px 16px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:12px}
+.confirm-dlg h2{font-size:22px;font-weight:400;margin:0;line-height:28px}
+.confirm-dlg p{margin:0;font-size:14px;line-height:20px;color:var(--on-surface-variant)}
+.help-note.err{background:var(--error-container)}
+.help-note.err>.ms{color:var(--error)}
+.help-note .auth-list{display:flex;flex-direction:column;gap:4px;margin:8px 0 0}
+.help-note .auth-list a{display:inline-flex;align-items:center;gap:8px;font-weight:500}
+.help-note .auth-list .pdot{width:14px;height:14px}
+.confirm-dlg .auth-list{display:flex;flex-direction:column;gap:6px;margin:10px 0 0}
+.confirm-dlg .auth-list a{display:inline-flex;align-items:center;gap:8px;color:var(--primary);font-weight:500;text-decoration:none}
+.confirm-dlg .auth-list a:hover{text-decoration:underline}
+.confirm-dlg .auth-list .pdot{width:14px;height:14px}
+.confirm-dlg .dlg-actions{padding:8px 24px 20px}
+ /* botón destructivo: colores fijos con contraste AA en ambos temas (claro 6,5:1 · oscuro 7,0:1) */
+:root{--danger-bg:#b3261e;--danger-fg:#ffffff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--danger-bg:#8c1d18;--danger-fg:#ffdad6}}
+:root[data-theme="dark"]{--danger-bg:#8c1d18;--danger-fg:#ffdad6}
+.confirm-dlg.danger #cfOk{--bg:var(--danger-bg);--fg:var(--danger-fg)}
+
+/* Aviso: seguimientos o publicaciones sin comentarios */
+.warn-chip{display:inline-flex;align-items:center;gap:3px;height:18px;padding:0 7px 0 4px;margin:-2px 0;border-radius:9px;font-size:11px;font-weight:600;line-height:18px;background:var(--pend-bg);color:var(--pend-fg);vertical-align:middle;white-space:nowrap}
+.warn-chip .ms{font-size:13px;line-height:1}
+.warn-txt{display:inline-flex;align-items:center;gap:4px;color:var(--pend-fg);font-weight:500}
+.warn-txt .ms{font-size:16px}
+
+/* Sesiones en la barra superior */
+.sess{display:flex;align-items:center;gap:4px;margin-right:8px}
+.sess-i{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px 0 8px;border-radius:16px;text-decoration:none;color:var(--on-surface-variant);font:500 12px var(--font);border:1px solid var(--outline-variant)}
+.sess-i .pdot{width:14px;height:14px}
+.sess-i .sess-dot{width:8px;height:8px;border-radius:50%;background:var(--outline)}
+.sess-i.on{color:var(--on-surface);border-color:transparent;background:var(--surface-container)}
+.sess-i.on .sess-dot{background:#1e8e3e;box-shadow:0 0 0 2px color-mix(in srgb,#1e8e3e 25%,transparent)}
+.sess-i.off .pdot{filter:grayscale(1);opacity:.6}
+.sess-i:hover{background:color-mix(in srgb,var(--on-surface) 8%,transparent)}
+@media (max-width:1100px){ .sess-n{display:none} .sess-i{padding:0 8px} }
+@media (max-width:720px){ .sess{gap:2px;margin-right:2px} .sess-i{height:28px;padding:0 6px;border:0} .sess-i .sess-dot{width:7px;height:7px} }
 </style>
 </head>
 <body>
@@ -1117,6 +1189,11 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
     <span class="brand-name"><span class="long">Social </span>Comments <b>Analyzer</b></span>
   </a>
   <div class="spacer"></div>
+  <div class="sess hidden" id="sessBar" role="status" aria-label="Sesiones en las redes sociales">
+    <a class="sess-i" data-net="facebook" href="https://www.facebook.com/" target="_blank" rel="noopener"><i class="pdot fb"></i><span class="sess-n">Facebook</span><i class="sess-dot"></i></a>
+    <a class="sess-i" data-net="instagram" href="https://www.instagram.com/" target="_blank" rel="noopener"><i class="pdot ig"></i><span class="sess-n">Instagram</span><i class="sess-dot"></i></a>
+    <a class="sess-i" data-net="tiktok" href="https://www.tiktok.com/" target="_blank" rel="noopener"><i class="pdot tt"></i><span class="sess-n">TikTok</span><i class="sess-dot"></i></a>
+  </div>
   <button class="icon-btn" id="helpBtn" aria-label="Ayuda" title="Ayuda (?)"><span class="ms">help</span></button>
   <button class="icon-btn" id="themeBtn" aria-label="Cambiar tema" title="Tema"><span class="ms" id="themeIcon">brightness_auto</span></button>
   <div class="menu-anchor">
@@ -1137,10 +1214,14 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
 
 <div class="layout">
   <nav class="rail" aria-label="Navegación principal">
-    <a class="nav-item" href="#seguimiento" data-view="seguimiento"><span class="pill"><span class="ms">track_changes</span><span class="nav-badge hidden" id="navTrackBadge"></span></span>Seguimiento</a>
-    <a class="nav-item" href="#informes" data-view="informes"><span class="pill"><span class="ms">analytics</span></span>Informes</a>
-    <a class="nav-item" href="#obtener" data-view="obtener"><span class="pill"><span class="ms">add_comment</span></span>Obtener</a>
-    <a class="nav-item" href="#resultados" data-view="resultados"><span class="pill"><span class="ms">insights</span><span class="nav-badge hidden" id="navBadge"></span></span>Resultados</a>
+    <span class="nav-group" aria-hidden="true">Diario</span>
+    <a class="nav-item" href="#seguimiento" data-view="seguimiento" title="Seguimiento diario de varias publicaciones"><span class="pill"><span class="ms">track_changes</span><span class="nav-badge hidden" id="navTrackBadge"></span></span>Seguimiento</a>
+    <a class="nav-item" href="#informes" data-view="informes" title="Informes a partir del historial"><span class="pill"><span class="ms">analytics</span></span>Informes</a>
+    <span class="nav-sep" aria-hidden="true"></span>
+    <span class="nav-group" aria-hidden="true">Puntual</span>
+    <a class="nav-item" href="#obtener" data-view="obtener" title="Extraer los comentarios de una publicación"><span class="pill"><span class="ms">add_comment</span></span>Obtener</a>
+    <a class="nav-item" href="#resultados" data-view="resultados" title="Análisis de los comentarios abiertos"><span class="pill"><span class="ms">insights</span><span class="nav-badge hidden" id="navBadge"></span></span>Resultados</a>
+    <span class="nav-sep" aria-hidden="true"></span>
     <a class="nav-item" href="#ayuda" data-view="ayuda"><span class="pill"><span class="ms">menu_book</span></span>Ayuda</a>
   </nav>
 
@@ -1152,7 +1233,7 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
       <div class="page-head head-row">
         <div>
           <h1 id="h-seg">Seguimiento</h1>
-          <p>Tu lista de publicaciones, los seguimientos de cada día y su historial.</p>
+          <p>Para revisar varias publicaciones cada día: <b>1</b> guarda las publicaciones, <b>2</b> crea y ejecuta un seguimiento, <b>3</b> consulta el historial y <b>4</b> genera informes.</p>
           <div class="head-links"><a class="hlp" href="#ayuda/seguimiento"><span class="ms">help</span>Cómo funciona</a><a class="hlp" href="#ayuda/extension"><span class="ms">help</span>Extensión de Chrome</a></div>
         </div>
         <div class="head-acts">
@@ -1171,9 +1252,10 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
       </div>
 
       <div class="tabs" role="tablist" aria-label="Secciones de seguimiento">
-        <button class="tab" role="tab" id="stab-posts" aria-controls="sp-posts" aria-selected="true"><span class="ms">list_alt</span>Publicaciones<span class="count-badge" id="postsCount">0</span></button>
-        <button class="tab" role="tab" id="stab-runs" aria-controls="sp-runs" aria-selected="false" tabindex="-1"><span class="ms">play_circle</span>Seguimientos<span class="count-badge" id="runsCount">0</span></button>
-        <button class="tab" role="tab" id="stab-hist" aria-controls="sp-hist" aria-selected="false" tabindex="-1"><span class="ms">history</span>Historial<span class="count-badge" id="histCount">0</span></button>
+        <button class="tab" role="tab" id="stab-posts" aria-controls="sp-posts" aria-selected="true"><span class="step-n">1</span>Publicaciones<span class="count-badge" id="postsCount">0</span></button>
+        <button class="tab" role="tab" id="stab-runs" aria-controls="sp-runs" aria-selected="false" tabindex="-1"><span class="step-n">2</span>Seguimientos<span class="count-badge" id="runsCount">0</span></button>
+        <button class="tab" role="tab" id="stab-hist" aria-controls="sp-hist" aria-selected="false" tabindex="-1"><span class="step-n">3</span>Historial<span class="count-badge" id="histCount">0</span></button>
+        <a class="tab tab-link" href="#informes" title="Crea informes a partir del historial"><span class="step-n">4</span>Informes<span class="ms sm">arrow_forward</span></a>
       </div>
 
       <!-- Publicaciones -->
@@ -1181,7 +1263,7 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
         <form class="card add-post" id="addPostForm" autocomplete="off">
           <label class="field" style="flex:1 1 320px"><span class="lbl">Añadir publicación</span>
             <input class="input" id="addPostUrl" placeholder="Pega el enlace de una publicación de Facebook, Instagram o TikTok" aria-describedby="addPostHint"></label>
-          <label class="field" style="flex:0 1 220px"><span class="lbl">Nombre (opcional)</span><input class="input" id="addPostName" maxlength="120" placeholder="Ej.: Promo Black Friday"></label>
+          <label class="field" style="flex:0 1 240px"><span class="lbl">Nombre para identificarla (recomendado)</span><input class="input" id="addPostName" maxlength="120" placeholder="Ej.: Promo Black Friday"></label>
           <div class="add-acts"><button class="btn filled" type="submit"><span class="ms">add</span>Añadir</button><button class="btn text" type="button" id="addManyBtn"><span class="ms">playlist_add</span>Añadir varias</button></div>
           <p class="hint small muted" id="addPostHint" style="flex-basis:100%;margin:0">La red se detecta sola. Las publicaciones repetidas no se duplican.</p>
           <div class="add-many hidden" id="addMany" style="flex-basis:100%">
@@ -1232,6 +1314,7 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
 
     <!-- ================= INFORMES ================= -->
     <section class="view" id="view-informes" aria-labelledby="h-inf">
+      <nav class="crumbs hidden" id="repCrumbs" aria-label="Ubicación"></nav>
       <div class="page-head head-row">
         <div>
           <h1 id="h-inf">Informes</h1>
@@ -1247,6 +1330,7 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
       <div class="page-head">
         <h1 id="h-obtener">Obtén los comentarios</h1>
         <p>Elige la red social y cómo quieres obtener los comentarios de una publicación.</p>
+        <p class="small muted" style="font-size:13px;margin-top:2px">¿Revisas varias publicaciones cada día? Usa <a href="#seguimiento">Seguimiento</a>: guarda la lista y extrae todas de una vez.</p>
         <div class="head-links"><a class="hlp" href="#ayuda/metodos"><span class="ms">help</span>¿Qué método elegir?</a><a class="hlp" href="#ayuda/inicio"><span class="ms">help</span>Primeros pasos</a></div>
       </div>
 
@@ -1429,6 +1513,7 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
       </div>
 
       <div id="resContent" class="hidden">
+        <nav class="crumbs hidden" id="resCrumbs" aria-label="Ubicación"></nav>
         <div class="res-head">
           <div style="min-width:0;flex:1 1 400px">
             <h1 id="pTitle">Publicación</h1>
@@ -1458,6 +1543,7 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
                 <button role="menuitem" data-exp="csv"><span class="ms">csv</span>CSV (.csv)</button>
                 <button role="menuitem" data-exp="json"><span class="ms">data_object</span>JSON (.json)</button>
                 <button role="menuitem" data-exp="txt"><span class="ms">description</span>Texto (.txt)</button>
+                <button role="menuitem" data-exp="word"><span class="ms">description</span>Informe Word (.doc)</button>
                 <button role="menuitem" data-exp="html"><span class="ms">web</span>Informe HTML</button>
                 <hr>
                 <a role="menuitem" href="#ayuda/exportar"><span class="ms">help</span>¿Qué formato elegir?</a>
@@ -1552,6 +1638,8 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
             <button class="btn text sm" id="semClear"><span class="ms">close</span>Quitar</button>
           </div>
           <div class="filters" role="group" aria-label="Filtros">
+            <label class="fpost hidden" id="fPostF"><span class="ms">article</span><select class="input sm" id="fPost" aria-label="Filtrar por publicación"></select></label>
+            <span class="fsep hidden" id="fPostSep"></span>
             <button class="fchip" data-fg="type" data-fv="comment" aria-pressed="false"><span class="ms">check</span>Comentarios</button>
             <button class="fchip" data-fg="type" data-fv="reply" aria-pressed="false"><span class="ms">check</span>Respuestas</button>
             <span class="fsep"></span>
@@ -1847,13 +1935,16 @@ Los más usados de cada tipo. Pulsa cualquiera para ver los comentarios que lo c
 
 # Seguimiento de publicaciones {#seguimiento icon=track_changes}
 
+> **Cómo orientarte**: el menú tiene dos grupos. **Diario** (*Seguimiento* e *Informes*) es para revisar varias publicaciones cada día; **Puntual** (*Obtener* y *Resultados*) es para analizar una publicación concreta. Al abrir comentarios desde un seguimiento o un informe, arriba verás dónde estás y el botón **Volver**.
+
 Da seguimiento diario a varias publicaciones de Facebook, Instagram y TikTok: guarda la lista, extrae todos sus comentarios con un clic y compáralos en el tiempo.
 
-1. **Publicaciones**: pega el enlace de cada publicación (o varias con *Añadir varias*). La red se detecta sola y no se duplican.
+1. **Publicaciones**: pega el enlace de cada publicación (o varias con *Añadir varias*) y dale un **nombre** para reconocerla en la lista. La red se detecta sola y no se duplican.
 2. **Crear seguimiento**: marca las publicaciones que quieras revisar hoy, pulsa **Crear seguimiento**, ponle nombre y fecha.
 3. **Iniciar**: la app extrae los comentarios de cada publicación y muestra el progreso por publicación y el **porcentaje total**.
 4. **Detener y continuar**: puedes detenerlo en cualquier momento; lo ya extraído se guarda y **Continuar** sigue con las pendientes, incluso otro día.
-5. Al terminar, el seguimiento pasa al **Historial**. Desde ahí creas **informes** o vuelves a ver sus comentarios.
+5. Al terminar, el seguimiento pasa al **Historial**. Si alguna publicación (o todo el seguimiento) quedó **sin comentarios**, verás un aviso ámbar {ms:warning}: reintenta esa publicación con {ms:refresh}.
+6. Desde el historial creas **informes** o vuelves a ver sus comentarios.
 
 ## Cómo se extrae cada publicación {#seg-metodos}
 
@@ -1869,7 +1960,8 @@ En *Automático* (por defecto) se prueba la API si iniciaste sesión; si la publ
 ## Ver y responder comentarios {#seg-ver}
 
 - Pulsa **Ver comentarios** en una publicación de un seguimiento para abrirla en *Resultados*, con la conversación, los filtros y el asistente de respuestas de siempre.
-- En el historial, marca varios seguimientos y pulsa **Ver comentarios** para verlos juntos (sin duplicar los de una misma publicación).
+- En el historial, pulsa el icono **Ver comentarios por publicación** de un seguimiento para abrir todos sus comentarios en el visor. Usa el selector **Publicación** (junto a los filtros) para ver solo los de una publicación; muestra cuántos comentarios tiene cada una.
+- Marca varios seguimientos y pulsa **Ver comentarios** para verlos juntos (sin duplicar los de una misma publicación), también filtrables por publicación.
 - Las respuestas publicadas desde ahí se guardan también en el seguimiento.
 
 ## Historial y copia de seguridad {#seg-historial}
@@ -1902,11 +1994,39 @@ Cuando haya una versión nueva, *Seguimiento* mostrará **Actualizar extensión*
 
 > Funciona con la app publicada en GitHub Pages, en `http://localhost` y abriendo el archivo directamente (para esto último activa *Permitir acceso a URLs de archivo* en los detalles de la extensión).
 
+## Dejarlo trabajando solo {#ext-desatendido}
+
+Inicia el seguimiento y vete a hacer otra cosa: no necesita que estés delante.
+
+- Mientras extrae, la extensión **impide que el equipo se suspenda** (la pantalla sí puede apagarse o bloquearse) y lo libera al terminar.
+- Al acabar, detenerse o agotar los reintentos recibirás una **notificación de escritorio** (la app pide permiso la primera vez que inicias un seguimiento).
+- Si la extensión deja de responder, la app lo detecta a los pocos minutos y aplica los **reintentos automáticos**.
+- **Deja abierta** la pestaña de la app y el navegador. Si los cierras, el seguimiento queda en pausa y lo continúas después sin perder lo extraído.
+
+## Protección de tu cuenta {#ext-cuenta}
+
+Para que la red social no confunda la extracción con un uso abusivo, la app trabaja a un **ritmo prudente**: una sola publicación cada vez, pausas variables entre publicaciones (por defecto unos 6 s) y una pausa larga cada 5 publicaciones. La extensión solo lee las páginas que ya puedes ver con tu sesión: **no publica, no da “me gusta” y no envía datos** a ningún servidor. Puedes ajustar el ritmo en {ms:more_vert} › **Opciones de extracción**. Evita seguimientos de cientos de publicaciones seguidas.
+
+## Reintentos automáticos {#ext-reintentos}
+
+Si la extracción de una publicación se interrumpe **sin que tú la detengas** (fallo de conexión, sesión de Facebook, Instagram o TikTok caducada, la página no carga, se cierra la ventana de trabajo o no aparecen comentarios), la app la **reintenta sola**:
+
+- Hasta **10 intentos** por publicación, con esperas crecientes: 15 s, 30 s, 1 min, 2 min, 4 min y después 5 min entre intentos.
+- Si no hay conexión, espera a que vuelva antes de reintentar.
+- En la publicación verás *Reintento 3 de 10 en 42 s* y el último error; con **Reintentar ahora** no esperas.
+- Si se agotan los intentos, **se detiene todo el proceso de extracción** y el seguimiento queda en pausa con el motivo. Resuelve el problema (por ejemplo, vuelve a iniciar sesión en la red social) y pulsa **Continuar**: se reintentan las publicaciones con error y siguen las pendientes.
+- Ajusta el número de intentos (1–10) y la espera inicial en {ms:more_vert} › **Opciones de extracción**.
+
+## Sesiones activas {#ext-sesiones}
+
+- En la barra superior verás **Facebook, Instagram y TikTok** con un punto verde si hay **sesión iniciada** en este navegador. La extensión solo comprueba si la sesión existe; no lee ni envía tus credenciales.
+- **Para iniciar o continuar un seguimiento es obligatorio** tener sesión activa en todas las redes de sus publicaciones (y, para las publicaciones fijadas a la API, haber conectado Facebook en *Obtener*). Si falta alguna, la app indica cuáles y ofrece un enlace para iniciar sesión; el seguimiento se puede guardar como borrador mientras tanto.
+
 ## Seguir trabajando mientras extrae {#ext-segundo-plano}
 
 La extracción **no te bloquea el ordenador**: inicia el seguimiento y sigue con otras tareas.
 
-- Por defecto, la ventana de trabajo se abre **pequeña, en una esquina y sin quitarte el foco**: puedes seguir escribiendo en otra aplicación o pestaña.
+- Por defecto, la ventana de trabajo se abre **en segundo plano, detrás de tus ventanas**, y te devuelve el foco: puedes seguir escribiendo en otra aplicación o pestaña. Siempre tiene tamaño de escritorio, porque en ventanas estrechas las redes muestran su versión móvil, sin comentarios.
 - Puedes **minimizarla** o dejarla detrás de otras ventanas: la extensión mide los tiempos desde su propio proceso para que Chrome no frene la extracción, y simula el desplazamiento para que la red siga cargando comentarios. Elige *Minimizada* en las opciones si prefieres que empiece así.
 - La pestaña de la app también puede quedar en segundo plano. Al volver verás el progreso actualizado; si cierras la app, el seguimiento queda **en pausa** y lo continúas cuando quieras.
 - No cierres la ventana de trabajo ni el navegador mientras extrae.
@@ -1926,8 +2046,10 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 
 ## Qué incluye {#inf-contenido}
 
+> El **seguimiento más reciente** de los elegidos es siempre el **principal**: sus indicadores encabezan el informe y se comparan con el seguimiento anterior (variación ▲/▼). La evolución, la audiencia y los temas cubren todo el periodo elegido.
+
 - **Resumen ejecutivo** automático y, opcionalmente, **Resumen con IA** (usa el modelo gratuito que configures).
-- **Indicadores clave**: comentarios únicos, personas, interacciones, **índice neto de sentimiento** (% positivos − % negativos), negativos y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
+- **Indicadores clave**: comentarios únicos, personas, interacciones, comentarios **positivos** y **negativos** y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
 - **Alertas**: publicaciones con muchos negativos, subida de negativos entre fechas y comentarios negativos o preguntas sin responder.
 - **Evolución por seguimiento**: comentarios por fecha y comentarios **nuevos** respecto a los seguimientos anteriores.
 - **Publicaciones** y **redes** comparadas; **quién más comenta**, **embajadores**, **detractores** y **más influyentes**.
@@ -1936,9 +2058,13 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 
 ## Exportar y compartir {#inf-exportar}
 
+**Mensaje para WhatsApp**: genera un párrafo breve y **sin tecnicismos** con tu **valoración personal**: cuántos comentarios se analizaron, cuántos hablan de las marcas o temas vigilados y cuántos de ellos son positivos y negativos, quiénes más critican, quiénes son los embajadores, tu opinión sobre lo que se dice y qué conviene atender. Sirve para situar a quienes reciban el informe en un chat o canal. Elige el tono (cercano, formal o muy breve), añade tu firma, edítalo y pulsa **Copiar mensaje** o **Abrir en WhatsApp**. Con **Redactar con IA** lo reescribe el modelo gratuito que configures ([cómo configurarlo](#ayuda/ia-config)).
+
+Los documentos exportados tienen un formato **sencillo, en blanco y negro y en Arial 12**: título, ficha (fecha, *Elaborado por*, *Cliente / marca* y periodo), resumen, indicadores, detalle por publicación, audiencia, comentarios destacados y próximos pasos, con pie de página numerado. Rellena *Elaborado por* y *Cliente / marca* al elegir los seguimientos del informe.
+
 | Opción | Resultado |
 |---|---|
-| **Copiar texto** | Copia el informe con formato (al pegar en Word, Google Docs o un correo) y como texto plano |
+| **Copiar texto** | Copia el informe con formato sencillo (al pegar en Word, Google Docs o un correo) y como texto plano |
 | **Word (.doc)** | Documento editable con tablas y gráficos |
 | **PDF** | Archivo PDF en tamaño A4 listo para enviar |
 | **Página web (.html)** | Informe autónomo para abrir en cualquier navegador |
@@ -1953,6 +2079,86 @@ En *Resultados › Comentarios*, junto al buscador, elige el tipo de búsqueda:
 - **Clasificar con IA**: el modelo gratuito que configuraste en el asistente (Chrome, Ollama, Gemini, Groq u OpenRouter) decide qué comentarios cumplen el criterio. Más fino para criterios complejos; más lento.
 
 Se combina con los filtros de **polaridad** (positivos, neutrales, negativos) y con el resto de chips.
+
+# Configurar la IA gratuita {#ia-config icon=psychology}
+
+La app usa IA para **sugerir respuestas**, **clasificar comentarios por un criterio**, redactar el **resumen del informe** y el **mensaje para WhatsApp**. Por defecto intenta usar la **IA integrada de Chrome**; si tu navegador no la tiene, descarga con un clic la **IA de la app** (sin claves) o elige otro proveedor gratuito en el diálogo de IA ({ms:tune} en el asistente de respuestas o *Redactar con IA*), pulsa **Probar** y después **Guardar**.
+
+| Proveedor | Coste | Clave | Dónde se procesan los comentarios |
+|---|---|---|---|
+| IA integrada de Chrome | Gratis | No | En tu equipo |
+| **IA de la app** (se descarga una vez) | Gratis | No | En tu equipo |
+| Ollama / LM Studio | Gratis | No | En tu equipo |
+| Google Gemini | Nivel gratuito | Sí | En Google |
+| Groq | Nivel gratuito | Sí | En Groq |
+| OpenRouter (modelos “:free”) | Gratis con límites | Sí | En el proveedor del modelo |
+
+> La **búsqueda por significado** de *Resultados* no necesita configuración: usa su propio modelo gratuito en el navegador.
+
+## IA de la app (descarga con un clic) {#ia-local}
+
+La app puede descargar su propio modelo de IA gratuito, que se ejecuta dentro del navegador en cualquier ordenador: **sin claves, sin cuentas y sin activar opciones de Chrome**. Es la alternativa cuando la IA integrada de Chrome no está disponible.
+
+1. Abre **Configurar IA** (en el asistente de respuestas, la búsqueda por significado o el mensaje para WhatsApp).
+2. En *Proveedor* elige **IA de la app** y pulsa **Descargar e instalar**.
+3. Verás el porcentaje y los MB descargados (≈ 500 MB; con una conexión lenta puede tardar varios minutos). Puedes cerrar el diálogo y seguir trabajando: la descarga continúa y te avisamos al terminar.
+4. Al terminar queda **configurada como proveedor** automáticamente. Desde entonces funciona incluso sin conexión.
+
+- Para liberar espacio, pulsa **Eliminar modelo** en el mismo lugar.
+- Si se borran los datos del sitio en el navegador, el modelo también se borra y habrá que descargarlo de nuevo.
+- Usa la tarjeta gráfica si el navegador lo permite (WebGPU) y, si no, el procesador (algo más lento).
+- Los comentarios **no salen de tu equipo**.
+- Es un modelo pequeño: redacta bien mensajes y respuestas cortas. Para textos más elaborados puedes cambiar a Gemini o Groq (gratuitos con clave).
+
+## IA integrada de Chrome (Gemini Nano) {#ia-chrome}
+
+Se ejecuta en tu ordenador, sin clave y sin enviar datos. Requisitos: **Chrome de escritorio reciente** (Windows, macOS o Linux), unos **22 GB libres** en disco y una tarjeta gráfica con más de 4 GB de memoria (o 16 GB de RAM).
+
+1. Actualiza Chrome (*Menú › Ayuda › Información de Google Chrome*).
+2. Si la app indica *“La IA integrada no está disponible en este navegador”*, abre `chrome://flags`, busca **Prompt API for Gemini Nano** y elige *Enabled*; busca **Enables optimization guide on device** y elige *Enabled BypassPerfRequirement*.
+3. Pulsa **Relaunch** para reiniciar Chrome.
+4. Abre `chrome://on-device-internals` y comprueba que el modelo aparece como descargado (la primera vez puede tardar varios minutos).
+5. Vuelve a la app, elige *IA integrada de Chrome* y pulsa **Probar**.
+
+> Si tu equipo no cumple los requisitos, usa Gemini o Groq (gratuitos con clave) u Ollama.
+
+## Google Gemini (nivel gratuito) {#ia-gemini}
+
+1. Entra en [aistudio.google.com/apikey](https://aistudio.google.com/apikey) con una cuenta de Google.
+2. Pulsa **Create API key** (Crear clave de API) y cópiala.
+3. En la app elige *Google Gemini*, pega la clave y deja el modelo `gemini-flash-latest`.
+4. Pulsa **Probar** y **Guardar**.
+
+> El nivel gratuito tiene límites diarios; en ese nivel Google puede usar los datos enviados para mejorar sus modelos.
+
+## Groq (nivel gratuito) {#ia-groq}
+
+1. Crea una cuenta en [console.groq.com](https://console.groq.com) y entra en **API Keys**.
+2. Pulsa **Create API Key** y cópiala.
+3. En la app elige *Groq*, pega la clave y deja el modelo `llama-3.3-70b-versatile` (o el que indique la consola).
+4. Pulsa **Probar** y **Guardar**.
+
+## OpenRouter (modelos gratuitos) {#ia-openrouter}
+
+1. Crea una cuenta en [openrouter.ai](https://openrouter.ai) y abre **Keys** › **Create Key**.
+2. En [openrouter.ai/models](https://openrouter.ai/models?max_price=0) filtra por gratuitos y copia el nombre de un modelo que termine en `:free`.
+3. En la app elige *OpenRouter*, pega la clave y el nombre del modelo, y pulsa **Probar**.
+
+## Ollama o LM Studio (en tu equipo) {#ia-custom}
+
+1. Instala [Ollama](https://ollama.com) y descarga un modelo: `ollama pull llama3.2`.
+2. Permite que la app se conecte: cierra Ollama y arráncalo con la variable `OLLAMA_ORIGINS` con la dirección de la app, por ejemplo `OLLAMA_ORIGINS=https://arlizheredia.github.io ollama serve` (en Windows, crea la variable de entorno `OLLAMA_ORIGINS` y reinicia Ollama).
+3. En la app elige *Ollama / LM Studio*, deja la URL `http://localhost:11434/v1` y escribe el modelo (`llama3.2`).
+4. Pulsa **Probar** y **Guardar**. En LM Studio, activa el servidor local y usa su URL (`http://localhost:1234/v1`).
+
+## Problemas frecuentes {#ia-problemas}
+
+??? “No se pudo conectar con el servicio” {#ia-faq-conexion}
+    Revisa la conexión a internet y la clave. Con Ollama, comprueba que está en marcha y que `OLLAMA_ORIGINS` incluye la dirección de la app.
+??? “Se alcanzó el límite gratuito” {#ia-faq-limite}
+    Los niveles gratuitos limitan las peticiones por minuto o por día. Espera un poco o cambia de proveedor.
+??? La clave se guarda en el navegador {#ia-faq-clave}
+    Las claves se guardan solo en este navegador y se envían únicamente al proveedor elegido. No las compartas y bórralas al usar un ordenador ajeno.
 
 # Buscar y filtrar {#filtrar icon=filter_list}
 
@@ -1982,6 +2188,7 @@ Antes de responder, el asistente comprueba que haya una **sesión de Facebook ac
 ## Equipo {#as-equipo}
 
 - Añade personas desde la lista *Personas en estos comentarios*, escribiendo su nombre, o desde el detalle de un comentario (**Añadir al equipo**).
+- Los comentarios **pendientes** se distinguen por su **fondo ámbar** (con una barra a la izquierda) en la conversación y en la tabla.
 - Un comentario está **respondido** cuando alguien del equipo contesta en su hilo (o lo menciona en una respuesta posterior del mismo hilo). Sus mensajes llevan la insignia *Equipo*.
 - Por defecto, el **autor de la publicación** (tu página o cuenta) cuenta como equipo.
 - **A los miembros del equipo no se les responde**: sus comentarios nunca son pendientes, no muestran el botón de responder y el asistente los omite (también si añades a alguien mientras respondes).
@@ -2031,6 +2238,7 @@ Se usan los comentarios **seleccionados** o, si no hay selección, **todos los f
 |---|---|
 | Copiar como tabla | Pegar directamente en Excel o Google Sheets |
 | Excel (.xlsx) | Hoja *Comentarios* con todos los campos y hoja *Resumen* |
+| Informe Word (.doc) | Informe sencillo en blanco y negro, Arial 12: resumen, indicadores, audiencia, comentarios destacados y próximos pasos |
 | CSV | UTF-8 compatible con Excel; conserva acentos y emojis |
 | JSON | Volver a importarlo en esta aplicación |
 | Informe HTML | Compartir o imprimir |
@@ -2246,12 +2454,18 @@ Cada comentario incluye su **plataforma**.
     <div class="field"><label for="aiProv">Proveedor</label>
       <select class="input" id="aiProv">
         <option value="chrome">IA integrada de Chrome (Gemini Nano) · local, gratis, sin clave</option>
+        <option value="local">IA de la app · gratis, sin clave, se descarga una vez (≈ 500 MB)</option>
         <option value="gemini">Google Gemini · nivel gratuito, requiere clave</option>
         <option value="groq">Groq · nivel gratuito, requiere clave</option>
         <option value="openrouter">OpenRouter · modelos gratuitos (:free), requiere clave</option>
         <option value="custom">Ollama / LM Studio / compatible con OpenAI</option>
       </select>
       <span class="hint" id="aiProvHint"></span></div>
+    <div class="ai-dl hidden" id="aiDlF">
+      <div class="ai-dl-t"><b id="aiDlTitle">Modelo no descargado</b><span class="small muted" id="aiDlSub">Se descarga una sola vez (≈ 500 MB) y queda guardado en este navegador. Después funciona sin conexión y sin claves.</span></div>
+      <span class="pbar hidden" id="aiDlBar" role="progressbar" aria-label="Descarga del modelo" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span>
+      <div class="ai-dl-a"><button class="btn filled" id="aiDlBtn"><span class="ms">download</span>Descargar e instalar</button><button class="btn text hidden" id="aiDlDel"><span class="ms">delete</span>Eliminar modelo</button></div>
+    </div>
     <div class="field" id="aiUrlF"><label for="aiUrl">URL del servidor</label><input class="input" id="aiUrl" placeholder="http://localhost:11434/v1"></div>
     <div class="field" id="aiKeyF"><label for="aiKey">Clave de API</label><input class="input" id="aiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Pega aquí tu clave">
       <span class="hint">Se guarda solo en este navegador. <a id="aiKeyLink" target="_blank" rel="noopener">Obtener una clave gratuita</a></span></div>
@@ -2267,7 +2481,7 @@ Cada comentario incluye su **plataforma**.
     <p class="status" id="aiStatus" aria-live="polite"></p>
   </div>
   <div class="dlg-actions">
-    <span style="margin-right:auto"><a class="hlp" href="#ayuda/as-ia"><span class="ms">help</span>Ayuda</a></span>
+    <span style="margin-right:auto"><a class="hlp" href="#ayuda/ia-config"><span class="ms">help</span>Cómo configurar la IA</a></span>
     <button class="btn text" id="aiTest"><span class="ms">bolt</span>Probar</button>
     <button class="btn filled" id="aiSave">Guardar</button>
   </div>
@@ -2329,16 +2543,55 @@ Cada comentario incluye su **plataforma**.
   <div class="dlg-body" style="display:flex;flex-direction:column;gap:10px">
     <label class="field"><span class="lbl">Ventana de trabajo</span>
       <select class="input" id="eoWin">
-        <option value="small">Pequeña, en una esquina, sin quitarte el foco (recomendada)</option>
-        <option value="minimized">Minimizada (sigue trabajando; algo más lenta)</option>
-        <option value="normal">Normal, a la vista</option>
+        <option value="small">En segundo plano, detrás de tus ventanas (recomendada)</option>
+        <option value="minimized">Minimizada</option>
+        <option value="normal">A la vista</option>
       </select>
-      <span class="hint">Puedes seguir usando el ordenador mientras extrae. Si minimizas la ventana de trabajo, la extracción continúa.</span></label>
+      <span class="hint">Puedes seguir usando el ordenador mientras extrae. La ventana de trabajo siempre tiene tamaño de escritorio: en ventanas estrechas las redes muestran su versión móvil, sin comentarios.</span></label>
+    <label class="check"><input type="checkbox" id="eoCareful"> Ritmo prudente para proteger tu cuenta (pausas variables y una pausa larga cada 5 publicaciones)</label>
     <label class="check"><input type="checkbox" id="eoKeep"> Dejar abiertas las pestañas al terminar</label>
     <label class="field"><span class="lbl">Tiempo máximo por publicación (minutos)</span><input class="input" type="number" id="eoMax" min="2" max="90"></label>
     <label class="field"><span class="lbl">Pausa entre publicaciones (segundos)</span><input class="input" type="number" id="eoGap" min="0" max="120"></label>
+    <label class="field"><span class="lbl">Reintentos automáticos ante fallos (máximo 10)</span><input class="input" type="number" id="eoRetries" min="1" max="10">
+      <span class="hint">Si la extracción falla por la conexión, la sesión de la red social o la carga de la página, se reintenta con esperas crecientes. Agotados los intentos, el seguimiento se detiene.</span></label>
+    <label class="field"><span class="lbl">Espera antes del primer reintento (segundos)</span><input class="input" type="number" id="eoRetryBase" min="5" max="120">
+      <span class="hint">Cada reintento espera el doble que el anterior, hasta 5 minutos.</span></label>
   </div>
   <div class="dlg-actions"><button class="btn filled" id="eoSave">Guardar</button></div>
+</dialog>
+<!-- Mensaje para WhatsApp sobre el informe -->
+<dialog id="waDlg" class="wide" aria-labelledby="waTitle">
+  <div class="dlg-head">
+    <h2 id="waTitle" style="font-size:20px">Mensaje para WhatsApp</h2>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <div class="dlg-body">
+    <p class="small muted" style="margin:0 0 10px">Una valoración breve, sin tecnicismos, para acompañar el informe en un chat o canal. Habla de los comentarios sobre las marcas o temas vigilados del informe. Revísala y ajústala a tu estilo antes de enviarla.</p>
+    <div class="row" style="gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <label class="field" style="flex:1 1 180px"><span class="lbl">Tono</span>
+        <select class="input" id="waTone"><option value="cercano">Cercano</option><option value="formal">Formal</option><option value="breve">Muy breve</option></select></label>
+      <label class="field" style="flex:2 1 260px"><span class="lbl">Firma</span><input class="input" id="waSign" maxlength="80" placeholder="Tu nombre (opcional)"></label>
+    </div>
+    <textarea class="input prose wa-text" id="waText" aria-label="Mensaje para WhatsApp"></textarea>
+    <div class="ed-tools"><span class="hint" id="waAiState"></span><span class="hint rp-hint"><span id="waChars">0</span> caracteres</span></div>
+  </div>
+  <div class="dlg-actions">
+    <button class="btn text" id="waAi" style="margin-right:auto"><span class="ms">auto_awesome</span>Redactar con IA</button>
+    <button class="btn tonal" id="waOpen"><span class="ms">send</span>Abrir en WhatsApp</button>
+    <button class="btn filled" id="waCopy"><span class="ms">content_copy</span>Copiar mensaje</button>
+  </div>
+</dialog>
+
+<!-- Confirmación (sustituye a los avisos nativos del navegador) -->
+<dialog id="confirmDlg" class="confirm-dlg" aria-labelledby="cfTitle" aria-describedby="cfText">
+  <div class="cf-body">
+    <h2 id="cfTitle">¿Eliminar?</h2>
+    <p id="cfText"></p>
+  </div>
+  <div class="dlg-actions">
+    <button class="btn text" id="cfCancel">Cancelar</button>
+    <button class="btn filled" id="cfOk">Eliminar</button>
+  </div>
 </dialog>
 <div class="snackbar" id="snackbar" role="status" aria-live="polite"><span class="msg" id="snackMsg"></span><button class="btn text hidden" id="snackAct"></button></div>
 
@@ -2889,6 +3142,8 @@ function fbExtractor(){
   }
   async function openComments(){
     if (visibleCount() > 0) return;
+    // En Instagram el icono de comentarios solo despliega la lista en los reels; en las publicaciones sirve para escribir (y sin sesión abre el acceso)
+    if (IG && !/\/(reel|reels)\//.test(location.pathname)) return;
     // Si la sección ya se está abriendo (marcadores de carga), primero se espera a que termine (máx. ~10 s)
     for (var w0 = 0; w0 < 40 && loadingVisible() && !stop; w0++){ if (w0 === 0) status('Esperando a que carguen los comentarios…', true); await sleep(250); if (visibleCount() > 0){ await sleep(600); return; } }
     if (visibleCount() > 0) return;
@@ -2900,7 +3155,7 @@ function fbExtractor(){
     for (var i = 0; i < Math.min(btns.length, 3) && !stop; i++){
       try { btns[i].scrollIntoView({ block: 'center' }); btns[i].click(); } catch(e){}
       // esperar a que aparezcan los comentarios y desaparezcan los marcadores de carga (máx. ~12 s)
-      for (var t = 0; t < 48 && !stop; t++){ await sleep(250); var n = visibleCount(); if (n > 0 && (!loadingVisible() || t > 16)) { await sleep(600); return; } }
+      for (var t = 0; t < 60 && !stop; t++){ await sleep(200); var n = visibleCount(); if (n > 0 && (!loadingVisible() || t > 15)) { await sleep(250); return; } }
     }
   }
   // ---- Facebook: cambiar "Más relevantes" por "Todos los comentarios" para no perder ninguno ----
@@ -2911,10 +3166,10 @@ function fbExtractor(){
     var sortBtn = Array.prototype.slice.call(r.querySelectorAll('div[role="button"],span[role="button"]')).filter(function(b){ return b.offsetParent && SORT_RE.test((b.innerText || '').trim()); })[0];
     if (!sortBtn) return;
     try { sortBtn.click(); } catch(e){ return; }
-    for (var t = 0; t < 12; t++){
-      await sleep(250);
+    for (var t = 0; t < 10; t++){
+      await sleep(150);
       var item = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
-      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); await sleep(1500); return; }
+      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); for (var t2 = 0; t2 < 12; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; } return; }
     }
     try { document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); } catch(e){}
   }
@@ -3009,9 +3264,36 @@ function fbExtractor(){
   (async function(){
     var clicks = new Map(), idle = 0, round = 0;
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
+    // En cuanto aparece el botón de comentarios se abre la sección (los reels no muestran comentarios sin pulsarlo).
+    // Si no hay botón, se espera a que la red pinte los comentarios (Instagram sin sesión tarda 10–15 s) o a la pantalla de acceso.
+    var canOpen = !(IG && !/\/(reel|reels)\//.test(location.pathname));
+    for (var w1 = 0; w1 < 80 && visibleCount() === 0 && !stop; w1++){
+      if (w1 === 0) status('Buscando la sección de comentarios…', true);
+      if (canOpen && w1 >= 2 && commentButtons().some(function(b){ return b.getAttribute('aria-pressed') !== 'true' && b.getAttribute('aria-expanded') !== 'true'; })) break;
+      await sleep(250);
+    }
+    // Sin sesión, Instagram y Facebook pueden mostrar una pantalla de acceso en lugar de la publicación
+    var loginWall = function(){
+      if (visibleCount() > 0) return false;
+      if (IG) return !!document.querySelector('input[name="username"]');
+      if (!TT) return !!document.querySelector('form[action*="login"] input[name="email"], #login_form, [data-testid="royal_login_form"]') && !articles().length;
+      return false;
+    };
+    // Ventana estrecha: Instagram muestra su versión móvil (enlaces intent://) sin comentarios en la página
+    if (IG && visibleCount() === 0 && document.querySelector('a[href^="intent://"]')){
+      var msg = 'La ventana es demasiado estrecha: Instagram muestra su versión móvil, sin comentarios. Agranda la ventana (o elige “En segundo plano” en las opciones) y reintenta.';
+      if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'error', error: msg }); return; }
+      status('⚠ ' + msg); window.__fbcx = false; return;
+    }
+    if (loginWall()){
+      var net = TT ? 'TikTok' : IG ? 'Instagram' : 'Facebook';
+      if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'error', error: 'No has iniciado sesión en ' + net + ' en este navegador: la red muestra la pantalla de acceso en lugar de la publicación. Inicia sesión y continúa el seguimiento.' }); return; }
+      status('⚠ No has iniciado sesión en ' + net + ': inicia sesión y vuelve a pulsar el marcador.'); window.__fbcx = false; return;
+    }
     await openComments();
     if (!TT && !IG) await fbAllComments();
     startKey = postKey(); snapshot();
+    if (AUTO) AUTO.emit({ type: 'progress', round: 0, count: collected.length, visible: countNow(), note: collected.length ? 'comentarios abiertos' : '' });
     while (!stop && round < 600){
       round++;
       if (AUTO && AUTO.stopRequested){ stop = true; break; }
@@ -3078,7 +3360,7 @@ const PREF = {
   del(k){ try{ localStorage.removeItem('fbca:'+k); }catch(e){} }
 };
 const S = { meta:{}, comments:[], filtered:[], rows:[], selected:new Set(), sort:{key:'idx',dir:'asc'}, page:1, pageSize:50, threaded:true,
-  f:{ type:new Set(), sent:new Set(), extra:new Set() },
+  f:{ type:new Set(), sent:new Set(), extra:new Set(), post:new Set() },
   listView:'conv', tops:[], kids:{}, expanded:new Set(), collapsed:new Set() };
 const STORE_KEY = 'data:v1';
 /* ---------- Plataformas ---------- */
@@ -3827,6 +4109,7 @@ function applyFilters(){
   if(am){ authorQ = (am[2]||am[3]).toLowerCase(); q = q.replace(am[0],'').trim(); }
   const F=S.f;
   S.filtered = S.comments.filter(c=>{
+    if(F.post.size && !F.post.has(c._ref?.postId)) return false;
     if(F.type.size && !F.type.has(c.type)) return false;
     if(F.sent.size && !F.sent.has(c.sentiment)) return false;
     if(F.extra.has('att') && !c.attachments.length) return false;
@@ -3868,6 +4151,7 @@ function renderAll(){
 }
 function renderMeta(){
   const m=S.meta;
+  renderResCrumbs();
   $('#pTitle').textContent = m.title || 'Publicación';
   const parts=[];
   if(m.postAuthor) parts.push(['person',esc(m.postAuthor)]);
@@ -4203,7 +4487,7 @@ function renderConv(slice, q){
     const textHtml = markMention(highlight(c.text,q), c)||'<span class="muted">(sin texto)</span>';
 
     const toggleLbl = `${esc(kids[0]?.authorName||'Alguien')} respondió · ${kids.length===1?'1 respuesta':kids.length+' respuestas'}`;
-    return `<div style="--plvl:${lvl}" class="cnode${c.needsTeam?' pend':''}${lvl===0?' cthread':''}${kids.length?' has-kids':''}${sel?' selected':''}${ig?' ig':''}${tt?' tt':''}" data-id="${esc(c.id)}">
+    return `<div style="--plvl:${lvl}"${c.needsTeam?' title="Pendiente: nadie de tu equipo ha respondido todavía"':''} class="cnode${c.needsTeam?' pend':''}${lvl===0?' cthread':''}${kids.length?' has-kids':''}${sel?' selected':''}${ig?' ig':''}${tt?' tt':''}" data-id="${esc(c.id)}">
       ${lvl===0 && c.parentId ? `<div class="cctx"><span class="ms">subdirectory_arrow_right</span>En respuesta a ${esc(c.replyTo||'otro comentario')}</div>` : ''}
       <div class="crow">
         <div class="cav">${avatarHtml(c)}</div>
@@ -4233,7 +4517,7 @@ function renderConv(slice, q){
             ${c.edited?'<span>Editado</span>':''}
             ${c._post && S.meta.multi ? `<span title="Publicación">${esc(c._post.slice(0, 40))}${c._post.length > 40 ? '…' : ''}</span>` : ''}
             ${S.sem && S.sem.mode === 'sem' ? `<span class="cscore" title="Relevancia por significado">${Math.round((S.sem.scores.get(c.id) || 0) * 100)}</span>` : ''}
-            ${c.needsTeam?'<span class="cstate pend" title="Nadie de tu equipo ha respondido todavía"><span class="ms fill">schedule</span>Pendiente</span>':''}
+            ${c.needsTeam?'<span class="sr-only">Pendiente de respuesta del equipo</span>':''}
             ${S.teamOn && !c.isTeam && c.teamAnswered?'<span class="cstate done" title="Tu equipo ya respondió"><span class="ms">done_all</span>Respondido</span>':''}
             ${open?`<button data-toggle="${esc(c.id)}">Ocultar respuestas</button>`:''}
             <button data-act="copy">Copiar</button>
@@ -4279,7 +4563,7 @@ function renderTable(){
   if(conv){ renderConv(slice, q); $('#tbody').innerHTML=''; }
   else $('#tbody').innerHTML = slice.length ? slice.map(c=>{
     const sel=S.selected.has(c.id);
-    return `<tr class="${c.type==='reply'&&S.threaded?'reply':''} ${sel?'selected':''} ${c.needsTeam?'pend':''}" data-id="${esc(c.id)}">
+    return `<tr class="${c.type==='reply'&&S.threaded?'reply':''} ${sel?'selected':''} ${c.needsTeam?'pend':''}"${c.needsTeam?' title="Pendiente: nadie de tu equipo ha respondido todavía"':''} data-id="${esc(c.id)}">
       <td class="c-chk"><input type="checkbox" class="rowchk" ${sel?'checked':''} aria-label="Seleccionar comentario de ${esc(c.authorName)}"></td>
       <td class="c-idx muted small">${c.idx}</td>
       <td class="c-author"><div class="author">
@@ -4316,8 +4600,21 @@ function renderTable(){
   $('#chkPage').checked = slice.length>0 && slice.every(c=>S.selected.has(c.id));
   $('#chkPage').indeterminate = !$('#chkPage').checked && slice.some(c=>S.selected.has(c.id));
   $$('.fchip[data-fg]').forEach(ch=>ch.setAttribute('aria-pressed', S.f[ch.dataset.fg].has(ch.dataset.fv)));
+  renderPostFilter();
   $('#fReset').classList.toggle('hidden', !Object.values(S.f).some(s=>s.size));
   $('#qClear').classList.toggle('hidden', !$('#q').value);
+}
+// Selector de publicación: aparece cuando se ven comentarios de varias publicaciones (seguimientos)
+function renderPostFilter(){
+  const posts = new Map();
+  if(S.meta.multi) S.comments.forEach(c => { const k = c._ref?.postId; if(!k) return; const p = posts.get(k) || { label:c._post || 'Publicación', platform:c.platform, n:0 }; p.n++; posts.set(k, p); });
+  const show = posts.size > 1;
+  $('#fPostF').classList.toggle('hidden', !show); $('#fPostSep').classList.toggle('hidden', !show);
+  if(!show){ S.f.post.clear(); return; }
+  const cur = [...S.f.post][0] || '';
+  const html = `<option value="">Todas las publicaciones (${fmtN(S.comments.length)})</option>` + [...posts].sort((a, b) => b[1].n - a[1].n).map(([k, p]) => `<option value="${esc(k)}">${esc(platName(p.platform))} · ${esc(p.label.slice(0, 60))}${p.label.length > 60 ? '…' : ''} (${fmtN(p.n)})</option>`).join('');
+  const sel = $('#fPost'); if(sel.dataset.sig !== html){ sel.innerHTML = html; sel.dataset.sig = html; }
+  sel.value = posts.has(cur) ? cur : ''; $('#fPostF').classList.toggle('on', !!sel.value);
 }
 let detailCurrent=null;
 
@@ -4376,14 +4673,15 @@ function computeTeam(){
   });
   // Una respuesta del equipo atiende: a sus antecesores y, en el mismo hilo, a los comentarios anteriores de las personas que menciona
   const order = new Map(S.comments.map((c, i) => [c.id, i]));
+  const byRoot = new Map(); S.comments.forEach(c => { const a = byRoot.get(c.root); a ? a.push(c) : byRoot.set(c.root, [c]); });
   S.comments.forEach(y => {
     if(!y.isTeam) return;
     let p = y, g = 0;
     while(p.parentId && byId.has(p.parentId) && g++ < 12){ p = byId.get(p.parentId); p.teamAnswered = true; }
     const named = new Set([y.replyTo, ...(y.mentions||[])].filter(Boolean).map(normName));
     const yt = normName(y.text);
-    S.comments.forEach(x => {
-      if(x.root !== y.root || x === y || x.isTeam || order.get(x.id) > order.get(y.id)) return;
+    (byRoot.get(y.root) || []).forEach(x => {
+      if(x === y || x.isTeam || order.get(x.id) > order.get(y.id)) return;
       const xn = normName(x.authorName);
       if(xn && (named.has(xn) || yt.startsWith(xn))) x.teamAnswered = true;
     });
@@ -4661,6 +4959,7 @@ async function copyAndOpen(){
 
 /* ---------- Sugerencias con IA (modelos gratuitos) ---------- */
 const AI_PROV = {
+  local:{ name:'IA de la app', key:false, hint:'Modelo de IA gratuito (Qwen2.5) que se ejecuta en tu navegador, sin claves ni opciones de Chrome. Descárgalo una vez con el botón; después funciona incluso sin conexión. Para textos más elaborados puedes usar Gemini o Groq.' },
   chrome:{ name:'IA integrada de Chrome', key:false, hint:'Funciona sin conexión a servicios externos en Chrome de escritorio reciente con la IA integrada activada. La primera vez descarga el modelo (puede tardar).' },
   gemini:{ name:'Google Gemini', key:true, model:'gemini-flash-latest', link:'https://aistudio.google.com/apikey', hint:'Nivel gratuito de Google AI Studio con límites diarios.', mhint:'Por ejemplo gemini-flash-latest o gemini-flash-lite-latest.' },
   groq:{ name:'Groq', key:true, model:'llama-3.3-70b-versatile', link:'https://console.groq.com/keys', url:'https://api.groq.com/openai/v1', hint:'Nivel gratuito con límites por minuto; respuestas muy rápidas.', mhint:'Consulta los modelos disponibles en la consola de Groq.' },
@@ -4668,12 +4967,14 @@ const AI_PROV = {
   custom:{ name:'Servidor compatible con OpenAI', key:false, model:'llama3.2', url:'http://localhost:11434/v1', hint:'Ollama o LM Studio en tu equipo (gratis y privado). En Ollama permite el origen de esta página con OLLAMA_ORIGINS.', mhint:'El nombre del modelo instalado, p. ej. llama3.2 o qwen2.5.' }
 };
 const AI = {
-  cfg(){ const c = jsonPref('ai', {}); return { prov:'chrome', tone:'cordial', n:3, brand:'', keys:{}, models:{}, url:'', ...c }; },
+  // Si el proveedor guardado no se puede usar (p. ej. Chrome sin Gemini Nano o sin clave) y la IA de la app está descargada, se usa esta.
+  cfg(){ const c = { prov:'chrome', tone:'cordial', n:3, brand:'', keys:{}, models:{}, url:'', ...jsonPref('ai', {}) }; if(!aiConfigured(c) && localReady()) c.prov = 'local'; return c; },
   save(c){ PREF.set('ai', JSON.stringify(c)); },
   chromeApi(){ return self.LanguageModel || null; }
 };
 function aiConfigured(c = AI.cfg()){
   const P = AI_PROV[c.prov]; if(!P) return false;
+  if(c.prov === 'local') return localReady();   // disponible una vez descargada
   if(c.prov === 'chrome') return !!AI.chromeApi();
   if(P.key && !c.keys[c.prov]) return false;
   if(!(c.models[c.prov] || P.model)) return false;
@@ -4701,7 +5002,18 @@ function aiParse(txt, n){
   const arr = txt.match(/\[[\s\S]*\]/); if(arr){ try{ const a = JSON.parse(arr[0]); if(Array.isArray(a)) return a.map(String).filter(Boolean).slice(0, n); }catch(e){} }
   return txt.split(/\n+/).map(s => s.replace(/^\s*(\d+[.)]|[-*•])\s*/, '').replace(/^["“]|["”]$/g, '').trim()).filter(s => s.length > 8).slice(0, n);
 }
+// Si el proveedor elegido falla (sin conexión, límite gratuito, Chrome sin modelo…) y la IA de la app está descargada, responde esta.
 async function aiRequest(cfg, sys, user, signal){
+  if(cfg.prov === 'local') return localGenerate(sys, user, signal);
+  try{ return await aiRequestProv(cfg, sys, user, signal); }
+  catch(e){
+    if(e.name === 'AbortError' || (signal && signal.aborted) || !localReady()) throw e;
+    console.warn('IA: ' + AI_PROV[cfg.prov].name + ' falló, se usa la IA de la app:', e.message);
+    toast(AI_PROV[cfg.prov].name + ' no respondió; se usa la IA de la app');
+    return localGenerate(sys, user, signal);
+  }
+}
+async function aiRequestProv(cfg, sys, user, signal){
   const P = AI_PROV[cfg.prov];
   if(cfg.prov === 'chrome'){
     const LM = AI.chromeApi();
@@ -4732,6 +5044,57 @@ async function aiRequest(cfg, sys, user, signal){
   if(!r.ok) throw new Error((j.error?.message || j.message || 'Error ' + r.status) + (r.status === 429 ? ' — Se alcanzó el límite gratuito; espera un poco.' : r.status === 401 ? ' — Revisa la clave.' : ''));
   return j.choices?.[0]?.message?.content || '';
 }
+
+/* ---------- IA incluida en la app: modelo de lenguaje gratuito que se ejecuta en el navegador ---------- */
+// Sin instalación ni claves. La primera vez descarga el modelo (queda en la caché del navegador). Usa la GPU (WebGPU) si existe; si no, la CPU.
+const LLM = { model:'onnx-community/Qwen2.5-0.5B-Instruct', gen:null, loading:null, pct:0, onProgress:null };
+const LLM_CACHE = 'transformers-cache';
+function localReady(){ return PREF.get('aiLocal', '') === '1'; }
+// Comprueba que los archivos del modelo siguen en la caché del navegador (se pueden borrar al limpiar los datos del sitio)
+async function localCheck(){
+  if(!localReady()) return false;
+  try{ const k = await (await caches.open(LLM_CACHE)).keys(); if(k.some(r => r.url.includes(LLM.model) && /\.onnx/.test(r.url))) return true; }catch(e){ return true; }
+  PREF.set('aiLocal', ''); return false;
+}
+async function localDownload(){
+  const gen = await localModel();
+  PREF.set('aiLocal', '1');
+  const c = AI.cfg(); c.prov = 'local'; AI.save(c);   // queda configurada como proveedor
+  return gen;
+}
+async function localDelete(){
+  try{ const cache = await caches.open(LLM_CACHE); await Promise.all((await cache.keys()).filter(r => r.url.includes(LLM.model)).map(r => cache.delete(r))); }catch(e){}
+  LLM.gen = null; LLM.loading = null; PREF.set('aiLocal', '');
+  const c = AI.cfg(); if(c.prov === 'local'){ c.prov = 'chrome'; AI.save(c); }
+}
+function aiStatusText(t){ ['#rpAiState', '#waAiState', '#aiStatus'].forEach(s => { const e = $(s); if(e && e.offsetParent && !(s === '#aiStatus' && !$('#aiDlF').classList.contains('hidden'))) e.textContent = t; }); }
+async function localModel(){
+  if(LLM.gen) return LLM.gen;
+  LLM.loading ||= (async () => {
+    const T = await import(SEM.lib);
+    T.env.allowLocalModels = false;
+    let device = 'wasm';
+    try{ if(navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; }catch(e){}
+    const files = {};
+    const progress_callback = pr => {
+      if(pr.status === 'progress' && pr.total){ files[pr.file] = [pr.loaded, pr.total]; const a = Object.values(files).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); LLM.pct = Math.min(99, Math.floor(a[0] / a[1] * 100)); LLM.mb = [a[0] / 1e6, a[1] / 1e6]; aiStatusText(`Cargando la IA de la app… ${LLM.pct} %`); LLM.onProgress?.(); }
+    };
+    try{ LLM.gen = await T.pipeline('text-generation', LLM.model, { dtype:device === 'webgpu' ? 'q4f16' : 'quantized', device, progress_callback }); }
+    catch(e){ if(device !== 'webgpu') throw e; LLM.gen = await T.pipeline('text-generation', LLM.model, { dtype:'quantized', device:'wasm', progress_callback }); }
+    return LLM.gen;
+  })().catch(e => { LLM.loading = null; throw new Error('No se pudo cargar la IA de la app: ' + (e.message || e) + (navigator.onLine ? '' : ' (sin conexión)')); });
+  return LLM.loading;
+}
+async function localGenerate(sys, user, signal){
+  if(!localReady()) throw new Error('La IA de la app no está descargada: ábrela en Configurar IA y pulsa “Descargar e instalar”.');
+  const gen = await localModel();
+  if(signal && signal.aborted) throw Object.assign(new Error('Cancelado'), { name:'AbortError' });
+  aiStatusText('Redactando con la IA de la app…');
+  const out = await gen([{ role:'system', content:sys }, { role:'user', content:user }], { max_new_tokens:420, do_sample:true, temperature:.7, top_p:.9, repetition_penalty:1.1 });
+  const g = out[0].generated_text;
+  return Array.isArray(g) ? (g[g.length - 1].content || '') : String(g || '');
+}
+
 let aiAbort = null;
 async function aiSuggest(){
   const c = RP.c, cfg = AI.cfg(); if(!c) return;
@@ -4752,7 +5115,7 @@ async function aiSuggest(){
     if(e.name === 'AbortError') return;
     RP.ai = null; renderReplyOpts();
     $('#rpAiState').textContent = '';
-    setStatus('#rpStatus', 'IA: ' + (e.message === 'Failed to fetch' ? 'no se pudo conectar con el servicio (revisa la URL, la conexión o los permisos CORS).' : e.message), true, 'as-ia');
+    setStatus('#rpStatus', 'IA: ' + (e.message === 'Failed to fetch' ? 'no se pudo conectar con el servicio (revisa la URL, la conexión o los permisos CORS).' : e.message), true, 'ia-config');
   }finally{ if(RP.c === forC) $('#rpAi').disabled = false; }
 }
 function pickAi(i){
@@ -4768,23 +5131,51 @@ function aiOptsHtml(){
 }
 function openAiCfg(){
   const c = AI.cfg();
-  $('#aiProv').value = c.prov; $('#aiTone').value = c.tone; $('#aiN').value = String(c.n); $('#aiBrand').value = c.brand;
+  // sin ningún proveedor utilizable, se muestra directamente la opción de descargar la IA de la app
+  $('#aiProv').value = !aiConfigured(c) && c.prov === 'chrome' && !AI.chromeApi() ? 'local' : c.prov; $('#aiTone').value = c.tone; $('#aiN').value = String(c.n); $('#aiBrand').value = c.brand;
   aiCfgSync(); setStatus('#aiStatus', ''); $('#aiDlg').showModal();
 }
 function aiCfgSync(){
   const c = AI.cfg(), prov = $('#aiProv').value, P = AI_PROV[prov];
-  $('#aiProvHint').textContent = P.hint + (prov === 'chrome' && !AI.chromeApi() ? ' Este navegador no la tiene disponible.' : '');
+  $('#aiProvHint').textContent = P.hint + (prov === 'chrome' && !AI.chromeApi() ? ' Este navegador no la tiene disponible: elige “IA de la app” y descárgala con un clic.' : '');
+  $('#aiDlF').classList.toggle('hidden', prov !== 'local'); if(prov === 'local') aiDlRender();
   $('#aiKeyF').classList.toggle('hidden', !P.key && prov !== 'custom');
   $('#aiUrlF').classList.toggle('hidden', prov !== 'custom');
-  $('#aiModelF').classList.toggle('hidden', prov === 'chrome');
+  $('#aiModelF').classList.toggle('hidden', prov === 'chrome' || prov === 'local');
   $('#aiKey').value = c.keys[prov] || ''; $('#aiModel').value = c.models[prov] || P.model || ''; $('#aiUrl').value = c.url || P.url || '';
   $('#aiModel').placeholder = prov === 'openrouter' ? 'proveedor/modelo:free' : (P.model || '');
   $('#aiModelHint').textContent = P.mhint || '';
   const kl = $('#aiKeyLink'); kl.classList.toggle('hidden', !P.link); if(P.link) kl.href = P.link;
   $('#aiKey').placeholder = prov === 'custom' ? 'Opcional' : 'Pega aquí tu clave';
-  $('#aiPrivacy div').innerHTML = prov === 'chrome' || prov === 'custom'
+  $('#aiPrivacy div').innerHTML = prov === 'chrome' || prov === 'custom' || prov === 'local'
     ? 'El texto del comentario <b>no sale de tu equipo</b>: el modelo se ejecuta en local.'
     : `Para generar sugerencias se envían a <b>${esc(P.name)}</b> el texto del comentario, el nombre de su autor y el de la publicación. En los niveles gratuitos el proveedor puede usar esos datos para mejorar sus modelos: revisa sus condiciones.`;
+}
+function aiDlRender(){
+  const busy = !!LLM.loading && !LLM.gen && !localReady(), ready = localReady();
+  $('#aiDlTitle').textContent = ready ? 'IA de la app instalada' : busy ? `Descargando el modelo… ${LLM.pct} %` : 'Modelo no descargado';
+  $('#aiDlSub').textContent = ready ? 'Lista para usar en este navegador, también sin conexión. Se guardó como proveedor de IA.'
+    : busy ? (LLM.mb ? `${fmtN(Math.round(LLM.mb[0]))} de ${fmtN(Math.round(LLM.mb[1]))} MB. Puedes cerrar este diálogo y seguir trabajando: la descarga continúa.` : 'Preparando la descarga…')
+    : 'Se descarga una sola vez (≈ 500 MB) y queda guardado en este navegador. Después funciona sin conexión y sin claves.';
+  const bar = $('#aiDlBar'); bar.classList.toggle('hidden', !busy); bar.classList.toggle('indet', busy && !LLM.pct);
+  bar.firstElementChild.style.width = LLM.pct + '%'; bar.setAttribute('aria-valuenow', String(LLM.pct));
+  $('#aiDlBtn').classList.toggle('hidden', ready); $('#aiDlBtn').disabled = busy;
+  $('#aiDlBtn').innerHTML = busy ? '<span class="ms">downloading</span>Descargando…' : '<span class="ms">download</span>Descargar e instalar';
+  $('#aiDlDel').classList.toggle('hidden', !ready);
+}
+async function aiDlStart(){
+  if(!navigator.onLine){ setStatus('#aiStatus', 'Sin conexión: conéctate a internet para descargar el modelo.', true); return; }
+  LLM.pct = 0; LLM.mb = null; LLM.onProgress = () => { if($('#aiDlg').open) aiDlRender(); };
+  setStatus('#aiStatus', '');
+  const run = localDownload(); aiDlRender();
+  try{
+    await run;
+    const c = AI.cfg(); $('#aiProv').value = c.prov; aiCfgSync();
+    setStatus('#aiStatus', '✓ IA de la app instalada y configurada.');
+    toast('IA de la app instalada: ya puedes usarla');
+    notifyDesk?.('IA de la app instalada', 'El modelo se descargó y ya está listo para usar.');
+  }catch(e){ setStatus('#aiStatus', e.message, true, 'ia-local'); toast('No se pudo descargar la IA de la app'); }
+  finally{ LLM.onProgress = null; if($('#aiDlg').open) aiDlRender(); }
 }
 function aiCfgRead(){
   const c = AI.cfg(), prov = $('#aiProv').value;
@@ -4797,13 +5188,21 @@ function initAi(){
   $('#rpAi').onclick = aiSuggest;
   $('#rpAiCfg').onclick = openAiCfg;
   $('#aiProv').onchange = aiCfgSync;
-  $('#aiSave').onclick = () => { const c = aiCfgRead(); AI.save(c); $('#aiDlg').close(); toast('Configuración de IA guardada');
+  $('#aiDlBtn').onclick = aiDlStart;
+  $('#aiDlDel').onclick = async () => {
+    if(!await askConfirm({ title:'¿Eliminar la IA de la app?', text:'Se borrará el modelo descargado (≈ 500 MB) de este navegador. Podrás volver a descargarlo cuando quieras.', ok:'Eliminar', danger:true })) return;
+    await localDelete(); $('#aiProv').value = 'local'; aiCfgSync(); setStatus('#aiStatus', 'Modelo eliminado.');
+  };
+  localCheck();
+  $('#aiSave').onclick = () => { const c = aiCfgRead();
+    if(c.prov === 'local' && !localReady()){ if(!LLM.loading) aiDlStart(); else setStatus('#aiStatus', 'La descarga está en curso; al terminar quedará configurada.'); return; }
+    AI.save(c); $('#aiDlg').close(); toast('Configuración de IA guardada');
     if($('#replyDlg').open && aiConfigured(c) && !RP.ai) aiSuggest(); };
   $('#aiTest').onclick = async () => {
-    const c = aiCfgRead(); if(!aiConfigured(c)){ setStatus('#aiStatus', c.prov === 'chrome' ? 'La IA integrada no está disponible en este navegador.' : 'Completa la clave y el modelo.', true); return; }
+    const c = aiCfgRead(); if(!aiConfigured(c)){ setStatus('#aiStatus', c.prov === 'chrome' ? 'La IA integrada no está disponible en este navegador.' : c.prov === 'local' ? 'Primero descarga la IA de la app con “Descargar e instalar”.' : 'Completa la clave y el modelo.', true, 'ia-' + c.prov); return; }
     setStatus('#aiStatus', 'Probando…');
     try{ const t = await aiRequest(c, 'Responde solo con JSON: {"respuestas":["ok"]}', 'Prueba de conexión'); setStatus('#aiStatus', '✓ Conexión correcta' + (aiParse(t, 1)[0] ? '' : ' (respuesta inesperada, pero el servicio contestó)')); }
-    catch(e){ setStatus('#aiStatus', e.message === 'Failed to fetch' ? 'No se pudo conectar (revisa la URL, la conexión o CORS).' : e.message, true, 'as-ia'); }
+    catch(e){ setStatus('#aiStatus', e.message === 'Failed to fetch' ? 'No se pudo conectar (revisa la URL, la conexión o CORS).' : e.message, true, 'ia-' + c.prov); }
   };
   $('#rpSaveCat').onclick = () => {
     const c = RP.c, t = $('#rpText').value.trim(); if(!t){ setStatus('#rpStatus', 'No hay texto que guardar.', true); return; }
@@ -5095,10 +5494,13 @@ function renderPosts(){
 }
 
 /* ---------- Extensión de Chrome ---------- */
-const EXT_LATEST = '1.1.1';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
+const EXT_LATEST = '1.3.1';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 const EXT = { version:null, waiters:new Map(), jobs:new Map() };
+// pausa entre publicaciones por defecto: 6 s (variable)
+if(PREF.get('eoGap') === null) PREF.set('eoGap', '6');
 const verLt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for(let i = 0; i < 3; i++){ if((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
-function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', maxMinutes:+PREF.get('eoMax', '20') || 20, gap:+PREF.get('eoGap', '4') || 0 }; }
+function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', maxMinutes:+PREF.get('eoMax', '20') || 20, gap:+PREF.get('eoGap', '4') || 0,
+  retries:Math.min(10, Math.max(1, Math.round(+PREF.get('eoRetries', '10')) || 10)), retryBase:Math.max(0.01, +PREF.get('eoRetryBase', '15') || 15), careful:PREF.get('eoCareful', '1') === '1' }; }
 function renderExt(){
   const on = !!EXT.version, old = on && verLt(EXT.version, EXT_LATEST);
   $('#extDl').classList.toggle('hidden', on && !old);
@@ -5117,17 +5519,25 @@ function extDetect(){
 window.addEventListener('message', e => {
   if(e.source !== window || !e.data || e.data.source !== 'sca-ext') return;
   const m = e.data;
-  if(m.type === 'hello' || m.type === 'pong' || m.type === 'ready'){ if(m.version && EXT.version !== m.version){ EXT.version = m.version; renderExt(); } return; }
+  if(m.type === 'hello' || m.type === 'pong' || m.type === 'ready'){ if(m.version && EXT.version !== m.version){ EXT.version = m.version; renderExt(); requestSessions(); } return; }
   const job = EXT.jobs.get(m.jobId); if(!job) return;
   if(m.type === 'progress') job.onProgress && job.onProgress(m);
   else if(m.type === 'result'){ EXT.jobs.delete(m.jobId); job.resolve(m); }
   else if(m.type === 'error' || m.type === 'stopped'){ EXT.jobs.delete(m.jobId); m.type === 'stopped' ? job.resolve({ stopped:true }) : job.reject(new Error(m.error || 'Error de la extensión')); }
 });
 function extExtract(url, onProgress){
-  const jobId = uid('j_');
+  const jobId = uid('j_'), opts = extOpts();
   return { jobId, promise:new Promise((resolve, reject) => {
-    EXT.jobs.set(jobId, { resolve, reject, onProgress });
-    window.postMessage({ source:'sca-app', type:'extract', jobId, url, options:extOpts() }, '*');
+    // sin noticias de la extensión durante 3 min (o más del tiempo máximo por publicación) → fallo reintentable
+    let last = Date.now();
+    const idleMax = 3 * 60000, hardMax = (opts.maxMinutes + 3) * 60000, started = Date.now();
+    const finish = fn => v => { clearInterval(wd); EXT.jobs.delete(jobId); fn(v); };
+    const wd = setInterval(() => {
+      const now = Date.now();
+      if(now - last > idleMax || now - started > hardMax){ extStop(jobId); finish(reject)(new Error('La extensión dejó de responder (la pestaña o Chrome pueden haberse bloqueado).')); }
+    }, 15000);
+    EXT.jobs.set(jobId, { resolve:finish(resolve), reject:finish(reject), onProgress:m => { last = Date.now(); onProgress && onProgress(m); } });
+    window.postMessage({ source:'sca-app', type:'extract', jobId, url, options:opts }, '*');
   }) };
 }
 function extStop(jobId){ window.postMessage({ source:'sca-app', type:'stop', jobId }, '*'); }
@@ -5148,6 +5558,7 @@ function openTrackDlg(postIds, tid){
   $('#trackName').value = t ? t.name : 'Seguimiento del ' + new Date().toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' });
   $('#trackDate').value = t ? t.date : todayISO();
   renderTrackDlg(); $('#trackDlg').showModal();
+  refreshSessions().then(() => { if($('#trackDlg').open) renderTrackDlg(); });
 }
 function renderTrackDlg(){
   const ids = TR.draft.ids, posts = ids.map(id => TR.posts.find(p => p.id === id)).filter(Boolean);
@@ -5158,11 +5569,15 @@ function renderTrackDlg(){
   if(n('api')) lines.push(`<b>${n('api')}</b> por la API de Meta (si alguna no es de una página o cuenta tuya, se usará la extensión)`);
   if(n('extension')) lines.push(`<b>${n('extension')}</b> con la extensión de Chrome, automáticamente`);
   const noExt = !EXT.version && posts.some(p => methodFor(p) === 'extension');
+  const auth = EXT.version ? missingAuth(posts) : { nets:[], api:false };
   $('#trackMethods div').innerHTML = (lines.length ? 'Se extraerán ' + lines.join('; ') + '.' : '')
     + (noExt ? ` <b style="color:var(--error)">La extensión no está instalada:</b> <a href="downloads/social-comments-analyzer-extension.zip" download>descárgala</a> y sigue los <a href="#ayuda/ext-instalar">pasos de instalación</a> para poder iniciar el seguimiento.` : '');
+  const needAuth = auth.nets.length || auth.api;
+  if(needAuth) $('#trackMethods div').innerHTML += ` <b style="color:var(--error)">No es posible iniciar el seguimiento:</b> se necesita autenticación activa en ${[...auth.nets.map(platName), ...(auth.api ? ['la API de Facebook'] : [])].join(', ')}.${authListHtml(auth)}<span class="small muted" style="display:block;margin-top:6px">Inicia sesión y vuelve a esta ventana: se comprobará automáticamente.</span>`;
+  $('#trackMethods').classList.toggle('err', !!needAuth || noExt);
   $('#trackSave').disabled = !posts.length;
-  $('#trackStart').disabled = !posts.length || noExt;
-  $('#trackStart').title = noExt ? 'Instala la extensión de Chrome para iniciar el seguimiento' : '';
+  $('#trackStart').disabled = !posts.length || noExt || !!needAuth;
+  $('#trackStart').title = noExt ? 'Instala la extensión de Chrome para iniciar el seguimiento' : needAuth ? 'Inicia sesión en las redes indicadas para iniciar el seguimiento' : '';
 }
 async function saveTrack(start){
   const ids = TR.draft.ids.filter(id => TR.posts.some(p => p.id === id)); if(!ids.length) return;
@@ -5177,6 +5592,21 @@ async function saveTrack(start){
   selectSegTab('runs'); renderSeg();
   if(start) runTracking(t.id);
 }
+// Publicaciones terminadas sin ningún comentario y aviso visible para listas
+const emptyPosts = t => t.postIds.filter(id => t.items[id] && t.items[id].status === 'done' && !t.items[id].count);
+// "N comentarios" o, si no hay ninguno, solo la advertencia (sin "0 comentarios")
+function commentsTxt(t){
+  const pr = trackProgress(t), w = emptyWarn(t);
+  if(!pr.comments && w) return w.replace(/^ · /, '');
+  return countTxt(pr.comments, 'comentario', 'comentarios') + w;
+}
+function emptyWarn(t){
+  const pr = trackProgress(t), e = emptyPosts(t).length;
+  if(t.status === 'draft' || (t.status !== 'done' && !pr.done)) return '';
+  if(!pr.comments) return ' · <span class="warn-chip" title="La extracción no encontró comentarios: reintenta las publicaciones"><span class="ms">warning</span>Sin comentarios</span>';
+  return e ? ` · <span class="warn-chip" title="Algunas publicaciones no tienen comentarios: reintenta su extracción"><span class="ms">warning</span>${countTxt(e, 'publicación sin comentarios', 'publicaciones sin comentarios')}</span>` : '';
+}
+const fmtSecs = s => s >= 60 ? Math.floor(s / 60) + ' min ' + String(s % 60).padStart(2, '0') + ' s' : s + ' s';
 function trackProgress(t){
   const ids = t.postIds, n = ids.length || 1;
   let done = 0, frac = 0;
@@ -5192,7 +5622,7 @@ function renderRuns(){
   $('#runList').innerHTML = list.length ? list.map(t => {
     const pr = trackProgress(t), [ic, tx] = ST_TXT[t.status];
     return `<button class="rcard${TR.open === t.id ? ' open' : ''}" data-tid="${esc(t.id)}" aria-expanded="${TR.open === t.id}">
-      <span><span class="rt">${esc(t.name)}</span><br><span class="rs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</span></span>
+      <span><span class="rt">${esc(t.name)}</span><br><span class="rs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</span></span>
       <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx} · ${pr.pct} %</span>
       <span class="pbar"><i style="width:${pr.pct}%"></i></span></button>`;
   }).join('') : `<div class="empty-mini"><span class="ms">add_task</span>No hay seguimientos activos. En <b>Publicaciones</b>, selecciona las que quieras revisar hoy y pulsa <b>Crear seguimiento</b>.</div>`;
@@ -5209,17 +5639,20 @@ function renderRunDetail(){
     <div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rs small muted">${esc(fmtDay(t.date))} · <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx}</span></div></div>
       <div class="rd-acts">
         ${running ? `<button class="btn tonal" data-ract="stop"><span class="ms">stop</span>Detener</button>`
-          : `<button class="btn filled" data-ract="start" ${pend ? '' : 'disabled'}><span class="ms">play_arrow</span>${t.status === 'draft' ? 'Iniciar' : 'Continuar'}</button>`}
+          : `<button class="btn filled" data-ract="start" ${pend || t.halt ? '' : 'disabled'}><span class="ms">play_arrow</span>${t.status === 'draft' ? 'Iniciar' : 'Continuar'}</button>`}
         ${!running ? `<button class="btn text" data-ract="edit"><span class="ms">edit</span>Editar</button>` : ''}
         ${!running && pr.done ? `<button class="btn text" data-ract="finish"><span class="ms">inventory</span>Finalizar y archivar</button>` : ''}
         ${!running ? `<button class="icon-btn" data-ract="del" aria-label="Eliminar seguimiento" title="Eliminar seguimiento"><span class="ms">delete</span></button>` : ''}
       </div></div>
+    ${t.halt && !running ? `<div class="rep-alert high" role="alert"><span class="ms">error</span><span><b>La extracción se detuvo</b> porque «${esc(t.halt.post)}» falló: ${esc(t.halt.error)}. Comprueba la conexión y la sesión de la red social en este navegador y pulsa <b>Continuar</b>.</span></div>` : ''}
     <div class="rd-prog"><span class="pbar${running && !pr.pct ? ' indet' : ''}"><i style="width:${pr.pct}%"></i></span><span class="pct">${pr.pct} %</span>
       <span class="pctsub">${pr.done} de ${pr.n} publicaciones · ${countTxt(pr.comments, 'comentario extraído', 'comentarios extraídos')}${pr.errors ? ` · <b style="color:var(--error)">${countTxt(pr.errors, 'con error', 'con error')}</b>` : ''}</span></div>
     ${t.postIds.map(id => {
       const p = TR.posts.find(x => x.id === id) || { id, url:'', platform:'facebook', name:'(publicación eliminada de la lista)' }, it = t.items[id];
       const m = it.method || methodFor(p);
-      const sub = it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`)
+      const sub = it.status === 'running' && it.retry ? `<span class="warn-txt"><span class="ms">autorenew</span>${it.retry.offline ? 'Sin conexión: esperando a que vuelva para el ' : 'Reintento '}${it.retry.attempt} de ${it.retry.max}${it.retry.offline ? '' : ' en ' + fmtSecs(it.retry.left)}</span> · último error: ${esc(it.retry.error.slice(0, 140))}`
+        : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`)
+        : it.status === 'done' && !it.count ? `<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: la extracción no encontró ninguno. Reinténtala con <span class="ms" style="font-size:15px">refresh</span>.</span>`
         : it.status === 'done' ? `${countTxt(it.count, 'comentario', 'comentarios')} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
         : it.status === 'error' ? esc(it.error || 'Error') : it.status === 'skipped' ? 'Omitida' : 'Pendiente';
       const pp = it.status === 'running' && it.total ? Math.min(100, Math.round((it.count || 0) / it.total * 100)) : 0;
@@ -5231,9 +5664,10 @@ function renderRunDetail(){
           ${!running && ['error', 'skipped', 'done'].includes(it.status) ? `<button class="icon-btn sm" data-iact="retry" aria-label="Volver a extraer" title="Volver a extraer"><span class="ms">refresh</span></button>` : ''}
           ${!running && it.status === 'pending' ? `<button class="icon-btn sm" data-iact="skip" aria-label="Omitir" title="Omitir"><span class="ms">do_not_disturb_on</span></button>` : ''}
           ${it.status === 'error' && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
+          ${it.status === 'running' && it.retry ? `<button class="btn tonal sm" data-iact="retrynow"><span class="ms">refresh</span>Reintentar ahora</button>` : ''}
           ${p.url ? `<a class="icon-btn sm" href="${esc(p.url)}" target="_blank" rel="noopener" aria-label="Abrir publicación" title="Abrir publicación"><span class="ms">open_in_new</span></a>` : ''}
         </div>
-        ${it.status === 'running' ? `<span class="pbar${it.total ? '' : ' indet'}"><i style="width:${pp}%"></i></span>` : ''}
+        ${it.status === 'running' && !it.retry ? `<span class="pbar${it.total ? '' : ' indet'}"><i style="width:${pp}%"></i></span>` : ''}
       </div>`;
     }).join('')}
   </div>`;
@@ -5292,7 +5726,25 @@ async function collectPost(t, p, it, onProg){
   }
   return { parsed:fromExtractor(r.data), method:'extension', partial:!!r.stopped, stopped:r.stopped && RUN.stopReq };
 }
+// Reintentos: qué fallos se reintentan y cómo se espera entre intentos
+const NO_RETRY = /no está instalada|Enlace no admitido|no admitido|no responde\. Instálala/i;
+const isRetryable = e => !!e && e.name !== 'AbortError' && !NO_RETRY.test(e.message || '') && ![10, 100, 190, 200].includes(e.code);   // permisos o token de la API: reintentar no lo arregla
+const isFatal = e => /no está instalada|no responde\. Instálala/i.test((e && e.message) || '');
+const retryDelay = (n, base) => Math.min(300000, base * 1000 * Math.pow(2, n - 1));   // 15 s, 30 s, 1 min, 2 min, 4 min, 5 min…
+async function waitRetry(ms, it){
+  const end = Date.now() + ms; RUN.retryNow = false;
+  while(!RUN.stopReq && !RUN.retryNow && (Date.now() < end || !navigator.onLine)){
+    it.retry.left = Math.max(0, Math.ceil((end - Date.now()) / 1000)); it.retry.offline = !navigator.onLine;
+    renderRunDetail(); await bgSleep(Math.min(1000, Math.max(10, end - Date.now())));
+  }
+}
+// Notificación de escritorio (para cuando el usuario no está delante del ordenador)
+function notifyDesk(title, body){
+  try{ if('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') new Notification(title, { body, icon:document.querySelector('link[rel=icon]')?.href || '', tag:'sca-tracking' }); }catch(e){}
+}
 async function runTracking(tid){
+  // pedir permiso de notificaciones al iniciar (hay gesto del usuario); si lo niega, se sigue igual
+  try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }catch(e){}
   if(TR.running){ toast('Ya hay un seguimiento en curso'); return; }
   const t = TR.tracks.find(x => x.id === tid); if(!t) return;
   extDetect();
@@ -5301,7 +5753,14 @@ async function runTracking(tid){
     toast('Para extraer automáticamente necesitas la extensión de Chrome', { label:'Instalarla', run:() => go('ayuda', 'ext-instalar') });
     return;
   }
-  TR.running = tid; RUN.stopReq = false; TR.open = tid;
+  await refreshSessions();
+  const auth = missingAuth(pend);
+  if(auth.nets.length || auth.api){
+    await askConfirm({ title:'No es posible iniciar el seguimiento', cancel:false, ok:'Entendido',
+      html:`Se necesita autenticación activa en todas las redes de las publicaciones seleccionadas. Falta en: <b>${esc([...auth.nets.map(platName), ...(auth.api ? ['la API de Facebook'] : [])].join(', '))}</b>.${authListHtml(auth)}` });
+    return;
+  }
+  TR.running = tid; RUN.stopReq = false; RUN.halt = null; RUN.extCount = 0; TR.open = tid; delete t.halt;
   t.status = 'running'; t.startedAt ||= new Date().toISOString(); await DB.put('trackings', t);
   selectSegTab('runs'); renderRuns(); renderSegCounts();
   const gap = extOpts().gap * 1000;
@@ -5315,28 +5774,72 @@ async function runTracking(tid){
     Object.assign(it, { status:'running', count:0, total:null, phase:'', error:'', method:methodFor(p), startedAt:new Date().toISOString() });
     renderRuns();
     try{
-      const r = await collectPost(t, p, it, u => {
-        if(u.phase) it.phase = u.phase; if(u.count != null) it.count = u.count; if(u.total) it.total = u.total; if(u.note) it.note = u.note;
-        save(); renderRunDetail(); renderRunCardsOnly();
-      });
+      const opts = extOpts(); let r, attempt = 0;
+      delete it.retry; it.attempts = 0;
+      for(;;){
+        attempt++; it.attempts = attempt;
+        try{
+          r = await collectPost(t, p, it, u => {
+            if(u.phase) it.phase = u.phase; if(u.count != null) it.count = u.count; if(u.total) it.total = u.total; if(u.note) it.note = u.note;
+            save(); scheduleRunRender();
+          });
+          delete it.retry; break;
+        }catch(err){
+          if(err.name === 'AbortError' || RUN.stopReq || !isRetryable(err)) throw err;
+          if(attempt >= opts.retries){ err.exhausted = true; err.attempts = attempt; throw err; }
+          const ms = retryDelay(attempt, opts.retryBase);
+          it.retry = { attempt:attempt + 1, max:opts.retries, error:err.message, left:Math.ceil(ms / 1000) };
+          Object.assign(it, { phase:'retry', count:0, total:null });
+          await DB.put('trackings', t).catch(() => {}); renderRunDetail();
+          await waitRetry(ms, it);
+          if(RUN.stopReq) throw Object.assign(new Error('Detenido'), { name:'AbortError' });
+          it.phase = '';
+        }
+      }
       if(r.skipped){ it.status = 'skipped'; }
       else if(r.stopped || (RUN.stopReq && !r.parsed)){ it.status = 'pending'; }
       else if(RUN.stopReq && r.partial){ it.status = 'pending'; }   // detenido a mitad: se repetirá al continuar
       else { await storeResult(t, p, r.parsed, r.method, r.partial); }
     }catch(e){
-      if(e.name === 'AbortError' || RUN.stopReq){ it.status = 'pending'; }
-      else { it.status = 'error'; it.error = e.message; it.diag = e.diag || null; }
+      if(e.name === 'AbortError' || (RUN.stopReq && !RUN.halt)){ it.status = 'pending'; }
+      else {
+        it.status = 'error'; it.diag = e.diag || null;
+        it.error = e.exhausted ? `${e.message} (sin éxito tras ${countTxt(e.attempts, 'intento', 'intentos')})` : e.message;
+        // reintentos agotados o fallo general (sin extensión): se detiene todo el proceso de extracción
+        if(e.exhausted || isFatal(e)){ RUN.stopReq = true; RUN.halt = { post:postLabel(p), error:it.error }; }
+      }
     }
+    delete it.retry;
     it.phase = '';
     await DB.put('trackings', t); renderRuns();
-    if(!RUN.stopReq && gap && t.postIds.some(x => t.items[x].status === 'pending')) await bgSleep(gap);
+    if(!RUN.stopReq && t.postIds.some(x => t.items[x].status === 'pending')){
+      // pausa variable (±50 %) y, en modo prudente, una pausa larga (30–60 s) cada 5 publicaciones extraídas por la extensión
+      let wait = gap ? gap * (0.5 + Math.random()) : 0;
+      if(extOpts().careful && it.method === 'extension' && (++RUN.extCount % 5 === 0)) wait += 30000 + Math.random() * 30000;
+      if(wait){ it.phase = ''; await bgSleep(wait); }
+    }
   }
   const pr = trackProgress(t), left = t.postIds.some(id => t.items[id].status === 'pending');
-  if(RUN.stopReq || left){ t.status = 'paused'; toast('Seguimiento en pausa: ' + pr.done + ' de ' + pr.n + ' publicaciones'); }
+  if(RUN.halt){ t.status = 'paused'; t.halt = { ...RUN.halt, at:new Date().toISOString() };
+    toast(`Extracción detenida: «${RUN.halt.post}» falló ${RUN.halt.error.includes('intento') ? '' : 'de forma irrecuperable'}. Revisa la conexión o la sesión y pulsa Continuar.`, { label:'Ver', run:() => { TR.open = t.id; selectSegTab('runs'); renderRuns(); } }); }
+  else if(RUN.stopReq || left){ t.status = 'paused'; delete t.halt; toast('Seguimiento en pausa: ' + pr.done + ' de ' + pr.n + ' publicaciones'); }
   else if(pr.errors){ t.status = 'paused'; toast(countTxt(pr.errors, 'publicación no se pudo extraer', 'publicaciones no se pudieron extraer') + ': reinténtalas o finaliza el seguimiento'); }
-  else { t.status = 'done'; t.finishedAt = new Date().toISOString(); toast('✓ Seguimiento completado: ' + countTxt(pr.comments, 'comentario', 'comentarios') + '. Ya está en el historial.', { label:'Ver historial', run:() => selectSegTab('hist') }); }
-  TR.running = null; RUN.stopReq = false;
+  else if(!pr.comments){ t.status = 'done'; t.finishedAt = new Date().toISOString(); toast('⚠ El seguimiento terminó sin comentarios: revisa que la sección de comentarios se abra y reintenta las publicaciones', { label:'Ver', run:() => { TR.open = t.id; selectSegTab('hist'); showHistoryDetail(t); } }); }
+  else { t.status = 'done'; t.finishedAt = new Date().toISOString(); toast((emptyPosts(t).length ? '⚠ ' + countTxt(emptyPosts(t).length, 'publicación quedó', 'publicaciones quedaron') + ' sin comentarios. ' : '✓ ') + 'Seguimiento completado: ' + countTxt(pr.comments, 'comentario', 'comentarios') + '. Ya está en el historial.', { label:'Ver historial', run:() => selectSegTab('hist') }); }
+  if(t.status === 'done') notifyDesk('Seguimiento completado', `${t.name}: ${countTxt(pr.comments, 'comentario', 'comentarios')}${emptyPosts(t).length ? ' · ' + countTxt(emptyPosts(t).length, 'publicación sin comentarios', 'publicaciones sin comentarios') : ''}`);
+  else if(RUN.halt) notifyDesk('Extracción detenida', `${t.name}: ${RUN.halt.error}`);
+  else if(!RUN.stopReq && pr.errors) notifyDesk('Seguimiento con errores', `${t.name}: ${countTxt(pr.errors, 'publicación no se pudo extraer', 'publicaciones no se pudieron extraer')}`);
+  if(!RUN.halt && t.status !== 'paused') delete t.halt;
+  TR.running = null; RUN.stopReq = false; RUN.halt = null;
+  renderSeg();   // primero se repinta (estado final visible al instante) y después se guarda
   await DB.put('trackings', t); renderSeg();
+}
+// Los avisos de progreso llegan muy seguidos: se repinta como mucho una vez por fotograma
+let runRenderQueued = false;
+function scheduleRunRender(){
+  if(runRenderQueued) return; runRenderQueued = true;
+  const go2 = () => { runRenderQueued = false; renderRunDetail(); renderRunCardsOnly(); };
+  document.visibilityState === 'visible' ? requestAnimationFrame(go2) : setTimeout(go2, 500);   // con la pestaña oculta no hay fotogramas
 }
 function renderRunCardsOnly(){
   $$('#runList .rcard').forEach(b => { const t = TR.tracks.find(x => x.id === b.dataset.tid); if(!t) return; const pr = trackProgress(t); const bar = b.querySelector('.pbar i'); if(bar) bar.style.width = pr.pct + '%'; const ch = b.querySelector('.stchip'); if(ch) ch.lastChild.textContent = ST_TXT[t.status][1] + ' · ' + pr.pct + ' %'; });
@@ -5348,11 +5851,11 @@ function stopTracking(){
   if(RUN.abort) RUN.abort.abort();
   toast('Deteniendo… se guardará lo ya extraído');
 }
-async function viewResult(tid, postId){
+async function viewResult(tid, postId, tab){
   const r = await DB.get('results', tid + '|' + postId);
   if(!r){ toast('No se encontraron los comentarios de esta publicación'); return; }
   const p = TR.posts.find(x => x.id === postId), t = TR.tracks.find(x => x.id === tid);
-  loadData({ meta:{ ...r.meta, source:'Seguimiento · ' + (t ? t.name : fmtDay(r.date)), ref:{ tid, postId }, title:r.meta.title || (p && postLabel(p)) }, comments:r.comments.map(c => ({ ...c })) });
+  loadData({ meta:{ ...r.meta, source:'Seguimiento · ' + (t ? t.name : fmtDay(r.date)), ref:{ tid, postId }, title:(p && postLabel(p)) || r.meta.title, ctx:{ from:'seg', tab:tab || (t && t.status === 'done' ? 'hist' : 'runs'), tid } }, comments:r.comments.map(c => ({ ...c })) });
 }
 // Las respuestas publicadas desde Resultados se guardan también en el seguimiento de origen
 async function persistReplyToTracking(c, reply){
@@ -5375,9 +5878,10 @@ function renderHistory(){
     const pr = trackProgress(t), sel = TR.hsel.has(t.id);
     return `<div class="hrow${sel ? ' sel' : ''}" data-hid="${esc(t.id)}">
       <input type="checkbox" class="hsel" ${sel ? 'checked' : ''} aria-label="Seleccionar ${esc(t.name)}">
-      <div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
+      <div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
       <div class="hsent" data-hsent="${esc(t.id)}"></div>
-      <div class="pacts"><button class="icon-btn sm" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
+      <div class="pacts"><button class="icon-btn sm" data-hact="view" aria-label="Ver comentarios por publicación" title="Ver comentarios por publicación"><span class="ms">forum</span></button>
+        <button class="icon-btn sm" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
         <button class="icon-btn sm" data-hact="open" aria-label="Ver publicaciones" title="Ver publicaciones"><span class="ms">list</span></button>
         <button class="icon-btn sm" data-hact="del" aria-label="Eliminar del historial" title="Eliminar del historial"><span class="ms">delete</span></button></div>
     </div>`;
@@ -5388,7 +5892,7 @@ function renderHistory(){
   list.forEach(async t => {
     const s = await trackStats(t), el = $(`[data-hsent="${CSS.escape(t.id)}"]`); if(!el || !s.n) return;
     const nss = Math.round((s.pos - s.neg) / s.n * 100);
-    el.innerHTML = miniSeg({ total:s.n, pos:s.pos, neg:s.neg, neu:s.neu }) + `<small>Índice neto ${nss > 0 ? '+' : ''}${nss}</small>`;
+    el.innerHTML = miniSeg({ total:s.n, pos:s.pos, neg:s.neg, neu:s.neu }) + `<small>${countTxt(s.pos, 'positivo', 'positivos')} · ${countTxt(s.neg, 'negativo', 'negativos')}</small>`;
   });
 }
 
@@ -5427,7 +5931,7 @@ function initTracking(){
   $('#postList').addEventListener('click', async e => {
     const row = e.target.closest('[data-pid]'); if(!row) return;
     const p = TR.posts.find(x => x.id === row.dataset.pid), a = e.target.closest('[data-pact]')?.dataset.pact;
-    if(a === 'view'){ const lr = lastRunOf(p.id); if(lr) viewResult(lr.t.id, p.id); }
+    if(a === 'view'){ const lr = lastRunOf(p.id); if(lr) viewResult(lr.t.id, p.id, 'posts'); }
     if(a === 'edit'){ $('#pfId').value = p.id; $('#pfName').value = p.name || ''; $('#pfUrl').value = p.url; $('#pfMethod').value = ['api', 'extension'].includes(p.method) ? p.method : 'auto'; $('#pfNotes').value = p.notes || ''; $('#postDlg').showModal(); }
     if(a === 'del'){ await DB.del('posts', p.id); TR.posts = TR.posts.filter(x => x !== p); TR.sel.delete(p.id); renderPosts(); renderSegCounts();
       toast('Publicación eliminada de la lista', { label:'Deshacer', run:async () => { await DB.put('posts', p); TR.posts.unshift(p); renderPosts(); renderSegCounts(); } }); }
@@ -5435,7 +5939,7 @@ function initTracking(){
   });
   $('#postSelNone').onclick = () => { TR.sel.clear(); renderPosts(); };
   $('#postAll').onchange = e => { (TR.visible || []).forEach(id => e.target.checked ? TR.sel.add(id) : TR.sel.delete(id)); renderPosts(); };
-  $('#postDelSel').onclick = async () => { const ids = [...TR.sel]; if(!confirm(`¿Eliminar ${countTxt(ids.length, 'publicación', 'publicaciones')} de la lista? Su historial se conserva.`)) return; for(const id of ids) await DB.del('posts', id); TR.posts = TR.posts.filter(p => !ids.includes(p.id)); TR.sel.clear(); renderPosts(); renderSegCounts(); };
+  $('#postDelSel').onclick = async () => { const ids = [...TR.sel]; if(!await askConfirm({ title:`¿Eliminar ${countTxt(ids.length, 'publicación', 'publicaciones')} de la lista?`, text:'Se quitan de la lista de seguimiento. Sus seguimientos anteriores y comentarios se conservan en el historial.', ok:'Eliminar', danger:true })) return; for(const id of ids) await DB.del('posts', id); TR.posts = TR.posts.filter(p => !ids.includes(p.id)); TR.sel.clear(); renderPosts(); renderSegCounts(); };
   $('#newTrackBtn').onclick = () => openTrackDlg([...TR.sel]);
   $('#pfSave').onclick = async () => { const p = TR.posts.find(x => x.id === $('#pfId').value); if(!p) return; p.name = $('#pfName').value.trim(); p.method = $('#pfMethod').value; p.notes = $('#pfNotes').value.trim(); await DB.put('posts', p); $('#postDlg').close(); renderPosts(); toast('Publicación guardada'); };
   // diálogo de seguimiento
@@ -5447,14 +5951,15 @@ function initTracking(){
   $('#runDetail').addEventListener('click', async e => {
     const t = TR.tracks.find(x => x.id === TR.open); if(!t) return;
     const ra = e.target.closest('[data-ract]')?.dataset.ract;
-    if(ra === 'start') runTracking(t.id);
+    if(ra === 'start'){ if(t.halt){ t.postIds.forEach(id => { const x = t.items[id]; if(x.status === 'error'){ x.status = 'pending'; x.error = ''; } }); } runTracking(t.id); }
     if(ra === 'stop') stopTracking();
     if(ra === 'edit') openTrackDlg(null, t.id);
     if(ra === 'finish'){ t.status = 'done'; t.finishedAt = new Date().toISOString(); await DB.put('trackings', t); renderSeg(); toast('Seguimiento archivado en el historial', { label:'Ver historial', run:() => selectSegTab('hist') }); }
-    if(ra === 'del'){ if(!confirm('¿Eliminar este seguimiento y sus comentarios extraídos?')) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.open = null; renderSeg(); toast('Seguimiento eliminado'); }
+    if(ra === 'del'){ if(!await askConfirm({ title:'¿Eliminar este seguimiento?', text:`Se eliminarán «${t.name}» y ${countTxt(trackProgress(t).comments, 'comentario extraído', 'comentarios extraídos')}. No se puede deshacer.`, ok:'Eliminar', danger:true })) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.open = null; renderSeg(); toast('Seguimiento eliminado'); }
     const row = e.target.closest('[data-ipid]'); if(!row) return;
     const pid = row.dataset.ipid, it = t.items[pid], ia = e.target.closest('[data-iact]')?.dataset.iact;
-    if(ia === 'view') viewResult(t.id, pid);
+    if(ia === 'view') viewResult(t.id, pid, 'runs');
+    if(ia === 'retrynow'){ RUN.retryNow = true; }
     if(ia === 'diag') copyText(JSON.stringify({ url:(TR.posts.find(p => p.id === pid) || {}).url, error:it.error, diag:it.diag, extension:EXT.version, navegador:navigator.userAgent }, null, 2), 'Diagnóstico copiado (sin textos ni nombres de los comentarios)');
     if(ia === 'retry' || ia === 'skip'){ it.status = ia === 'retry' ? 'pending' : 'skipped'; it.error = ''; if(ia === 'retry' && t.status === 'done') t.status = 'paused'; await DB.put('trackings', t); renderRuns(); }
   });
@@ -5465,8 +5970,9 @@ function initTracking(){
     const row = e.target.closest('[data-hid]'); if(!row) return;
     const t = TR.tracks.find(x => x.id === row.dataset.hid), a = e.target.closest('[data-hact]')?.dataset.hact;
     if(a === 'report') openReport([t.id]);
+    if(a === 'view') viewTrackingsComments([t.id]);
     if(a === 'open'){ t.status = 'done'; TR.open = t.id; showHistoryDetail(t); }
-    if(a === 'del'){ if(!confirm('¿Eliminar este seguimiento del historial y sus comentarios?')) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.hsel.delete(t.id); renderSeg(); }
+    if(a === 'del'){ if(!await askConfirm({ title:'¿Eliminar del historial?', text:`Se eliminarán «${t.name}» (${fmtDay(t.date)}) y ${countTxt(trackProgress(t).comments, 'comentario', 'comentarios')}. No se puede deshacer.`, ok:'Eliminar', danger:true })) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.hsel.delete(t.id); renderSeg(); }
     if(!a && !e.target.closest('a,button,input')){ TR.hsel.has(t.id) ? TR.hsel.delete(t.id) : TR.hsel.add(t.id); renderHistory(); }
   });
   $('#histSelNone').onclick = () => { TR.hsel.clear(); renderHistory(); };
@@ -5476,10 +5982,12 @@ function initTracking(){
   $('#dbExport').onclick = () => { closeMenus(); dbExport(); };
   $('#dbImport').onchange = e => { const f = e.target.files[0]; e.target.value = ''; closeMenus(); if(f) dbImport(f); };
   $('#extDl').addEventListener('click', () => toast('Descargando la extensión: descomprímela y cárgala en chrome://extensions', { label:'Ver pasos', run:() => go('ayuda', 'ext-instalar') }));
-  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoWin').value = o.window; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
-  $('#eoSave').onclick = () => { PREF.set('eoWin', $('#eoWin').value); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(90, Math.max(2, +$('#eoMax').value || 20)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
+  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
+  $('#eoSave').onclick = () => { PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(90, Math.max(2, +$('#eoMax').value || 20)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
   addEventListener('beforeunload', e => { if(TR.running){ e.preventDefault(); e.returnValue = ''; } });
   extDetect(); setTimeout(extDetect, 800);
+  setTimeout(requestSessions, 900); setInterval(requestSessions, 60000);
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') requestSessions(); });
   loadTR();
 }
 // Detalle (solo lectura) de un seguimiento del historial: lista de publicaciones con acceso a sus comentarios
@@ -5488,12 +5996,12 @@ function showHistoryDetail(t){
   const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="small muted">${esc(fmtDay(t.date))} · <span class="stchip done"><span class="ms">task_alt</span>Completado</span> · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
     <div class="rd-acts"><button class="btn filled" data-hd="report"><span class="ms">analytics</span>Crear informe</button><button class="btn text" data-hd="reopen"><span class="ms">replay</span>Reabrir</button><button class="icon-btn" data-hd="close" aria-label="Cerrar" title="Cerrar"><span class="ms">close</span></button></div></div>
     ${t.postIds.map(id => { const p = TR.posts.find(x => x.id === id) || { url:'', platform:'facebook', name:'(eliminada de la lista)' }, it = t.items[id];
-      return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' ? countTxt(it.count, 'comentario', 'comentarios') : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
+      return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' && !it.count ? '<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: reabre el seguimiento y reintenta esta publicación</span>' : it.status === 'done' ? countTxt(it.count, 'comentario', 'comentarios') : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
         <div class="ri-acts">${it.status === 'done' ? `<button class="btn text sm" data-hdv="${esc(id)}"><span class="ms">forum</span>Ver comentarios</button>` : ''}</div></div>`; }).join('')}</div>`;
   let box = $('#histDetail'); if(!box){ box = document.createElement('div'); box.id = 'histDetail'; $('#sp-hist').appendChild(box); }
   box.innerHTML = html; box.scrollIntoView({ behavior:'smooth', block:'start' });
   box.onclick = async e => {
-    const v = e.target.closest('[data-hdv]'); if(v) return viewResult(t.id, v.dataset.hdv);
+    const v = e.target.closest('[data-hdv]'); if(v) return viewResult(t.id, v.dataset.hdv, 'hist');
     const a = e.target.closest('[data-hd]')?.dataset.hd;
     if(a === 'close') box.innerHTML = '';
     if(a === 'report') openReport([t.id]);
@@ -5518,10 +6026,11 @@ async function gatherComments(tids){
   }
   return { comments:[...out.values()], platform:Object.keys(metaPlat).sort((a, b) => metaPlat[b] - metaPlat[a])[0] || 'facebook', tracks:ts };
 }
-async function viewTrackingsComments(tids){
+async function viewTrackingsComments(tids, from, postId){
   const g = await gatherComments(tids);
-  if(!g.comments.length){ toast('Esos seguimientos no tienen comentarios'); return; }
-  loadData({ meta:{ title:g.tracks.length === 1 ? g.tracks[0].name : `${g.tracks.length} seguimientos (${fmtDay(g.tracks[0].date)} – ${fmtDay(g.tracks[g.tracks.length - 1].date)})`, source:'Seguimientos', platform:g.platform, multi:true, extractedAt:new Date().toISOString() }, comments:g.comments });
+  if(!g.comments.length){ toast(tids.length === 1 ? 'Este seguimiento no tiene comentarios' : 'Esos seguimientos no tienen comentarios'); return; }
+  loadData({ meta:{ title:g.tracks.length === 1 ? g.tracks[0].name : `${g.tracks.length} seguimientos (${fmtDay(g.tracks[0].date)} – ${fmtDay(g.tracks[g.tracks.length - 1].date)})`, source:'Seguimientos', platform:g.platform, multi:true, ctx:from === 'informe' ? { from:'informe' } : { from:'seg', tab:'hist', tid:tids.length === 1 ? tids[0] : null }, extractedAt:new Date().toISOString() }, comments:g.comments });
+  if(postId && g.comments.some(c => c._ref?.postId === postId)){ S.f.post.add(postId); S.page = 1; renderTable(); }
 }
 
 
@@ -5537,12 +6046,14 @@ function renderReportPicker(){
   $('#repPicker').innerHTML = done.length ? `<div class="card rp-pick">
     <h3>Elige los seguimientos del informe</h3><p class="small muted" style="margin:0">El informe combina sus comentarios sin duplicar los de una misma publicación y compara la evolución entre fechas.</p>
     <div class="rp-presets" style="margin-top:12px"><button class="fchip" data-rpp="7">Últimos 7 días</button><button class="fchip" data-rpp="30">Últimos 30 días</button><button class="fchip" data-rpp="all">Todos</button><button class="fchip" data-rpp="none">Ninguno</button></div>
-    <div class="hlist">${done.map(t => { const pr = trackProgress(t); return `<label class="hrow${sel.has(t.id) ? ' sel' : ''}"><input type="checkbox" class="rpsel" value="${esc(t.id)}" ${sel.has(t.id) ? 'checked' : ''}><div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div></label>`; }).join('')}</div>
+    <div class="hlist">${done.map(t => { const pr = trackProgress(t); return `<label class="hrow${sel.has(t.id) ? ' sel' : ''}"><input type="checkbox" class="rpsel" value="${esc(t.id)}" ${sel.has(t.id) ? 'checked' : ''}><div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div></label>`; }).join('')}</div>
     <div class="rp-cfg"><label class="field"><span class="lbl">Marcas o temas a vigilar (separados por comas)</span><input class="input" id="repTerms" value="${esc(PREF.get('repTerms', ''))}" placeholder="Ej.: Kanasta24, envío, precio, atención"></label>
+      <label class="field" style="flex:1 1 200px"><span class="lbl">Elaborado por</span><input class="input" id="repAuthor" value="${esc(PREF.get('repAuthor', ''))}" placeholder="Nombre de quien firma el informe"></label>
+      <label class="field" style="flex:1 1 200px"><span class="lbl">Cliente / marca</span><input class="input" id="repClient" value="${esc(PREF.get('repClient', ''))}" placeholder="Ej.: Kanasta24"></label>
       <button class="btn filled" id="repGo"><span class="ms">analytics</span>Generar informe</button>${REP.model ? '<button class="btn text" id="repCancel">Cancelar</button>' : ''}</div>
   </div>` : `<div class="empty-mini"><span class="ms">analytics</span>Todavía no hay seguimientos completados. Cuando termines alguno en <a href="#seguimiento">Seguimiento</a>, podrás elegirlo aquí para crear el informe.</div>`;
 }
-function openReport(tids){ PREF.set('repSel', JSON.stringify(tids)); REP.editing = false; go('informes'); generateReport(tids); }
+function openReport(tids, from){ PREF.set('repSel', JSON.stringify(tids)); REP.editing = false; REP.from = from || 'hist'; go('informes'); generateReport(tids); }
 async function generateReport(tids){
   if(!tids.length){ toast('Elige al menos un seguimiento'); return; }
   $('#repOut').innerHTML = '<div class="empty-mini"><span class="ms" style="animation:spin 1.4s linear infinite">progress_activity</span>Analizando comentarios…</div>';
@@ -5571,6 +6082,55 @@ async function buildReport(tids, terms){
     rs.forEach(r => r.comments.forEach(c => { total++; const k = r.postId + '|' + (c.id && !/^(x|local)-/.test(c.id) ? c.id : normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160)); if(!seen.has(k)){ seen.add(k); nw++; } day.push(sentiment(c.text || '').label); }));
     byDate.push({ t, total, nw, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => t.items[id].status === 'done').length });
   }
+  const m = computeReportModel(list, team, tracks, byDate, terms, tids);
+  // Seguimiento principal = el más reciente; se compara con el anterior
+  const snap = async t => { const gg = await gatherComments([t.id]); if(!gg.comments.length) return null; const l = finalize(gg.comments.map((c, i) => ({ ...c, id:c.id || ('s' + i) })), { platform:gg.platform }); return computeReportModel(l, teamOn(l), [t], [], terms, [t.id]); };
+  m.cur = await snap(last) || m;
+  m.prevT = tracks.length > 1 ? tracks[tracks.length - 2] : null;
+  m.prev = m.prevT ? await snap(m.prevT) : null;
+  m.curNew = byDate.length ? byDate[byDate.length - 1].nw : m.cur.list.length;
+  m.prevNew = byDate.length > 1 ? byDate[byDate.length - 2].nw : null;
+  m.cmp = compareRows(m);
+  m.postCmp = comparePosts(m);
+  m.summary = [...compareSummary(m), ...m.summary];
+  return m;
+}
+// Filas de la comparativa: seguimiento más reciente frente al anterior
+function compareRows(m){
+  const c = m.cur, p = m.prev;
+  const negP = x => x && x.s.total ? Math.round(x.s.neg / x.s.total * 100) : null;
+  const rows = [
+    { k:'Comentarios', a:c.list.length, b:p && p.list.length, good:'up' },
+    { k:'Comentarios nuevos', a:m.curNew, b:m.prevNew, good:'up' },
+    { k:'Personas que comentan', a:c.authorsN, b:p && p.authorsN, good:'up' },
+    { k:'Interacciones', a:c.st.reacts, b:p && p.st.reacts, good:'up' },
+    { k:'Positivos', a:c.s.pos, b:p && p.s.pos, good:'up' },
+    { k:'Negativos', a:c.s.neg, b:p && p.s.neg, good:'down' },
+    { k:'Preguntas', a:c.st.q, b:p && p.st.q, good:'down' }
+  ];
+  if(c.team) rows.push({ k:'Pendientes de respuesta', a:c.pending, b:p && p.pending, good:'down' }, { k:'Tasa de respuesta del equipo', a:c.respRate, b:p && p.respRate, good:'up', pct:true });
+  return rows.map(r => {
+    const has = r.b != null && r.a != null, d = has ? r.a - r.b : null;
+    const val = v => v == null ? '—' : r.pct ? v + ' %' : r.signed ? sign(v) : fmtN(v);
+    const dTxt = !has ? '—' : d === 0 ? '=' : (d > 0 ? '▲ ' : '▼ ') + (r.pct || r.pts ? sign(d) + ' pts' : sign(d) + (r.b ? ` (${sign(Math.round(d / r.b * 100))} %)` : ''));
+    const tone = !has || d === 0 ? '' : (d > 0) === (r.good === 'up') ? 'up' : 'down';
+    return { ...r, A:val(r.a), B:val(r.b), D:dTxt, tone };
+  });
+}
+function comparePosts(m){
+  if(!m.prev) return [];
+  return m.cur.posts.map(pc => { const pp = m.prev.posts.find(x => x.id === pc.id); return { label:pc.label, platform:pc.platform, a:pc.total, b:pp ? pp.total : null, na:pc.s.pos, nb:pp ? pp.s.pos : null, neg:pc.negPct, negB:pp ? pp.negPct : null }; });
+}
+function compareSummary(m){
+  const t = m.last, c = m.cur, out = [];
+  if(!m.prev){ out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), con ${countTxt(c.list.length, 'comentario', 'comentarios')}: ${fmtN(c.s.pos)} positivos y ${fmtN(c.s.neg)} negativos.`); return out; }
+  const d = c.list.length - m.prev.list.length;
+  out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), comparado con «${m.prevT.name}» (${fmtDay(m.prevT.date)}). Tiene ${countTxt(c.list.length, 'comentario', 'comentarios')} (${d === 0 ? 'igual que el anterior' : sign(d) + ' frente al anterior'}), ${countTxt(m.curNew, 'nuevo', 'nuevos')}: ${fmtN(c.s.pos)} positivos y ${fmtN(c.s.neg)} negativos (antes, ${fmtN(m.prev.s.pos)} y ${fmtN(m.prev.s.neg)}).`);
+  return out;
+}
+// Cálculo del informe a partir de una lista de comentarios ya finalizada (seguimientos o los datos de Resultados)
+function computeReportModel(list, team, tracks, byDate, terms, tids){
+  const first = tracks[0], last = tracks[tracks.length - 1];
   const st = computeStats(list), s = sentOf(list);
   const nonTeam = list.filter(c => !c.isTeam);
   const answered = nonTeam.filter(c => c.teamAnswered && (!c.parentId || c.needsTeam === false)).length, pending = nonTeam.filter(c => c.needsTeam).length;
@@ -5602,16 +6162,21 @@ async function buildReport(tids, terms){
   const openQ = byReact(nonTeam.filter(c => c.isQuestion && c.needsTeam)).slice(0, 8);
   const openNeg = nonTeam.filter(c => c.sentiment === 'negativo' && c.needsTeam).length;
   // Comparación primer/último seguimiento
-  const fd = byDate[0], ld = byDate[byDate.length - 1];
+  const fd = byDate[0] || { total:s.total, neg:s.neg }, ld = byDate[byDate.length - 1] || fd;
   const negShare = d => d.total ? Math.round(d.neg / d.total * 100) : 0;
   const m = { tids, tracks, first, last, list, st, s, nss:nssOf(s), team, answered, pending, respRate:(answered + pending) ? Math.round(answered / (answered + pending) * 100) : null, medRT, rtN:rts.length,
     byDate, posts, platRows, topAuthors, ambassadors, detractors, influencers, recurring, authorsN:authors.length, watch, topPos, topNeg, openQ, openNeg,
     negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date() };
+  // por defecto el principal es el propio conjunto (sin seguimiento anterior); buildReport lo sustituye por el más reciente
+  m.cur = m; m.prev = null; m.prevT = null; m.curNew = list.length; m.prevNew = null; m.cmp = compareRows(m); m.postCmp = [];
   m.alerts = reportAlerts(m); m.recs = reportRecs(m); m.summary = reportSummary(m);
   return m;
 }
 function reportAlerts(m){
   const a = [];
+  const emptyT = m.tracks.filter(t => t.postIds && t.postIds.length && !trackProgress(t).comments), emptyP = m.tracks.reduce((s, t) => s + (t.postIds ? emptyPosts(t).length : 0), 0);
+  if(emptyT.length) a.push({ lvl:'high', txt:`${countTxt(emptyT.length, 'seguimiento no tiene', 'seguimientos no tienen')} comentarios (${emptyT.map(t => t.name).join(', ')}): sus datos no cuentan en este informe. Reintenta su extracción.` });
+  else if(emptyP) a.push({ lvl:'mid', txt:`${countTxt(emptyP, 'publicación de los seguimientos quedó', 'publicaciones de los seguimientos quedaron')} sin comentarios: revisa su extracción.` });
   m.posts.filter(p => p.total >= 5 && p.negPct >= 30).forEach(p => a.push({ lvl:'high', txt:`“${p.label}” concentra un ${p.negPct} % de comentarios negativos (${fmtN(p.s.neg)} de ${fmtN(p.total)}).` }));
   if(m.byDate.length > 1 && m.negLast - m.negFirst >= 10) a.push({ lvl:'high', txt:`La proporción de negativos subió de ${m.negFirst} % a ${m.negLast} % entre el primer y el último seguimiento.` });
   if(m.team && m.openNeg) a.push({ lvl:m.openNeg >= 5 ? 'high' : 'mid', txt:`${countTxt(m.openNeg, 'comentario negativo sigue', 'comentarios negativos siguen')} sin respuesta del equipo.` });
@@ -5627,7 +6192,7 @@ function reportRecs(m){
   if(m.detractors.length) r.push(`Contactar por privado a los detractores más activos (${m.detractors.slice(0, 3).map(a => a.name).join(', ')}) para resolver su caso antes de que escale.`);
   if(m.ambassadors.length) r.push(`Agradecer y reconocer a los embajadores (${m.ambassadors.slice(0, 3).map(a => a.name).join(', ')}); son candidatos para testimonios o contenido generado por usuarios.`);
   const best = [...m.posts].filter(p => p.total >= 5).sort((a, b) => b.nss - a.nss)[0];
-  if(best && best.nss > 20) r.push(`Replicar el enfoque de “${best.label}” (índice neto ${best.nss > 0 ? '+' : ''}${best.nss}), la publicación mejor valorada.`);
+  if(best && best.nss > 20) r.push(`Replicar el enfoque de “${best.label}”, la publicación mejor valorada (${fmtN(best.s.pos)} comentarios positivos y ${fmtN(best.s.neg)} negativos).`);
   const topW = m.st.words.slice(0, 3).map(w => w[0]);
   if(topW.length) r.push(`Tener en cuenta los temas más mencionados (${topW.join(', ')}) en las próximas publicaciones y en las respuestas tipo del catálogo.`);
   if(m.medRT != null && m.medRT > 12) r.push(`Reducir el tiempo de primera respuesta (mediana actual: ${fmtDec(m.medRT)} h); el objetivo habitual en redes es menos de 2–4 h.`);
@@ -5637,11 +6202,11 @@ function reportSummary(m){
   const out = [];
   const span = m.tracks.length === 1 ? 'el ' + fmtDay(m.first.date) : 'del ' + fmtDay(m.first.date) + ' al ' + fmtDay(m.last.date);
   out.push(`Se analizaron ${countTxt(m.list.length, 'comentario único', 'comentarios únicos')} de ${countTxt(m.posts.length, 'publicación', 'publicaciones')} en ${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')} (${span}), escritos por ${countTxt(m.authorsN, 'persona', 'personas')}.`);
-  out.push(`El sentimiento es ${m.nss >= 20 ? 'favorable' : m.nss <= -10 ? 'desfavorable' : 'mixto'}: índice neto ${m.nss > 0 ? '+' : ''}${m.nss} (${pctTxt(m.s.pos, m.s.total)} positivos, ${pctTxt(m.s.neg, m.s.total)} negativos).`);
+  out.push(`El sentimiento es ${m.nss >= 20 ? 'favorable' : m.nss <= -10 ? 'desfavorable' : 'mixto'}: ${countTxt(m.s.pos, 'comentario positivo', 'comentarios positivos')} y ${countTxt(m.s.neg, 'negativo', 'negativos')}.`);
   if(m.byDate.length > 1){ const d = m.byDate[m.byDate.length - 1].nw; out.push(`En el último seguimiento aparecieron ${countTxt(d, 'comentario nuevo', 'comentarios nuevos')}; la proporción de negativos pasó de ${m.negFirst} % a ${m.negLast} %.`); }
   if(m.team) out.push(`El equipo respondió ${m.respRate != null ? m.respRate + ' %' : '—'} de los comentarios que lo requerían; quedan ${countTxt(m.pending, 'pendiente', 'pendientes')}${m.medRT != null ? ` y la mediana de primera respuesta es de ${fmtDec(m.medRT)} h` : ''}.`);
   if(m.posts[0]) out.push(`La publicación con más conversación fue “${m.posts[0].label}” (${countTxt(m.posts[0].total, 'comentario', 'comentarios')}).`);
-  if(m.watch.length){ const w = [...m.watch].sort((a, b) => b.n - a.n)[0]; if(w.n) out.push(`“${w.term}” aparece en ${countTxt(w.n, 'comentario', 'comentarios')} (${w.pct} %), con índice neto ${w.nss > 0 ? '+' : ''}${w.nss}.`); }
+  if(m.watch.length){ const w = [...m.watch].sort((a, b) => b.n - a.n)[0]; if(w.n) out.push(`“${w.term}” aparece en ${countTxt(w.n, 'comentario', 'comentarios')} (${w.pct} %): ${fmtN(w.s.pos)} positivos y ${fmtN(w.s.neg)} negativos.`); }
   return out;
 }
 const miniSeg = s => s.total ? `<span class="mini-seg" title="${s.pos} positivos · ${s.neu} neutrales · ${s.neg} negativos">${[['var(--viz-neg)', s.neg], ['var(--viz-neu)', s.neu], ['var(--viz-pos)', s.pos]].filter(x => x[1]).map(([c, v]) => `<i style="flex:${v} 1 0;background:${c}"></i>`).join('')}</span>` : '';
@@ -5649,8 +6214,10 @@ const sign = n => (n > 0 ? '+' : '') + n;
 function qItem(c){ return `<div class="qitem"><b>${esc(c.authorName || '(desconocido)')}</b>: ${esc(c.text.slice(0, 280))}${c.text.length > 280 ? '…' : ''}<div class="qm">${esc(c._post || '')} · ${esc(platName(c.platform))}${c.reactions ? ' · ' + fmtN(c.reactions) + ' reacciones' : ''}${c._date ? ' · ' + esc(fmtDay(c._date)) : ''}</div></div>`; }
 function renderReport(){
   const m = REP.model; if(!m) return;
+  renderRepCrumbs();
   $('#repActs').innerHTML = `<button class="btn text" id="repEdit"><span class="ms">tune</span>Cambiar selección</button>
     <button class="btn text" id="repAI"><span class="ms">auto_awesome</span>Resumen con IA</button>
+    <button class="btn text" id="repWa"><span class="ms">chat</span>Mensaje para WhatsApp</button>
     <button class="btn tonal" id="repCopy"><span class="ms">content_copy</span>Copiar texto</button>
     <button class="btn filled" data-menu="repExpMenu" aria-haspopup="menu" aria-expanded="false"><span class="ms">download</span>Exportar</button>
     <div class="menu" id="repExpMenu" role="menu">
@@ -5666,26 +6233,25 @@ function renderReport(){
   $('#repOut').innerHTML = `<div class="report" id="reportDoc">
     <div class="rep-cover"><h2>Informe de comentarios</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · generado el ${esc(m.generatedAt.toLocaleString('es'))}</p></div>
     <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen ejecutivo</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div id="repAiOut"></div></section>
-    <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores clave</h3><p class="sub">Comentarios únicos (sin duplicar entre seguimientos de la misma publicación).</p>
-      <div class="kpis">
-        ${kpi('Comentarios', fmtN(m.list.length), `${fmtN(m.st.comments)} principales · ${fmtN(m.st.replies)} respuestas`)}
-        ${kpi('Personas que comentan', fmtN(m.authorsN), `${fmtN(m.recurring)} recurrentes`)}
-        ${kpi('Interacciones', fmtN(m.st.reacts), 'reacciones y me gusta')}
-        ${kpi('Índice neto de sentimiento', sign(m.nss), '% positivos − % negativos', m.nss >= 0 ? 'up' : 'down')}
-        ${kpi('Negativos', pctTxt(m.s.neg, m.s.total), dNeg != null ? `${sign(dNeg)} pts frente al primer seguimiento` : fmtN(m.s.neg) + ' comentarios', dNeg != null ? (dNeg > 0 ? 'down' : 'up') : '')}
-        ${kpi('Preguntas', fmtN(m.st.q), pctTxt(m.st.q, m.list.length) + ' de los comentarios')}
-        ${kpi('Tasa de respuesta', m.team && m.respRate != null ? m.respRate + ' %' : '—', m.team ? `${fmtN(m.pending)} pendientes` : 'define tu equipo')}
-        ${kpi('Primera respuesta (mediana)', m.medRT != null ? fmtDec(m.medRT) + ' h' : '—', m.medRT != null ? `sobre ${fmtN(m.rtN)} casos con fecha exacta` : 'requiere fechas exactas (API)')}
+    <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores clave · seguimiento más reciente</h3><p class="sub">«${esc(m.last.name)}» (${esc(fmtDay(m.last.date))})${m.prev ? ` comparado con «${esc(m.prevT.name)}» (${esc(fmtDay(m.prevT.date))})` : ''}.</p>
+      <div class="kpis">${m.cmp.map(r => kpi(r.k, r.A, m.prev ? (r.D === '—' ? 'sin dato anterior' : r.D + ' frente al anterior') : '', r.tone)).join('')}
+        ${kpi('Primera respuesta (mediana)', m.cur.medRT != null ? fmtDec(m.cur.medRT) + ' h' : '—', m.cur.medRT != null ? `sobre ${fmtN(m.cur.rtN)} casos con fecha exacta` : 'requiere fechas exactas (API)')}
       </div></section>
+    ${m.prev ? `<section class="card rep-sec"><h3><span class="ms">compare_arrows</span>Comparativa con el seguimiento anterior</h3><p class="sub">El seguimiento más reciente es el principal; la variación se calcula frente al anterior.</p>
+      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Indicador</th><th class="num">${esc(fmtDay(m.last.date))}</th><th class="num">${esc(fmtDay(m.prevT.date))}</th><th class="num">Variación</th></tr></thead><tbody>
+      ${m.cmp.map(r => `<tr><td>${esc(r.k)}</td><td class="num"><b>${esc(r.A)}</b></td><td class="num">${esc(r.B)}</td><td class="num cmp-${r.tone || 'eq'}">${esc(r.D)}</td></tr>`).join('')}</tbody></table></div>
+      ${m.postCmp.length ? `<h4 class="viz-h4" style="margin-top:16px">Por publicación</h4><div class="rtable-wrap"><table class="rtable"><thead><tr><th>Publicación</th><th class="num">Comentarios</th><th class="num">Anterior</th><th class="num">Variación</th><th class="num">Positivos</th><th class="num">Anterior</th></tr></thead><tbody>
+      ${m.postCmp.map(x => `<tr><td>${esc(x.label)}</td><td class="num"><b>${fmtN(x.a)}</b></td><td class="num">${x.b == null ? '—' : fmtN(x.b)}</td><td class="num">${x.b == null ? 'nueva' : x.a === x.b ? '=' : sign(x.a - x.b)}</td><td class="num"><b>${fmtN(x.na)}</b></td><td class="num">${x.nb == null ? '—' : fmtN(x.nb)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    </section>` : ''}
     <section class="card rep-sec"><h3><span class="ms">warning</span>Alertas</h3>${m.alerts.map(a => `<div class="rep-alert ${a.lvl}"><span class="ms">${a.lvl === 'ok' ? 'check_circle' : a.lvl === 'high' ? 'error' : 'warning'}</span><span>${esc(a.txt)}</span></div>`).join('')}</section>
     ${m.byDate.length > 1 ? `<section class="card rep-sec viz-card"><h3><span class="ms">timeline</span>Evolución por seguimiento</h3><p class="sub">Comentarios en cada fecha y nuevos respecto a los seguimientos anteriores.</p>
       <div class="viz-plot" id="repChartDates"></div>
-      <div class="rtable-wrap" style="margin-top:12px"><table class="rtable"><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="num">Publicaciones</th><th class="num">Comentarios</th><th class="num">Nuevos</th><th>Sentimiento</th><th class="num">Índice neto</th></tr></thead><tbody>
-      ${m.byDate.map(d => { const ss = { total:d.total, pos:d.pos, neg:d.neg, neu:d.neu }; return `<tr><td>${esc(fmtDay(d.t.date))}</td><td>${esc(d.t.name)}</td><td class="num">${d.posts}</td><td class="num">${fmtN(d.total)}</td><td class="num">${fmtN(d.nw)}</td><td>${miniSeg(ss)}</td><td class="num">${sign(nssOf(ss))}</td></tr>`; }).join('')}</tbody></table></div></section>` : ''}
+      <div class="rtable-wrap" style="margin-top:12px"><table class="rtable"><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="num">Publicaciones</th><th class="num">Comentarios</th><th class="num">Nuevos</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th></tr></thead><tbody>
+      ${m.byDate.map(d => { const ss = { total:d.total, pos:d.pos, neg:d.neg, neu:d.neu }; return `<tr><td>${esc(fmtDay(d.t.date))}</td><td>${esc(d.t.name)}</td><td class="num">${d.posts}</td><td class="num">${fmtN(d.total)}</td><td class="num">${fmtN(d.nw)}</td><td class="sent">${miniSeg(ss)}</td><td class="num">${fmtN(d.pos)}</td><td class="num">${fmtN(d.neg)}</td></tr>`; }).join('')}</tbody></table></div></section>` : ''}
     <section class="card rep-sec"><h3><span class="ms">article</span>Publicaciones</h3><p class="sub">Ordenadas por volumen de conversación.</p>
-      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Publicación</th><th>Red</th><th class="num">Comentarios</th><th class="num">Personas</th><th class="num">Reacciones</th><th>Sentimiento</th><th class="num">Índice neto</th><th class="num">Negativos</th>${m.team ? '<th class="num">Pendientes</th>' : ''}<th>Tema principal</th></tr></thead><tbody>
-      ${m.posts.map(p => `<tr><td>${esc(p.label)}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num">${fmtN(p.total)}</td><td class="num">${fmtN(p.authors)}</td><td class="num">${fmtN(p.reacts)}</td><td>${miniSeg(p.s)}</td><td class="num">${sign(p.nss)}</td><td class="num">${p.negPct} %</td>${m.team ? `<td class="num">${fmtN(p.pending)}</td>` : ''}<td>${esc(p.topWord)}</td></tr>`).join('')}</tbody></table></div>
-      ${m.platRows.length > 1 ? `<h4 class="viz-h4" style="margin-top:16px">Por red social</h4><div class="rtable-wrap"><table class="rtable"><thead><tr><th>Red</th><th class="num">Comentarios</th><th class="num">Personas</th><th class="num">Reacciones</th><th>Sentimiento</th><th class="num">Índice neto</th></tr></thead><tbody>${m.platRows.map(r => `<tr><td><i class="pdot ${platDot(r.k)}"></i> ${esc(platName(r.k))}</td><td class="num">${fmtN(r.total)}</td><td class="num">${fmtN(r.authors)}</td><td class="num">${fmtN(r.reacts)}</td><td>${miniSeg(r.s)}</td><td class="num">${sign(r.nss)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Publicación</th><th>Red</th><th class="num">Comentarios</th><th class="num">Personas</th><th class="num">Reacciones</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th>${m.team ? '<th class="num">Pendientes</th>' : ''}<th>Tema principal</th></tr></thead><tbody>
+      ${m.posts.map(p => `<tr><td>${esc(p.label)}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num">${fmtN(p.total)}</td><td class="num">${fmtN(p.authors)}</td><td class="num">${fmtN(p.reacts)}</td><td class="sent">${miniSeg(p.s)}</td><td class="num">${fmtN(p.s.pos)}</td><td class="num">${fmtN(p.s.neg)}</td>${m.team ? `<td class="num">${fmtN(p.pending)}</td>` : ''}<td>${esc(p.topWord)}</td></tr>`).join('')}</tbody></table></div>
+      ${m.platRows.length > 1 ? `<h4 class="viz-h4" style="margin-top:16px">Por red social</h4><div class="rtable-wrap"><table class="rtable"><thead><tr><th>Red</th><th class="num">Comentarios</th><th class="num">Personas</th><th class="num">Reacciones</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th></tr></thead><tbody>${m.platRows.map(r => `<tr><td><i class="pdot ${platDot(r.k)}"></i> ${esc(platName(r.k))}</td><td class="num">${fmtN(r.total)}</td><td class="num">${fmtN(r.authors)}</td><td class="num">${fmtN(r.reacts)}</td><td class="sent">${miniSeg(r.s)}</td><td class="num">${fmtN(r.s.pos)}</td><td class="num">${fmtN(r.s.neg)}</td></tr>`).join('')}</tbody></table></div>` : ''}
     </section>
     <div class="rep-grid">
       <section class="card rep-sec viz-card"><h3><span class="ms">groups</span>Quién más comenta</h3><p class="sub">Sin contar a tu equipo.</p>${rankedBars(m.topAuthors.map(a => ({ l:a.name, v:a.n })), 'rauthor', { unit:'comentarios' })}</section>
@@ -5697,8 +6263,8 @@ function renderReport(){
       <section class="card rep-sec"><h3><span class="ms">campaign</span>Más influyentes</h3><p class="sub">Comentarios con más reacciones acumuladas.</p>${m.influencers.length ? `<div class="rtable-wrap"><table class="rtable"><thead><tr><th>Persona</th><th class="num">Reacciones</th><th class="num">Comentarios</th></tr></thead><tbody>${m.influencers.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${fmtN(a.reacts)}</td><td class="num">${a.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="small muted">Sin reacciones registradas.</p>'}</section>
     </div>
     ${m.watch.length ? `<section class="card rep-sec"><h3><span class="ms">visibility</span>Marcas y temas vigilados</h3><p class="sub">Comentarios que mencionan cada término (por coincidencia de texto).</p>
-      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Término</th><th class="num">Menciones</th><th class="num">% del total</th><th>Sentimiento</th><th class="num">Índice neto</th><th>Ejemplo</th></tr></thead><tbody>
-      ${m.watch.map(w => `<tr><td><b>${esc(w.term)}</b></td><td class="num">${fmtN(w.n)}</td><td class="num">${w.pct} %</td><td>${miniSeg(w.s)}</td><td class="num">${w.n ? sign(w.nss) : '—'}</td><td>${w.sample ? esc(w.sample.text.slice(0, 120)) + (w.sample.text.length > 120 ? '…' : '') : ''}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
+      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Término</th><th class="num">Menciones</th><th class="num">% del total</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th><th>Ejemplo</th></tr></thead><tbody>
+      ${m.watch.map(w => `<tr><td><b>${esc(w.term)}</b></td><td class="num">${fmtN(w.n)}</td><td class="num">${w.pct} %</td><td class="sent">${miniSeg(w.s)}</td><td class="num">${fmtN(w.s.pos)}</td><td class="num">${fmtN(w.s.neg)}</td><td>${w.sample ? esc(w.sample.text.slice(0, 120)) + (w.sample.text.length > 120 ? '…' : '') : ''}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
     <div class="rep-grid">
       <section class="card rep-sec"><h3><span class="ms">thumb_up</span>Comentarios positivos destacados</h3><div class="qlist">${m.topPos.map(qItem).join('') || '<p class="small muted">Sin comentarios positivos.</p>'}</div></section>
       <section class="card rep-sec"><h3><span class="ms">thumb_down</span>Comentarios negativos destacados</h3><div class="qlist">${m.topNeg.map(qItem).join('') || '<p class="small muted">Sin comentarios negativos.</p>'}</div></section>
@@ -5706,7 +6272,7 @@ function renderReport(){
     ${m.team ? `<section class="card rep-sec"><h3><span class="ms">help</span>Preguntas sin responder</h3><p class="sub">Ordenadas por reacciones: atiéndelas con el asistente de respuestas.</p><div class="qlist">${m.openQ.map(qItem).join('') || '<p class="small muted">No hay preguntas pendientes. 🎉</p>'}</div></section>` : ''}
     <section class="card rep-sec"><h3><span class="ms">lightbulb</span>Recomendaciones</h3><ol class="rep-sum">${m.recs.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
       <p class="no-print" style="margin:12px 0 0"><button class="btn tonal sm" id="repOpenList"><span class="ms">forum</span>Ver y responder estos comentarios</button></p></section>
-    <p class="small muted">Metodología: sentimiento estimado por diccionario (orientativo); índice neto = % positivos − % negativos; “pendiente” = comentario dirigido a la marca sin respuesta de tu equipo; la tasa de respuesta se calcula sobre los comentarios que la requerían.</p>
+    <p class="small muted">Metodología: sentimiento estimado por diccionario (orientativo); “pendiente” = comentario dirigido a la marca sin respuesta de tu equipo; la tasa de respuesta se calcula sobre los comentarios que la requerían.</p>
   </div>`;
   if(m.byDate.length > 1){ const W = chartW('#repChartDates'); $('#repChartDates').innerHTML = columnChart(dates, { W, h:chartH(W), label:'Comentarios por seguimiento' }); }
   bindVizTips($('#repOut'));
@@ -5717,87 +6283,176 @@ function reportText(m){
   const L = [], H = t => { L.push('', t.toUpperCase(), '-'.repeat(Math.min(60, t.length))); };
   L.push('INFORME DE COMENTARIOS', m.tracks.length === 1 ? `${m.first.name} · ${fmtDay(m.first.date)}` : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`, `Generado el ${m.generatedAt.toLocaleString('es')}`);
   H('Resumen ejecutivo'); m.summary.forEach(x => L.push('• ' + x)); if(REP.ai) L.push('', REP.ai);
-  H('Indicadores clave');
+  H('Seguimiento más reciente' + (m.prev ? ' frente al anterior' : ''));
+  L.push(`Principal: ${m.last.name} (${fmtDay(m.last.date)})` + (m.prev ? ` · Comparado con: ${m.prevT.name} (${fmtDay(m.prevT.date)})` : ''));
+  m.cmp.forEach(r => L.push(`${r.k}: ${r.A}` + (m.prev ? ` (anterior ${r.B}; variación ${r.D})` : '')));
+  if(m.postCmp.length){ L.push(''); m.postCmp.forEach(x => L.push(`${x.label}: ${fmtN(x.a)} comentarios` + (x.b == null ? ' (nueva)' : ` (anterior ${fmtN(x.b)}; ${x.a === x.b ? '=' : sign(x.a - x.b)})`) + `, ${fmtN(x.na)} positivos` + (x.nb == null ? '' : ` (anterior ${fmtN(x.nb)})`))); }
+  H('Indicadores del periodo completo');
   L.push(`Comentarios: ${fmtN(m.list.length)} (${fmtN(m.st.comments)} principales, ${fmtN(m.st.replies)} respuestas)`, `Personas que comentan: ${fmtN(m.authorsN)} (${fmtN(m.recurring)} recurrentes)`, `Interacciones: ${fmtN(m.st.reacts)}`,
-    `Índice neto de sentimiento: ${sign(m.nss)} (${pctTxt(m.s.pos, m.s.total)} positivos, ${pctTxt(m.s.neu, m.s.total)} neutrales, ${pctTxt(m.s.neg, m.s.total)} negativos)`, `Preguntas: ${fmtN(m.st.q)}`,
+    `Sentimiento: ${fmtN(m.s.pos)} positivos, ${fmtN(m.s.neu)} neutrales y ${fmtN(m.s.neg)} negativos (${pctTxt(m.s.pos, m.s.total)} positivos, ${pctTxt(m.s.neu, m.s.total)} neutrales, ${pctTxt(m.s.neg, m.s.total)} negativos)`, `Preguntas: ${fmtN(m.st.q)}`,
     `Tasa de respuesta del equipo: ${m.team && m.respRate != null ? m.respRate + ' %' : '—'}${m.team ? ` (${fmtN(m.pending)} pendientes)` : ''}`, `Primera respuesta (mediana): ${m.medRT != null ? fmtDec(m.medRT) + ' h' : '—'}`);
   H('Alertas'); m.alerts.forEach(a => L.push('• ' + a.txt));
-  if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, índice neto ${sign(nssOf({ total:d.total, pos:d.pos, neg:d.neg }))}`)); }
-  H('Publicaciones'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.total)} comentarios, ${fmtN(p.authors)} personas, índice neto ${sign(p.nss)}, ${p.negPct} % negativos${m.team ? `, ${fmtN(p.pending)} pendientes` : ''}`));
+  if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, ${fmtN(d.pos)} positivos y ${fmtN(d.neg)} negativos`)); }
+  H('Publicaciones'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.total)} comentarios, ${fmtN(p.authors)} personas, ${fmtN(p.s.pos)} positivos y ${fmtN(p.s.neg)} negativos${m.team ? `, ${fmtN(p.pending)} pendientes` : ''}`));
   H('Quién más comenta'); m.topAuthors.forEach((a, i) => L.push(`${i + 1}. ${a.name}: ${a.n} comentarios`));
   if(m.ambassadors.length){ H('Embajadores'); m.ambassadors.forEach(a => L.push(`• ${a.name} (${a.pos} positivos de ${a.n})`)); }
   if(m.detractors.length){ H('Detractores'); m.detractors.forEach(a => L.push(`• ${a.name} (${a.neg} negativos de ${a.n})`)); }
   H('Temas más mencionados'); L.push(m.st.words.slice(0, 15).map(([w, n]) => `${w} (${n})`).join(', '));
-  if(m.watch.length){ H('Marcas y temas vigilados'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones (${w.pct} %), índice neto ${w.n ? sign(w.nss) : '—'}`)); }
+  if(m.watch.length){ H('Marcas y temas vigilados'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones (${w.pct} %): ${fmtN(w.s.pos)} positivos y ${fmtN(w.s.neg)} negativos`)); }
   H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`));
   H('Comentarios positivos destacados'); m.topPos.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`));
   if(m.team && m.openQ.length){ H('Preguntas sin responder'); m.openQ.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`)); }
   H('Recomendaciones'); m.recs.forEach((x, i) => L.push(`${i + 1}. ${x}`));
   return L.join('\n').trim();
 }
-// Convierte los gráficos SVG en imágenes PNG (Word y PDF no muestran SVG con estilos CSS)
-async function svgToPng(svg){
-  const cs = getComputedStyle(document.documentElement), clone = svg.cloneNode(true), vb = svg.viewBox.baseVal;
-  const W = vb && vb.width ? vb.width : svg.clientWidth, H = vb && vb.height ? vb.height : svg.clientHeight;
-  clone.setAttribute('width', W); clone.setAttribute('height', H); clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  const src = [...svg.querySelectorAll('*')], dst = [...clone.querySelectorAll('*')];
-  src.forEach((el, i) => { const s = getComputedStyle(el); ['fill', 'stroke', 'stroke-width', 'font', 'font-size', 'font-weight', 'opacity', 'fill-opacity'].forEach(k => { const v = s.getPropertyValue(k); if(v) dst[i].style.setProperty(k, v); }); });
-  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(clone));
-  const img = new Image(); await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-  const c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
-  const g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height); g.scale(2, 2); g.drawImage(img, 0, 0, W, H);
-  return { src:c.toDataURL('image/png'), W, H };
+// Documento del informe para exportar: sencillo, en blanco y negro, Arial 12 (independiente del tema de la app)
+const DOC_CSS = `.scadoc,.scadoc *{color:#000!important;background:#fff!important;font-family:Arial,Helvetica,sans-serif!important;box-shadow:none!important;text-shadow:none!important}
+  .scadoc{font-size:12pt;line-height:1.45;max-width:17cm;margin:0 auto}
+  .scadoc h1{font-size:17pt;font-weight:bold;margin:0 0 14pt;padding-bottom:3pt;border-bottom:1.5pt solid #000}
+  .scadoc h2{font-size:13pt;font-weight:bold;margin:16pt 0 5pt}
+  .scadoc h3{font-size:12pt;font-weight:bold;margin:10pt 0 2pt}
+  .scadoc p{margin:0 0 6pt}
+  .scadoc .meta p{margin:0 0 2pt}
+  .scadoc ul,.scadoc ol{margin:0 0 6pt;padding-left:18pt}
+  .scadoc li{margin:0 0 3pt}
+  .scadoc table{border-collapse:collapse;width:100%;margin:4pt 0 8pt;border:0.75pt solid #000}
+  .scadoc p.li{margin:0 0 3pt;padding-left:14pt;text-indent:-14pt}
+  .scadoc p{page-break-inside:avoid;break-inside:avoid}
+  .scadoc h2,.scadoc h3{page-break-after:avoid;break-after:avoid}
+  .scadoc th,.scadoc td{border:0.75pt solid #000;padding:3pt 5pt;text-align:left;vertical-align:top;font-size:11pt}
+  .scadoc th{font-weight:bold}
+  .scadoc td.n,.scadoc th.n{text-align:right;white-space:nowrap}
+  .scadoc .small{font-size:10pt}
+  .scadoc .q{margin:0 0 5pt}
+  .scadoc .avoid,.scadoc tr,.scadoc li{page-break-inside:avoid;break-inside:avoid}`;
+function reportDocument(m){
+  const e = esc, n = fmtN;
+  const UL = items => items.map(x => `<p class="li">•&nbsp;&nbsp;${x}</p>`).join('');
+  const OL = items => items.map((x, i) => `<p class="li">${i + 1}.&nbsp;&nbsp;${x}</p>`).join('');
+  const brand = PREF.get('repClient', '') || (m.watch[0] && m.watch[0].term) || '';
+  const author = PREF.get('repAuthor', '');
+  const period = m.tracks.length === 1 ? fmtDay(m.first.date) : `del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`;
+  const today = m.generatedAt.toLocaleDateString('es', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const quote = c => `<p class="q avoid"><b>${e(c.authorName || '(desconocido)')}</b> (${e(platName(c.platform))}${c.reactions ? ', ' + n(c.reactions) + ' reacciones' : ''}${c._date ? ', ' + e(fmtDay(c._date)) : ''}): «${e(c.text.slice(0, 300))}${c.text.length > 300 ? '…' : ''}»</p>`;
+  const sentTxt = s => s.total ? `${pctTxt(s.pos, s.total)} positivos, ${pctTxt(s.neu, s.total)} neutrales, ${pctTxt(s.neg, s.total)} negativos` : '—';
+  let b = `<h1>Informe de comentarios en redes sociales</h1>
+  <div class="meta">
+    <p><b>Fecha:</b> ${e(today.charAt(0).toUpperCase() + today.slice(1))}</p>
+    ${author ? `<p><b>Elaborado por:</b> ${e(author)}</p>` : ''}
+    ${brand ? `<p><b>Cliente / marca:</b> ${e(brand)}</p>` : ''}
+    <p><b>Periodo analizado:</b> ${e(period)} (${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')}, ${countTxt(m.posts.length, 'publicación', 'publicaciones')})</p>
+  </div>
+  <h2>Resumen</h2>
+  ${m.summary.map(x => `<p>${e(x)}</p>`).join('')}
+  ${REP.ai ? `<p>${e(REP.ai).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>')}</p>` : ''}
+  <div class="avoid"><h2>Indicadores del seguimiento más reciente</h2>
+  <p><b>Seguimiento principal:</b> ${e(m.last.name)} (${e(fmtDay(m.last.date))})${m.prev ? ` · <b>comparado con:</b> ${e(m.prevT.name)} (${e(fmtDay(m.prevT.date))})` : ''}</p>
+  <table><thead><tr><th>Indicador</th><th class="n">${e(fmtDay(m.last.date))}</th>${m.prev ? `<th class="n">${e(fmtDay(m.prevT.date))}</th><th class="n">Variación</th>` : ''}</tr></thead><tbody>
+  ${m.cmp.map(r => `<tr><td>${e(r.k)}</td><td class="n"><b>${e(r.A)}</b></td>${m.prev ? `<td class="n">${e(r.B)}</td><td class="n">${e(r.D)}</td>` : ''}</tr>`).join('')}
+  </tbody></table></div>
+  ${m.postCmp.length ? `<div class="avoid"><h2>Comparativa por publicación</h2><table><thead><tr><th>Publicación</th><th class="n">Comentarios</th><th class="n">Anterior</th><th class="n">Variación</th><th class="n">Positivos</th><th class="n">Anterior</th></tr></thead><tbody>
+  ${m.postCmp.map(x => `<tr><td>${e(x.label)}</td><td class="n"><b>${n(x.a)}</b></td><td class="n">${x.b == null ? '—' : n(x.b)}</td><td class="n">${x.b == null ? 'nueva' : x.a === x.b ? '=' : sign(x.a - x.b)}</td><td class="n"><b>${n(x.na)}</b></td><td class="n">${x.nb == null ? '—' : n(x.nb)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+  <div class="avoid"><h2>Indicadores del periodo completo</h2>
+  <table><tbody>
+    <tr><td>Comentarios únicos</td><td class="n">${n(m.list.length)}</td><td>${n(m.st.comments)} principales y ${n(m.st.replies)} respuestas</td></tr>
+    <tr><td>Personas que comentan</td><td class="n">${n(m.authorsN)}</td><td>${n(m.recurring)} recurrentes</td></tr>
+    <tr><td>Interacciones</td><td class="n">${n(m.st.reacts)}</td><td>reacciones y me gusta</td></tr>
+    <tr><td>Comentarios positivos</td><td class="n">${n(m.s.pos)}</td><td>${sentTxt(m.s)}</td></tr>
+    <tr><td>Comentarios negativos</td><td class="n">${n(m.s.neg)}</td><td>${m.team ? 'de ellos, sin responder: ' + n(m.list.filter(x => !x.isTeam && x.sentiment === 'negativo' && x.needsTeam).length) : ''}</td></tr>
+    <tr><td>Preguntas</td><td class="n">${n(m.st.q)}</td><td>${pctTxt(m.st.q, m.list.length)} de los comentarios</td></tr>
+    <tr><td>Tasa de respuesta del equipo</td><td class="n">${m.team && m.respRate != null ? m.respRate + ' %' : '—'}</td><td>${m.team ? countTxt(m.pending, 'comentario pendiente', 'comentarios pendientes') : 'equipo no definido'}</td></tr>
+    <tr><td>Primera respuesta (mediana)</td><td class="n">${m.medRT != null ? fmtDec(m.medRT) + ' h' : '—'}</td><td>${m.medRT != null ? 'sobre ' + n(m.rtN) + ' casos con fecha exacta' : 'requiere fechas exactas'}</td></tr>
+  </tbody></table></div>
+  <div class="avoid"><h2>Alertas</h2>
+  ${UL(m.alerts.map(a => e(a.txt)))}</div>`;
+  if(m.byDate.length > 1) b += `<div class="avoid"><h2>Evolución por seguimiento</h2>
+  <table><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="n">Comentarios</th><th class="n">Nuevos</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
+  ${m.byDate.map(d => `<tr><td>${e(fmtDay(d.t.date))}</td><td>${e(d.t.name)}</td><td class="n">${n(d.total)}</td><td class="n">${n(d.nw)}</td><td class="n">${n(d.pos)}</td><td class="n">${n(d.neg)}</td></tr>`).join('')}</tbody></table></div>`;
+  b += `<h2>Detalle por publicación</h2>
+  ${m.posts.map((p, i) => `<div class="avoid"><h3>${i + 1}. ${e(p.label)}</h3>
+    <p><b>Red:</b> ${e(platName(p.platform))} · <b>Comentarios:</b> ${n(p.total)} · <b>Personas:</b> ${n(p.authors)} · <b>Reacciones:</b> ${n(p.reacts)}<br>
+    <b>Sentimiento:</b> ${sentTxt(p.s)} (${n(p.s.pos)} positivos y ${n(p.s.neg)} negativos)${m.team ? ` · <b>Pendientes de respuesta:</b> ${n(p.pending)}` : ''}${p.topWord ? ` · <b>Tema principal:</b> ${e(p.topWord)}` : ''}</p></div>`).join('')}`;
+  if(m.platRows.length > 1) b += `<div class="avoid"><h2>Por red social</h2><table><thead><tr><th>Red</th><th class="n">Comentarios</th><th class="n">Personas</th><th class="n">Reacciones</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
+    ${m.platRows.map(r => `<tr><td>${e(platName(r.k))}</td><td class="n">${n(r.total)}</td><td class="n">${n(r.authors)}</td><td class="n">${n(r.reacts)}</td><td class="n">${n(r.s.pos)}</td><td class="n">${n(r.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
+  b += `<h2>Audiencia</h2>
+  <div class="avoid"><h3>Quién más comenta</h3>${OL(m.topAuthors.map(a => `${e(a.name)}: ${countTxt(a.n, 'comentario', 'comentarios')}`))}</div>
+  ${m.ambassadors.length ? `<div class="avoid"><h3>Embajadores</h3>${UL(m.ambassadors.map(a => `${e(a.name)} (${a.pos} positivos de ${a.n})`))}</div>` : ''}
+  ${m.detractors.length ? `<div class="avoid"><h3>Detractores</h3>${UL(m.detractors.map(a => `${e(a.name)} (${a.neg} negativos de ${a.n})`))}</div>` : ''}
+  ${m.influencers.length ? `<div class="avoid"><h3>Más influyentes</h3>${UL(m.influencers.map(a => `${e(a.name)} (${n(a.reacts)} reacciones en ${countTxt(a.n, 'comentario', 'comentarios')})`))}</div>` : ''}
+  <h2>Temas más mencionados</h2><p>${m.st.words.slice(0, 15).map(([w, c]) => `${e(w)} (${c})`).join(', ') || '—'}</p>`;
+  if(m.watch.length) b += `<div class="avoid"><h2>Marcas y temas vigilados</h2><table><thead><tr><th>Término</th><th class="n">Menciones</th><th class="n">% del total</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
+    ${m.watch.map(w => `<tr><td>${e(w.term)}</td><td class="n">${n(w.n)}</td><td class="n">${w.pct} %</td><td class="n">${n(w.s.pos)}</td><td class="n">${n(w.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
+  b += `<h2>Comentarios destacados</h2>
+  <h3>Negativos</h3>${m.topNeg.map(quote).join('') || '<p>Sin comentarios negativos.</p>'}
+  <h3>Positivos</h3>${m.topPos.map(quote).join('') || '<p>Sin comentarios positivos.</p>'}`;
+  if(m.team && m.openQ.length) b += `<h2>Preguntas sin responder</h2>${m.openQ.map(quote).join('')}`;
+  b += `<div class="avoid"><h2>Próximos pasos</h2>${m.recs.length ? OL(m.recs.map(e)) : '<p>Sin tareas pendientes de esta jornada.</p>'}</div>
+  <p class="small">Metodología: sentimiento estimado por diccionario (orientativo); “pendiente” = comentario dirigido a la marca sin respuesta del equipo.</p>`;
+  const footer = 'Informe de comentarios · ' + (today.charAt(0).toUpperCase() + today.slice(1));
+  return { body:`<div class="scadoc">${b}</div>`, css:DOC_CSS, footer,
+    html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Informe de comentarios</title><style>body{margin:2cm;background:#fff}${DOC_CSS}</style></head><body><div class="scadoc">${b}<p class="small" style="margin-top:18pt;border-top:0.75pt solid #000;padding-top:4pt">${e(footer)}</p></div></body></html>` };
 }
-// Documento autónomo (colores fijos claros) para Word, PDF y HTML
-async function reportDocHtml(){
-  const m = REP.model; const doc = $('#reportDoc').cloneNode(true);
-  doc.querySelectorAll('.no-print,button').forEach(e => e.remove());
-  const svgs = [...$('#reportDoc').querySelectorAll('.viz-plot svg')], dsv = [...doc.querySelectorAll('.viz-plot svg')];
-  for(let i = 0; i < svgs.length; i++){ try{ const r = await svgToPng(svgs[i]); const img = document.createElement('img'); img.src = r.src; img.width = Math.min(640, r.W); img.style.maxWidth = '100%'; dsv[i].replaceWith(img); }catch(e){ dsv[i].remove(); } }
-  // barras ordenadas → tabla simple; mini barras → texto
-  doc.querySelectorAll('.rbars').forEach(b => { const t = document.createElement('table'); t.className = 'rtable'; t.innerHTML = [...b.querySelectorAll('.rbar')].map(r => `<tr><td>${esc(r.querySelector('.rb-label').textContent)}</td><td class="num">${esc(r.querySelector('.rb-val').textContent)}</td></tr>`).join(''); b.replaceWith(t); });
-  doc.querySelectorAll('.mini-seg').forEach(s => { const sp = document.createElement('span'); sp.textContent = s.title; s.replaceWith(sp); });
-  doc.querySelectorAll('.ms').forEach(e => e.remove());
-  doc.querySelectorAll('.pdot').forEach(e => e.remove());
-  const css = `body{font-family:Calibri,Arial,sans-serif;color:#1f1f1f;font-size:11pt;line-height:1.45;margin:24px}
-    h2{font-size:22pt;font-weight:400;margin:0 0 4px;color:#0b57d0} h3{font-size:14pt;margin:18px 0 4px;color:#0b57d0} h4{font-size:11pt;margin:12px 0 4px}
-    .rep-cover{border-bottom:3px solid #0b57d0;padding-bottom:10px;margin-bottom:8px} .rep-cover p,.sub,.small,.muted,.qm,.d{color:#5f6368;font-size:9.5pt}
-    table{border-collapse:collapse;width:100%;margin:6px 0} th{background:#e8f0fe;text-align:left;padding:5px 7px;font-size:9.5pt} td{border-top:1px solid #dadce0;padding:5px 7px;font-size:9.5pt;vertical-align:top}
-    td.num,th.num{text-align:right} .kpis{display:block} .kpi{display:inline-block;width:23%;vertical-align:top;margin:0 1% 8px 0;padding:6px 8px;border:1px solid #dadce0}
-    .kpi .k{font-size:9pt;color:#5f6368} .kpi .v{font-size:16pt} .rep-alert{padding:6px 8px;margin:4px 0;border-left:4px solid #e69500;background:#fff4e0} .rep-alert.high{border-color:#d93025;background:#fce8e6} .rep-alert.ok{border-color:#188038;background:#e6f4ea}
-    .qitem{padding:6px 8px;margin:4px 0;background:#f1f3f4} section{page-break-inside:avoid} .rep-grid{display:block}`;
-  return { html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Informe de comentarios</title><style>${css}</style></head><body>${doc.innerHTML}</body></html>`, css, body:doc.innerHTML };
+// Word (.doc) en blanco y negro, Arial 12, con pie de página numerado
+function downloadWord(d, name){
+    // Word: estilos directos (Word ignora parte del CSS); Arial 12, negro sobre blanco, pie de página con número de página
+    const wordCss = d.css.replace(/\.scadoc,\.scadoc \*/g, 'body,body *').replace(/\.scadoc /g, '').replace(/\.scadoc\{/g, 'body{')
+      + `@page Section1{size:21cm 29.7cm;margin:2cm 2cm 2.2cm 2cm;mso-footer:f1}div.Section1{page:Section1}p.MsoFooter{font-family:Arial;font-size:9pt;margin:0}`;
+    const word = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Informe de comentarios</title>
+      <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>${wordCss}</style></head>
+      <body><div class="Section1">${d.body.replace(/^<div class="scadoc">|<\/div>$/g, '')}
+      <div style="mso-element:footer" id="f1"><p class="MsoFooter">${esc(d.footer)} — Página <span style="mso-field-code:' PAGE '"></span> de <span style="mso-field-code:' NUMPAGES '"></span></p></div></div></body></html>`;
+    download(name + '.doc', new Blob(['﻿', word], { type:'application/msword' }));
+}
+// Informe del análisis abierto en Resultados (una publicación o varias)
+function resultsReportModel(list){
+  const items = finalize(list.map((c, i) => ({ ...c, id:c.id || ('r' + i), _post:c._post || S.meta.title || 'Publicación', _date:c._date || todayISO(), _postAuthor:c._postAuthor || S.meta.postAuthor || '' })), { platform:S.meta.platform, postAuthor:S.meta.postAuthor });
+  const team = teamOn(items);
+  const terms = (PREF.get('repTerms', '') || '').split(',').map(x => x.trim()).filter(Boolean);
+  const day = (S.meta.extractedAt || new Date().toISOString()).slice(0, 10);
+  return computeReportModel(items, team, [{ id:'resultados', name:S.meta.title || 'Análisis de comentarios', date:day, postIds:[] }], [], terms, []);
+}
+// PDF A4 en blanco y negro con pie de página "Informe de comentarios · fecha — Página X de Y"
+async function reportPdf(m){
+  if(!window.html2pdf) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+  const d = reportDocument(m);
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;left:-10000px;top:0;width:680px;background:#fff';
+  box.innerHTML = `<style>${d.css}.scadoc{max-width:none}</style>${d.body}`;
+  document.body.appendChild(box);
+  try{
+    const pdf = await html2pdf().set({ margin:[20, 20, 22, 20], image:{ type:'jpeg', quality:.98 }, html2canvas:{ scale:2, backgroundColor:'#ffffff' },
+      jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }, pagebreak:{ mode:['css', 'legacy'], avoid:['tr', 'li', '.avoid', 'h2', 'h3'] } }).from(box.querySelector('.scadoc')).toPdf().get('pdf');
+    const total = pdf.internal.getNumberOfPages(), W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(0, 0, 0);
+    for(let i = 1; i <= total; i++){ pdf.setPage(i); pdf.text(d.footer, 20, H - 10); pdf.text(`Página ${i} de ${total}`, W - 20, H - 10, { align:'right' }); }
+    return pdf;
+  } finally { box.remove(); }
 }
 async function reportExport(kind){
   const m = REP.model; if(!m) return;
   const name = 'informe-comentarios-' + (m.tracks.length === 1 ? m.first.date : m.first.date + '_' + m.last.date);
-  if(kind === 'print'){ window.print(); return; }
   if(kind === 'xlsx'){ exportXLSX(m.list.map(c => ({ ...c, text:c.text }))); return; }
-  toast('Preparando el documento…');
-  const d = await reportDocHtml();
-  if(kind === 'html'){ download(name + '.html', d.html, 'text/html;charset=utf-8'); return; }
-  if(kind === 'word'){
-    const word = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Informe de comentarios</title>
-      <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2cm}${d.css}</style></head><body>${d.body}</body></html>`;
-    download(name + '.doc', new Blob(['﻿', word], { type:'application/msword' }));
-    return;
+  const d = reportDocument(m);
+  if(kind === 'print'){
+    const wdw = window.open('', '_blank');
+    if(!wdw){ toast('Permite las ventanas emergentes para imprimir'); return; }
+    wdw.document.write(d.html.replace('</body>', '<script>onload=()=>{print()}<\/script></body>')); wdw.document.close(); return;
   }
+  toast('Preparando el documento…');
+  if(kind === 'html'){ download(name + '.html', d.html, 'text/html;charset=utf-8'); return; }
+  if(kind === 'word'){ downloadWord(d, name); return; }
   if(kind === 'pdf'){
-    try{
-      if(!window.html2pdf) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
-      const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;width:780px;background:#fff';
-      box.innerHTML = `<style>${d.css.replace(/body\{/g, '.pdfdoc{')}</style><div class="pdfdoc">${d.body}</div>`; document.body.appendChild(box);
-      await html2pdf().set({ margin:[12, 12, 14, 12], filename:name + '.pdf', image:{ type:'jpeg', quality:.95 }, html2canvas:{ scale:2, backgroundColor:'#ffffff' }, jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }, pagebreak:{ mode:['css', 'legacy'], avoid:['tr', 'section', '.kpi', '.qitem', '.rep-alert'] } }).from(box.querySelector('.pdfdoc')).save();
-      box.remove(); toast('PDF descargado');
-    }catch(e){ toast('No se pudo generar el PDF directamente: se abre la impresión (elige “Guardar como PDF”)'); window.print(); }
+    try{ const pdf = await reportPdf(m); pdf.save(name + '.pdf'); toast('PDF descargado'); }
+    catch(e){ toast('No se pudo generar el PDF directamente: se abre la impresión (elige “Guardar como PDF”)'); reportExport('print'); }
   }
 }
 async function reportCopy(){
   const m = REP.model; if(!m) return;
   const text = reportText(m);
   try{
-    const d = await reportDocHtml();
-    await navigator.clipboard.write([new ClipboardItem({ 'text/plain':new Blob([text], { type:'text/plain' }), 'text/html':new Blob([`<style>${d.css}</style>${d.body}`], { type:'text/html' }) })]);
+    const d = reportDocument(m);
+    const htmlCopy = d.body.replace('<div class="scadoc">', '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12pt;color:#000">').replace(/<h1>/, '<h1 style="font-size:17pt;border-bottom:1.5pt solid #000">');
+    await navigator.clipboard.write([new ClipboardItem({ 'text/plain':new Blob([text], { type:'text/plain' }), 'text/html':new Blob([htmlCopy], { type:'text/html' }) })]);
     toast('Informe copiado: pégalo en Word, Google Docs o un correo (con formato)');
   }catch(e){ copyText(text, 'Informe copiado como texto'); }
 }
@@ -5821,17 +6476,18 @@ function initReports(){
     const pr = e.target.closest('[data-rpp]');
     if(pr){ const k = pr.dataset.rpp, lim = k === 'all' || k === 'none' ? null : new Date(Date.now() - (+k) * 864e5).toISOString().slice(0, 10);
       $$('.rpsel').forEach(c => { const t = TR.tracks.find(x => x.id === c.value); c.checked = k === 'none' ? false : !lim || (t && t.date >= lim); c.closest('.hrow').classList.toggle('sel', c.checked); }); }
-    if(e.target.id === 'repGo' || e.target.closest('#repGo')){ const ids = $$('.rpsel').filter(c => c.checked).map(c => c.value); PREF.set('repSel', JSON.stringify(ids)); PREF.set('repTerms', $('#repTerms').value); generateReport(ids); }
+    if(e.target.id === 'repGo' || e.target.closest('#repGo')){ const ids = $$('.rpsel').filter(c => c.checked).map(c => c.value); PREF.set('repSel', JSON.stringify(ids)); PREF.set('repTerms', $('#repTerms').value); PREF.set('repAuthor', $('#repAuthor').value.trim()); PREF.set('repClient', $('#repClient').value.trim()); REP.from = 'nav'; generateReport(ids); }
     if(e.target.closest('#repCancel')){ REP.editing = false; renderReportPicker(); }
   });
   $('#repPicker').addEventListener('change', e => { if(e.target.classList.contains('rpsel')) e.target.closest('.hrow').classList.toggle('sel', e.target.checked); });
   $('#repActs').addEventListener('click', e => {
-    if(e.target.closest('#repEdit')){ REP.editing = true; renderReportPicker(); $('#repPicker').scrollIntoView({ behavior:'smooth' }); }
+    if(e.target.closest('#repEdit')){ REP.editing = true; renderReportPicker(); renderRepCrumbs(); $('#repPicker').scrollIntoView({ behavior:'smooth' }); }
     if(e.target.closest('#repCopy')) reportCopy();
+    if(e.target.closest('#repWa')) openWaDlg();
     if(e.target.closest('#repAI')) reportAI();
     const x = e.target.closest('[data-rexp]'); if(x){ closeMenus(); reportExport(x.dataset.rexp); }
   });
-  $('#repOut').addEventListener('click', e => { if(e.target.closest('#repOpenList') && REP.model) viewTrackingsComments(REP.model.tids).then(() => selectTab('list')); });
+  $('#repOut').addEventListener('click', e => { if(e.target.closest('#repOpenList') && REP.model) viewTrackingsComments(REP.model.tids, 'informe').then(() => selectTab('list')); });
 }
 
 /* =====================================================================
@@ -5918,6 +6574,225 @@ function initSemantic(){
   $('#q').addEventListener('keydown', e => { if(e.key !== 'Enter') return; const m = $('#qMode').value, v = $('#q').value.trim(); if(m === 'terms' || !v) return; e.preventDefault(); m === 'sem' ? runSemantic(v) : runAIClassify(v); });
   $('#semClear').onclick = () => { semClear(); $('#q').value = ''; };
   $('#semLevel').onchange = semApply;
+}
+
+
+/* ---------- Ubicación y "Volver" (para no perderse entre secciones) ---------- */
+const CTX_TAB = { posts:'Publicaciones', runs:'Seguimientos', hist:'Historial' };
+function goBackTo(ctx){
+  if(!ctx) return;
+  if(ctx.from === 'informe'){ go('informes'); return; }
+  if(ctx.from === 'obtener'){ go('obtener'); return; }
+  go('seguimiento');
+  setTimeout(() => {
+    selectSegTab(ctx.tab || 'posts');
+    if(ctx.tab === 'runs' && ctx.tid){ TR.open = ctx.tid; renderRuns(); }
+    if(ctx.tab === 'hist' && ctx.tid){ const t = TR.tracks.find(x => x.id === ctx.tid); if(t) showHistoryDetail(t); }
+  }, 30);
+}
+function crumbsHtml(items, back){
+  return (back ? `<button class="btn tonal sm" data-crumb-back><span class="ms">arrow_back</span>${esc(back)}</button>` : '')
+    + `<ol>${items.map((it, i) => i === items.length - 1 ? `<li aria-current="page"><span title="${esc(it.l)}">${esc(it.l)}</span></li>` : `<li><a href="${it.href || '#'}" data-crumb="${i}" title="${esc(it.l)}">${esc(it.l)}</a></li>`).join('')}</ol>`;
+}
+function renderResCrumbs(){
+  const box = $('#resCrumbs'); if(!box) return;
+  const ctx = S.meta.ctx;
+  let items, back = '';
+  if(ctx && ctx.from === 'seg'){
+    const t = TR.tracks.find(x => x.id === ctx.tid);
+    items = [{ l:'Seguimiento', href:'#seguimiento' }, { l:CTX_TAB[ctx.tab] || 'Seguimiento' }];
+    if(t && ctx.tab !== 'posts') items.push({ l:t.name });
+    if(!t || S.meta.title !== t.name) items.push({ l:S.meta.title || 'Comentarios' });
+    back = 'Volver a ' + (CTX_TAB[ctx.tab] || 'Seguimiento');
+  } else if(ctx && ctx.from === 'informe'){
+    items = [{ l:'Informes', href:'#informes' }, { l:'Comentarios del informe' }]; back = 'Volver al informe';
+  } else if(S.meta.source === 'Datos de ejemplo'){
+    items = [{ l:'Obtener', href:'#obtener' }, { l:'Datos de ejemplo' }];
+  } else {
+    items = [{ l:'Obtener', href:'#obtener' }, { l:S.meta.title || 'Publicación' }];
+  }
+  box.innerHTML = crumbsHtml(items, back);
+  box.classList.remove('hidden');
+  box.onclick = e => {
+    if(e.target.closest('[data-crumb-back]')){ goBackTo(ctx); return; }
+    const a = e.target.closest('[data-crumb]'); if(!a) return;
+    e.preventDefault();
+    if(+a.dataset.crumb === 1 && ctx && ctx.from === 'seg') goBackTo({ ...ctx, tid:null });
+    else location.hash = a.getAttribute('href');
+  };
+}
+function renderRepCrumbs(){
+  const box = $('#repCrumbs'); if(!box) return;
+  if(!REP.model || REP.editing){ box.classList.add('hidden'); return; }
+  const m = REP.model, from = REP.from || 'nav';
+  const name = m.tracks.length === 1 ? 'Informe · ' + m.first.name : `Informe de ${m.tracks.length} seguimientos`;
+  box.innerHTML = crumbsHtml(from === 'hist' ? [{ l:'Seguimiento', href:'#seguimiento' }, { l:'Historial' }, { l:name }] : [{ l:'Informes', href:'#informes' }, { l:name }], from === 'hist' ? 'Volver al historial' : '');
+  box.classList.remove('hidden');
+  box.onclick = e => {
+    if(e.target.closest('[data-crumb-back]')){ goBackTo({ from:'seg', tab:'hist' }); return; }
+    const a = e.target.closest('[data-crumb]'); if(!a) return;
+    e.preventDefault();
+    if(from === 'hist' && +a.dataset.crumb === 1) goBackTo({ from:'seg', tab:'hist' });
+    else if(+a.dataset.crumb === 0 && from !== 'hist'){ REP.editing = true; renderReportPicker(); renderRepCrumbs(); }
+    else location.hash = a.getAttribute('href');
+  };
+}
+
+
+/* ---------- Confirmación en pantalla (en lugar de confirm() del navegador) ---------- */
+function askConfirm({ title, text = '', html = '', ok = 'Aceptar', danger = false, cancel = true }){
+  const d = $('#confirmDlg');
+  $('#cfTitle').textContent = title;
+  if(html) $('#cfText').innerHTML = html; else $('#cfText').textContent = text;
+  $('#cfText').hidden = !text && !html;
+  $('#cfCancel').hidden = !cancel;
+  $('#cfOk').textContent = ok;
+  d.classList.toggle('danger', danger);
+  return new Promise(res => {
+    const done = v => { d.removeEventListener('close', onClose); $('#cfOk').onclick = $('#cfCancel').onclick = null; if(d.open) d.close(); res(v); };
+    const onClose = () => done(false);
+    $('#cfOk').onclick = () => done(true);
+    $('#cfCancel').onclick = () => done(false);
+    d.addEventListener('close', onClose);
+    d.showModal(); setTimeout(() => (cancel ? $('#cfCancel') : $('#cfOk')).focus(), 0);   // el foco empieza en Cancelar: no se elimina por accidente
+  });
+}
+
+
+/* ---------- Autenticación requerida para iniciar un seguimiento ---------- */
+const LOGIN_URL = { facebook:'https://www.facebook.com/login', instagram:'https://www.instagram.com/accounts/login/', tiktok:'https://www.tiktok.com/login' };
+// Redes (y la API) sin autenticación activa para las publicaciones indicadas
+function missingAuth(posts){
+  const nets = new Set(), api = posts.some(p => p.method === 'api' && !FBA.userToken);
+  posts.forEach(p => { if(p.method !== 'api' && !SESS[p.platform]) nets.add(p.platform); });
+  return { nets:[...nets], api };
+}
+function authListHtml(m){
+  return `<span class="auth-list">${m.nets.map(n => `<a href="${LOGIN_URL[n]}" target="_blank" rel="noopener"><i class="pdot ${platDot(n)}"></i>Iniciar sesión en ${esc(platName(n))}</a>`).join('')}${m.api ? '<a href="#obtener"><span class="ms sm">verified_user</span>Conectar con Facebook en la app (API)</a>' : ''}</span>`;
+}
+// Consulta de nuevo las sesiones a la extensión antes de decidir (máx. 3 s)
+function refreshSessions(){
+  if(!EXT.version) return Promise.resolve();
+  return new Promise(res => {
+    const t = setTimeout(done, 3000);
+    function done(){ clearTimeout(t); window.removeEventListener('message', on); res(); }
+    function on(e){ if(e.source === window && e.data && e.data.source === 'sca-ext' && e.data.type === 'sessions') setTimeout(done, 0); }
+    window.addEventListener('message', on); requestSessions();
+  });
+}
+
+/* ---------- Sesiones activas (requieren la extensión) ---------- */
+const SESS = { facebook:null, instagram:null, tiktok:null, known:false };
+function renderSessions(){
+  const bar = $('#sessBar'); if(!bar) return;
+  bar.classList.toggle('hidden', !EXT.version || !SESS.known);
+  $$('#sessBar .sess-i').forEach(a => {
+    const on = !!SESS[a.dataset.net], name = platName(a.dataset.net);
+    a.classList.toggle('on', on); a.classList.toggle('off', !on);
+    a.title = on ? `Sesión iniciada en ${name} en este navegador` : `Sin sesión en ${name}: inicia sesión para extraer todos los comentarios (pulsa para abrir ${name})`;
+    a.setAttribute('aria-label', `${name}: ${on ? 'conectado' : 'sin sesión'}`);
+  });
+}
+function requestSessions(){ if(EXT.version) window.postMessage({ source:'sca-app', type:'sessions' }, '*'); }
+window.addEventListener('message', e => {
+  if(e.source !== window || !e.data || e.data.source !== 'sca-ext') return;
+  const m = e.data;
+  if(m.type === 'sessions'){ Object.assign(SESS, { facebook:!!m.facebook, instagram:!!m.instagram, tiktok:!!m.tiktok, known:true }); renderSessions(); if($('#trackDlg').open) renderTrackDlg(); }
+});
+
+
+/* ---------- Mensaje para WhatsApp: valoración personal breve sobre el informe ---------- */
+function whatsappMessage(m, tone = 'cercano'){
+  const c = m.cur || m, terms = (m.terms || []).filter(Boolean);
+  const brand = PREF.get('repClient', '') || terms[0] || '';
+  const crit = terms.length ? terms.join(', ') : '';
+  const day = d => new Date(d + 'T12:00:00').toLocaleDateString('es', { weekday:'long', day:'numeric', month:'long' });
+  const people = arr => arr.length === 1 ? arr[0] : arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
+  const others = c.list.filter(x => !x.isTeam);
+  // comentarios que hablan del criterio (marcas o temas vigilados); sin criterio, todos
+  const about = terms.length ? others.filter(x => terms.some(t => normName(x.text).includes(normName(t)) || (x.mentions || []).some(mm => normName(mm).includes(normName(t))))) : others;
+  const pos = about.filter(x => x.sentiment === 'positivo'), neg = about.filter(x => x.sentiment === 'negativo');
+  const topBy = arr => { const k = {}; arr.forEach(x => { const n = x.authorName || ''; if(n) k[n] = (k[n] || 0) + 1; }); return Object.entries(k).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]); };
+  const critics = topBy(neg), fans = topBy(pos);
+  // temas que más aparecen en lo positivo y en lo negativo (sin la propia marca)
+  const skip = terms.map(t => normName(t).replace(/\s+/g, ''));
+  const topWord = arr => (computeStats(arr).words.find(([w]) => !skip.some(s => normName(w).includes(s) || s.includes(normName(w)))) || [])[0];
+  const likeW = pos.length ? topWord(pos) : '', badW = neg.length ? topWord(neg) : '';
+  const pendNeg = c.team ? others.filter(x => x.sentiment === 'negativo' && x.needsTeam).length : 0;
+  const pendQ = c.team ? others.filter(x => x.isQuestion && x.needsTeam).length : 0;
+  const diff = m.prev ? c.list.length - m.prev.list.length : null;
+  const vsPrev = diff == null ? '' : diff > 0 ? ` (${diff} más que en el seguimiento anterior)` : diff < 0 ? ` (${-diff} menos que en el seguimiento anterior)` : ' (los mismos que en el seguimiento anterior)';
+  const formal = tone === 'formal', L = [];
+  L.push(`📊 *Informe de comentarios${brand ? ' · ' + brand : ''}*`);
+  L.push(m.prev ? `Seguimiento del ${day(m.last.date)}, comparado con el del ${day(m.prevT.date)}.` : `Seguimiento del ${day(m.last.date)}.`);
+  L.push('');
+  L.push(`${formal ? 'Se analizaron' : 'Analizamos'} *${countTxt(c.list.length, 'comentario', 'comentarios')}* de ${countTxt(c.authorsN, 'persona', 'personas')}${vsPrev}.`);
+  const aboutTxt = crit ? `Sobre *${crit}* ${about.length === 1 ? 'hay 1 comentario' : `hay ${about.length} comentarios`}` : 'De ellos';
+  if(about.length) L.push(`${aboutTxt}: *${pos.length} ${pos.length === 1 ? 'positivo' : 'positivos'}* 👍 y *${neg.length} ${neg.length === 1 ? 'negativo' : 'negativos'}* 👎${about.length - pos.length - neg.length ? ` (el resto, neutrales)` : ''}.`);
+  else if(crit) L.push(`Nadie mencionó *${crit}* en este seguimiento.`);
+  if(tone !== 'breve'){
+    if(critics.length) L.push(`👎 ${formal ? 'Quienes más críticas hicieron' : 'Quienes más critican'}: ${people(critics)}.`);
+    if(fans.length) L.push(`👍 ${formal ? 'Los principales embajadores' : 'Nuestros embajadores'}: ${people(fans)}.`);
+    // opinión personal sobre lo que se dice del criterio
+    const op = [];
+    if(about.length){
+      if(pos.length >= 2 * Math.max(1, neg.length)) op.push(`la mayoría de quienes hablan${crit ? ' de ' + crit : ''} lo hacen en positivo`);
+      else if(neg.length > pos.length) op.push(`predominan las críticas${crit ? ' hacia ' + crit : ''}`);
+      else op.push(`las opiniones${crit ? ' sobre ' + crit : ''} están divididas`);
+      if(likeW) op.push(`lo que más se valora es «${likeW}»`);
+      if(badW) op.push(`las quejas giran sobre todo en torno a «${badW}»`);
+    }
+    const todo = [];
+    if(pendNeg) todo.push(countTxt(pendNeg, 'comentario negativo que sigue', 'comentarios negativos que siguen') + ' sin respuesta');
+    if(pendQ) todo.push(countTxt(pendQ, 'pregunta pendiente', 'preguntas pendientes'));
+    if(op.length || todo.length){
+      let t = (formal ? 'En mi opinión, ' : 'Mi opinión: ') + (op.length ? op.join('; ') + '.' : '');
+      if(todo.length) t += (op.length ? ' ' : '') + `${formal ? 'Recomiendo atender' : 'Conviene atender'} cuanto antes ${todo.join(' y ')}.`;
+      L.push('', t);
+    }
+  }
+  L.push('', formal ? 'Adjunto el informe completo con todo el detalle.' : tone === 'breve' ? 'Adjunto el informe completo 👇' : 'Les dejo el informe completo con el detalle 👇');
+  return L.join('\n');
+}
+function openWaDlg(){
+  const m = REP.model; if(!m) return;
+  $('#waSign').value = PREF.get('waSign', '') || PREF.get('repAuthor', '');
+  $('#waTone').value = PREF.get('waTone', 'cercano');
+  REP.waAi = null; $('#waAiState').textContent = '';
+  renderWa(); $('#waDlg').showModal();
+}
+function renderWa(){
+  const m = REP.model; if(!m) return;
+  $('#waText').value = REP.waAi || waCompose(m, $('#waTone').value, $('#waSign').value.trim());
+  $('#waChars').textContent = fmtN(graphemes($('#waText').value));
+}
+function waCompose(m, tone, signature){
+  let t = whatsappMessage(m, tone);
+  if(signature) t += '\n\n— ' + signature;
+  return t;
+}
+async function waAi(){
+  const m = REP.model, cfg = AI.cfg();
+  if(!aiConfigured(cfg)){ openAiCfg(); toast('Configura primero un modelo de IA gratuito'); return; }
+  $('#waAi').disabled = true; $('#waAiState').textContent = 'Redactando con ' + AI_PROV[cfg.prov].name + '…';
+  try{
+    const tone = { cercano:'cercano y profesional, en primera persona', formal:'formal, en primera persona', breve:'muy breve (2 o 3 frases), en primera persona' }[$('#waTone').value];
+    const sys = 'Eres un especialista en comunicación y redes sociales. Escribes mensajes para WhatsApp en español, claros y humanos, para personas sin conocimientos técnicos. Nunca uses términos técnicos como "índice neto", "puntos", "KPI" o porcentajes complicados: habla de cantidades de comentarios. No inventes datos. Usa *negrita* de WhatsApp con moderación y como mucho 3 emojis. Responde solo con el mensaje.';
+    const user = `Escribe un mensaje ${tone} para un canal de WhatsApp que acompañe un informe de comentarios en redes sociales. Incluye: cuántos comentarios se analizaron; cuántos hablan del criterio (${(m.terms || []).join(', ') || 'la marca'}) y cuántos de esos son positivos y negativos; quiénes son los que más critican y quiénes los embajadores que hablan bien; y mi opinión personal sobre lo que se dice del criterio (qué se valora, de qué se quejan, qué conviene hacer). Máximo 700 caracteres. Termina indicando que se adjunta el informe.${$('#waSign').value.trim() ? ' Firma: ' + $('#waSign').value.trim() + '.' : ''}\n\nMensaje base con los datos correctos (reescríbelo con naturalidad):\n${whatsappMessage(m, 'cercano')}`;
+    let txt = String(await aiRequest(cfg, sys, user) || '').replace(/^```\w*\n?|```$/g, '').trim();
+    try{ const j = JSON.parse(txt); txt = j.mensaje || j.message || Object.values(j).join('\n'); }catch(e){}
+    if(!txt) throw new Error('La IA no devolvió texto.');
+    REP.waAi = txt; renderWa(); $('#waAiState').textContent = 'Redactado con ' + AI_PROV[cfg.prov].name + '. Revísalo antes de enviarlo.';
+  }catch(e){ $('#waAiState').textContent = 'IA: ' + e.message; }
+  finally{ $('#waAi').disabled = false; }
+}
+function initWa(){
+  $('#waTone').onchange = () => { PREF.set('waTone', $('#waTone').value); REP.waAi = null; renderWa(); };
+  $('#waSign').oninput = () => { PREF.set('waSign', $('#waSign').value.trim()); if(!REP.waAi) renderWa(); };
+  $('#waText').oninput = () => { $('#waChars').textContent = fmtN(graphemes($('#waText').value)); };
+  $('#waCopy').onclick = () => copyText($('#waText').value, 'Mensaje copiado: pégalo en WhatsApp junto al informe');
+  $('#waOpen').onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent($('#waText').value), '_blank', 'noopener');
+  $('#waAi').onclick = waAi;
 }
 
 function initAssistant(){
@@ -6109,6 +6984,7 @@ function doExport(kind){
       edited:c.edited, hidden:c.hidden, permalink:c.permalink, source:c.source, platform:c.platform }))},null,2), 'application/json');
   if(kind==='txt') download(`comentarios-${st}.txt`, summaryText(list)+'\n\n'+'─'.repeat(60)+'\n\n'+toText(list), 'text/plain;charset=utf-8');
   if(kind==='html') download(`informe-comentarios-${st}.html`, toHTMLReport(list), 'text/html;charset=utf-8');
+  if(kind==='word'){ const aiBak = REP.ai; REP.ai = null; try{ downloadWord(reportDocument(resultsReportModel(list)), `informe-comentarios-${st}`); } finally { REP.ai = aiBak; } }
   if(kind==='xlsx') exportXLSX(list);
 }
 function doCopy(kind){
@@ -6534,6 +7410,7 @@ function filterHelp(raw){
   };
   let qt; $('#q').oninput = ()=>{ clearTimeout(qt); qt=setTimeout(()=>{ S.page=1; renderTable(); },150); };
   $('#qClear').onclick = ()=>{ $('#q').value=''; S.page=1; renderTable(); $('#q').focus(); };
+  $('#fPost').onchange = e => { S.f.post.clear(); if(e.target.value) S.f.post.add(e.target.value); S.page = 1; renderTable(); };
   $$('.fchip[data-fg]').forEach(ch=>ch.onclick=()=>{ const set=S.f[ch.dataset.fg]; set.has(ch.dataset.fv)?set.delete(ch.dataset.fv):set.add(ch.dataset.fv); S.page=1; renderTable(); });
   $('#fReset').onclick = ()=>{ Object.values(S.f).forEach(s=>s.clear()); S.page=1; renderTable(); };
   $('#threaded').onchange = e=>{ S.threaded=e.target.checked; renderTable(); };
@@ -6594,6 +7471,7 @@ function filterHelp(raw){
   initAssistant();
   initTracking();
   initReports();
+  initWa();
   initSemantic();
   $('#dTeam').onclick = () => { const c = detailCurrent; if(!c) return; const was = TEAM.has(c.authorName);
     was ? TEAM.remove(c.authorName) : TEAM.add(c.authorName, c.authorId ? { id:c.authorId } : null);
