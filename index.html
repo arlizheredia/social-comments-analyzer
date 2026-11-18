@@ -3799,9 +3799,55 @@ function brandKeys(){
   src.join(',').split(/[,;]/).forEach(s => { try{ s = focusSubj(s); }catch(e){} normL(s).split(/[^a-z0-9ñ]+/).filter(w => w.length >= 4 && !/^(comentarios?|relacionad[oa]s?|marca|sobre)$/.test(w)).forEach(w => { ks.add(w); ks.add(w.replace(/\d+$/, '')); ks.add(w.replace(/k/g, 'c')); }); });
   return [...ks].filter(k => k.length >= 4);
 }
+// ¿El texto (normalizado) nombra la marca? («Kanasta 24», «canasta24»…)
+function brandIn(t, keys){ const x = t.replace(/k/g, 'c'), y = x.replace(/[\s\-_.]+/g, ''); return keys.some(k => { const kc = k.replace(/k/g, 'c'); return x.includes(kc) || y.includes(kc); }); }
+/* Posibles referencias a la competencia: nombres de negocios (con «bodega», «tienda», «shop»…), webs que no son de la marca
+   y nombres propios de varias palabras que aparecen al elogiar, preferir o comparar hablando de compras. Es orientativo. */
+const RIVAL_NOUN = /(^|[^\p{L}])(bodegas?|tiendas?|market|mercado|supermercado|minimarket|shop|store|express|envios?|delivery|combos?|mipymes?|agencia|online|cafeteria)(?=$|[^\p{L}])/u;
+const PLACE_STOP = new Set('holguin cuba habana santiago oriente miami mexico espana gibara moa banes camaguey tunas granma bayamo manzanillo guantanamo florida usa dios'.split(' '));
+const onlyPlaces = n => n.split(' ').filter(w => !/^(de|del|la|el|los|las|y)$/.test(w)).every(w => PLACE_STOP.has(w));
+const COMPARE_RE = /(^|[^\p{L}])(mejor|mejores|lo mejor|mas barat[oa]s?|mas rapid[oa]s?|mas competitiv[oa]s?|prefiero|preferible|bajando|en cambio|que en|igual que|como en)(?=$|[^\p{L}])/u;
+function rivalNames(c, keys){
+  if(!c.text || c.isTeam) return [];
+  let raw = c.text; [c.replyTo, ...(c.mentions || []), c.authorName].filter(Boolean).forEach(n => { raw = raw.split(n).join(' · '); });
+  const t = normL(raw), ctx = COMMERCE_RE.test(t), cmp = COMPARE_RE.test(t) || c.brandStance;
+  // si habla de la propia marca sin compararla con otra («Kanasta24… Plataforma d Envios»), lo que nombra es la marca
+  if(brandIn(t, keys) && !c.brandStance && !/(^|[^\p{L}])(prefiero|mejor que|mas barat[oa] que|en cambio)(?=$|[^\p{L}])/u.test(t)) return [];
+  const out = [];
+  const ok = name => { const n = normL(name).replace(/^(en |a )?(la|el|los|las) /, ''); return n.length >= 3 && !brandIn(n, keys) && !onlyPlaces(n) && !ENTITY_STOP.has(n) && n; };
+  // nombres propios (una o varias palabras con mayúscula)
+  (raw.match(/[A-ZÁÉÍÓÚÑ][\p{L}\d]+(?:\s+(?:del|de|la|el|los|las|y|&)?\s*[A-ZÁÉÍÓÚÑ0-9][\p{L}\d]*)*/gu) || []).forEach(e => {
+    // sin palabras iniciales que no forman parte del nombre («Lo AFIRMO», «En Santiago de Cuba»)
+    let words = e.trim().split(/\s+/);
+    while(words.length > 1 && !/^(la|el|los|las)$/i.test(words[0]) && (ENTITY_STOP.has(normL(words[0])) || /^(en|a|por|con|para|desde|hasta|lo|es|y)$/i.test(words[0]))) words = words.slice(1);
+    // «La Bodega del Chago» conserva su artículo
+    e = words.join(' ');
+    if(words.length === 1 && e === e.toUpperCase()) return;   // «AFIRMO»: énfasis, no una marca
+    const core = words.filter(w => !/^(la|el|los|las|del|de|y|&)$/i.test(w));
+    // un sustantivo genérico suelto («Envios», «Tienda») no es una marca: necesita un nombre propio al lado
+    const generic = core.length === 1 && RIVAL_NOUN.test(normL(core[0]));
+    const noun = !generic && RIVAL_NOUN.test(normL(e));
+    if(noun || (core.length >= 2 && ctx && cmp)){ const n = ok(e); if(n) out.push([n, e.replace(/^(En |A )?(la|el|La|El) (?=\S)/, m => m.replace(/^(En |A )/, ''))]); }
+  });
+  // «la bodega», «la tienda de enfrente» (en minúsculas) al comparar hablando de compras
+  if(ctx && cmp) (raw.match(/(?:^|[^\p{L}])(?:la|el)\s+(bodega|tienda|mipyme|agencia|cafeter[ií]a|supermercado)(?:\s+(?:de|del)\s+[\p{L}]+)?/giu) || []).forEach(e => { const n = ok(e.trim()); if(n) out.push([n, e.trim()]); });
+  // webs que no son de la marca
+  (raw.match(/\b(?:https?:\/\/)?(?:www\.)?([\w-]+\.(?:com|net|org|cu|shop|store))\b/gi) || []).forEach(e => { const d = e.replace(/^https?:\/\/(www\.)?|^www\./i, ''); const n = ok(d); if(n) out.push([n, d]); });
+  const seen = new Set(); return out.filter(([n]) => !seen.has(n) && seen.add(n));
+}
+function detectRivals(list){
+  const keys = brandKeys(); if(!keys.length) return [];
+  const g = new Map();
+  list.forEach(c => rivalNames(c, keys).forEach(([n, label]) => { const r = g.get(n) || { key:n, name:label, items:[] }; if(!r.items.includes(c)) r.items.push(c); if(label.length > r.name.length && /[A-ZÁÉÍÓÚÑ]/.test(label)) r.name = label; g.set(n, r); }));
+  // «bodega» dentro de «bodega del chago»: el mismo negocio
+  const all = [...g.values()];
+  all.forEach(a => { const big = all.find(b => b !== a && g.has(b.key) && new RegExp('(^|\\s)' + a.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(b.key)); if(big && g.has(a.key)){ a.items.forEach(c => { if(!big.items.includes(c)) big.items.push(c); }); g.delete(a.key); } });
+  return [...g.values()].map(r => ({ name:r.name.charAt(0).toUpperCase() + r.name.slice(1), n:r.items.length, neg:r.items.filter(c => c.sentiment === 'negativo').length,
+    sample:[...r.items].sort((a, b) => (b.reactions || 0) - (a.reactions || 0) || (b.text || '').length - (a.text || '').length)[0] })).sort((a, b) => b.n - a.n || b.neg - a.neg).slice(0, 8);
+}
 function brandStance(list){
   const keys = brandKeys(); if(!keys.length) return;
-  const hasBrand = t => { const x = t.replace(/k/g, 'c'), y = x.replace(/[\s\-_.]+/g, ''); return keys.some(k => { const kc = k.replace(/k/g, 'c'); return x.includes(kc) || y.includes(kc); }); };
+  const hasBrand = t => brandIn(t, keys);
   list.forEach(c => {
     if(!c.text) return;
     let t = normL(c.text);
@@ -6796,7 +6842,7 @@ async function focusMatch(list, q, onProg){
   // Contexto del hilo: si el equipo de la marca respondió un comentario, ese comentario va dirigido a la marca
   // («Los mejores» → «Gracias por considerarnos los mejores»); y las respuestas dentro de un hilo de la marca también son de ella.
   const byId = new Map(list.map(c => [c.id, c]));
-  list.forEach(c => { if(!c.isTeam && c.teamAnswered) keys.add(fkey(c._ref?.postId, c)); });
+  list.forEach(c => { if(!c.isTeam && (c.teamAnswered || c.brandStance)) keys.add(fkey(c._ref?.postId, c)); });
   list.forEach(c => {
     if(c.isTeam || !c.parentId) return;
     let p = c, g = 0; while(p.parentId && byId.has(p.parentId) && g++ < 12) p = byId.get(p.parentId);
@@ -6828,6 +6874,7 @@ async function buildReport(tids, terms, focusQ, onProg){
     byDate.push({ t, total, nw, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => t.items[id].status === 'done').length });
   }
   const m = computeReportModel(fl, team, tracks, byDate, terms, tids, focusCtx(focus, list));
+  m.rivals = detectRivals(fl);
   // Seguimiento principal = el más reciente; se compara con el anterior
   const snap = async t => { const gg = await gatherComments([t.id]); if(!gg.comments.length) return null; const l = finalize(gg.comments.map((c, i) => ({ ...c, id:c.id || ('s' + i) })), { platform:gg.platform }); return computeReportModel(focus ? focusFilter(l, focus) : l, teamOn(l), [t], [], terms, [t.id], focusCtx(focus, l)); };
   m.cur = await snap(last) || m;
@@ -7045,6 +7092,8 @@ function renderReport(){
       <section class="card rep-sec"><h3><span class="ms">sentiment_dissatisfied</span>Quiénes más critican</h3>${people(m.detractors, 'neg', 'Negativos', 'Nadie destaca por criticar.')}</section>
     </div>
     ${m.team && m.split ? splitSection(m, ab) : ''}
+    ${(m.rivals || []).length ? `<section class="card rep-sec"><h3><span class="ms">storefront</span>Posibles referencias a la competencia</h3><p class="sub">Otras marcas o negocios que aparecen en estos comentarios (detección automática por el texto: revísala).</p>
+      ${tbl(`<th>Marca o negocio</th><th class="num">Comentarios</th><th class="num">Negativos${ab ? ' para ' + esc(f.name) : ''}</th><th>Ejemplo</th>`, m.rivals.map(r => `<tr><td><b>${esc(r.name)}</b></td><td class="num">${fmtN(r.n)}</td><td class="num">${fmtN(r.neg)}</td><td>${r.sample ? '«' + esc(r.sample.text.slice(0, 140)) + (r.sample.text.length > 140 ? '…' : '') + '» — ' + esc(r.sample.authorName || '') : ''}</td></tr>`).join(''))}</section>` : ''}
     ${m.watch.length ? `<section class="card rep-sec"><h3><span class="ms">visibility</span>Otras marcas y temas</h3><p class="sub">Cuántos de estos comentarios los mencionan.</p>
       ${tbl('<th>Término</th><th class="num">Menciones</th><th class="num">Positivos</th><th class="num">Negativos</th><th>Ejemplo</th>', m.watch.map(w => `<tr><td><b>${esc(w.term)}</b></td><td class="num">${fmtN(w.n)}</td><td class="num">${fmtN(w.s.pos)}</td><td class="num">${fmtN(w.s.neg)}</td><td>${w.sample ? esc(w.sample.text.slice(0, 120)) + (w.sample.text.length > 120 ? '…' : '') : ''}</td></tr>`).join(''))}</section>` : ''}
     <div class="rep-grid">
@@ -7078,6 +7127,7 @@ function reportText(m){
       `Equipo: ${countTxt(T.n, 'respuesta', 'respuestas')} de ${countTxt(T.members.length, 'persona', 'personas')}; ${fmtN(m.answered)} comentarios respondidos, ${fmtN(m.pending)} sin responder${m.respRate != null ? ', tasa de respuesta ' + m.respRate + ' %' : ''}${m.medRT != null ? ', primera respuesta en ~' + fmtDec(m.medRT) + ' h' : ''}`);
     if(T.members.length) L.push('Quién respondió: ' + T.members.slice(0, 5).map(x => `${x.name} (${x.n})`).join(', ')); }
   if(m.st.words.length){ H(f ? 'Qué se dice' + ab : 'Temas más mencionados'); L.push(m.st.words.slice(0, 10).map(([w, n]) => `${w} (${n})`).join(', ')); }
+  if((m.rivals || []).length){ H('Posibles referencias a la competencia'); m.rivals.forEach(r => L.push(`• ${r.name}: ${countTxt(r.n, 'comentario', 'comentarios')} (${countTxt(r.neg, 'negativo', 'negativos')})${r.sample ? ' · «' + r.sample.text.slice(0, 140) + '» — ' + (r.sample.authorName || '') : ''}`)); }
   if(m.watch.length){ H('Otras marcas y temas'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones, ${countTxt(w.s.pos, 'positivo', 'positivos')} y ${countTxt(w.s.neg, 'negativo', 'negativos')}`)); }
   H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}${c.isTeam ? ' (equipo)' : ''}: ${c.text.slice(0, 240)}`));
   H('Comentarios positivos destacados'); m.topPos.forEach(c => L.push(`• ${c.authorName}${c.isTeam ? ' (equipo)' : ''}: ${c.text.slice(0, 240)}`));
@@ -7148,6 +7198,8 @@ function reportDocument(m){
       <tr><td>Público</td><td class="n">${n(P.n)}</td><td class="n">${n(P.people)}</td><td class="n">${n(P.s.pos)}</td><td class="n">${n(P.s.neu)}</td><td class="n">${n(P.s.neg)}</td></tr>
       <tr><td>Equipo</td><td class="n">${n(T.n)}</td><td class="n">${n(T.members.length)}</td><td class="n">${n(T.s.pos)}</td><td class="n">${n(T.s.neu)}</td><td class="n">${n(T.s.neg)}</td></tr></tbody></table>
       <p>El equipo respondió ${n(m.answered)} comentarios${m.pending ? ` y quedan ${n(m.pending)} sin responder` : ' y no queda ninguno pendiente'}${m.respRate != null ? ` (tasa de respuesta del ${m.respRate} %)` : ''}${m.medRT != null ? `; la primera respuesta llega en unas ${fmtDec(m.medRT)} horas` : ''}.${T.members.length ? ' Quién respondió: ' + T.members.slice(0, 5).map(x => `${e(x.name)} (${x.n})`).join(', ') + '.' : ''}</p></div>`; }
+  if((m.rivals || []).length) b += `<div class="avoid"><h2>Posibles referencias a la competencia</h2><p class="small">Otras marcas o negocios que aparecen en estos comentarios (detección automática por el texto).</p><table><thead><tr><th>Marca o negocio</th><th class="n">Comentarios</th><th class="n">Negativos</th><th>Ejemplo</th></tr></thead><tbody>
+    ${m.rivals.map(r => `<tr><td>${e(r.name)}</td><td class="n">${n(r.n)}</td><td class="n">${n(r.neg)}</td><td>${r.sample ? '«' + e(r.sample.text.slice(0, 140)) + (r.sample.text.length > 140 ? '…' : '') + '» — ' + e(r.sample.authorName || '') : ''}</td></tr>`).join('')}</tbody></table></div>`;
   if(m.watch.length) b += `<div class="avoid"><h2>Otras marcas y temas</h2><table><thead><tr><th>Término</th><th class="n">Menciones</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
     ${m.watch.map(w => `<tr><td>${e(w.term)}</td><td class="n">${n(w.n)}</td><td class="n">${n(w.s.pos)}</td><td class="n">${n(w.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
   b += `<h2>Comentarios destacados</h2>
@@ -7182,7 +7234,9 @@ async function resultsReportModel(list){
   if(aiInstalled()){ toast(`Buscando los comentarios sobre ${focusName(fq)}…`); focus = { q:fq, name:focusName(fq), keys:await focusMatch(items, fq) }; }
   const fl = focus ? focusFilter(items, focus) : items;
   if(focus && !fl.some(c => !c.isTeam)) throw new Error(`Ningún comentario habla de ${focus.name}. Cambia el criterio en ⋮ › Preferencias de informes.`);
-  return computeReportModel(fl, team, [{ id:'resultados', name:S.meta.title || 'Análisis de comentarios', date:day, postIds:[] }], [], terms, [], focusCtx(focus, items));
+  const m = computeReportModel(fl, team, [{ id:'resultados', name:S.meta.title || 'Análisis de comentarios', date:day, postIds:[] }], [], terms, [], focusCtx(focus, items));
+  m.rivals = detectRivals(fl);
+  return m;
 }
 // PDF A4 en blanco y negro con pie de página "Informe de comentarios · fecha — Página X de Y"
 async function reportPdf(m){

@@ -403,6 +403,14 @@ const TR = () => w.eval('TR');
       const s = Object.fromEntries(L.map(c => [c.id, c.sentiment]));
       check('Comentarios contra la marca: los de Dinna e Irina son negativos (otra marca mejor, preferir otra, no comprar, acuerdo con la queja)', s.b1 === 'negativo' && s.b2 === 'negativo' && s.b3 === 'negativo' && s.b4 === 'negativo', JSON.stringify(s) + ' · ' + L.filter(c => c.sentimentFrom).map(c => c.id + ': ' + c.sentimentFrom).join(' | '));
       check('Sin falsos negativos: elogiar a la marca o a la ciudad sigue siendo positivo, y el acuerdo con un elogio también', s.b5 === 'positivo' && s.b6 === 'positivo' && s.b7 === 'positivo', JSON.stringify({ b5:s.b5, b6:s.b6, b7:s.b7 }));
+      const extra = w.finalize([
+        { id:'r1', authorName:'Luis', text:'En Santiago de Cuba y en Holguín los precios de los combos están mejor que antes' },
+        { id:'r2', authorName:'Mario', text:'Yo compro en tiendaya.com, más barato y la entrega es rápida' },
+        { id:'r3', authorName:'Elena', text:'Lo AFIRMO, el servicio de Kanasta 24 es lo mejor' },
+        { id:'r4', authorName:'Julio Aguilera', text:'Hooooo. Kanasta24. Magnifica. Plataforma d Envios. Me alegre q Patrociine este importante. Conocimiento d La historia d Nuestra Ciudad.' } ], { platform:'facebook' });
+      const rv = w.detectRivals([...L, ...extra]);
+      const chago = rv.find(r => /^La Bodega del Chago$/.test(r.name));
+      check('Competencia: detecta «La Bodega del Chago» (une «la bodega») y una web ajena; no cuenta lugares, personas, la marca ni palabras en mayúsculas', chago && chago.n === 2 && chago.neg === 2 && rv.some(r => /tiendaya\.com/i.test(r.name)) && !rv.some(r => /holgu|santiago|kanasta|afirmo|irina|dinna|envios|historia|ciudad/i.test(r.name)), JSON.stringify(rv.map(r => r.name + ' ' + r.n + '/' + r.neg)));
       check('El motivo queda en «Detalles»', /otra marca \(La Bodega del Chago\)/.test(L.find(c => c.id === 'b4').sentimentFrom || '') && /no comprar/.test(L.find(c => c.id === 'b2').sentimentFrom || ''), L.map(c => c.sentimentFrom || '').join(' | ')); }
     // «Sin responder» y el informe de Resultados siguen el criterio del informe (Kanasta24)
     w.applyFilters(); await until(() => w.eval('!!(S.focusRes && S.focusRes.list === S.comments)'), 8000).catch(() => {});
