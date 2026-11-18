@@ -361,6 +361,9 @@ const TR = () => w.eval('TR');
     // 8. Ver comentarios del informe y búsqueda por significado (modelo simulado: bolsa de palabras)
     await w.viewTrackingsComments([t1.id, t2.id]); w.selectTab('list'); await wait(200);
     check('Ver varios seguimientos juntos en Resultados', w.eval('S.comments.length') === 16 && w.eval('S.meta.multi') === true);
+    { w.selectTab('summary'); await wait(300); const card = id => d.getElementById(id).closest('section.card');
+      check('Resumen: las tarjetas sin datos no se muestran (sin hashtags ni menciones) y las que tienen datos sí', card('topHashtags').classList.contains('hidden') && !card('topLiked').classList.contains('hidden') && !card('topEmojis').classList.contains('hidden') && !card('topAuthors').classList.contains('hidden'));
+      w.selectTab('list'); await wait(100); }
     const VOC = ['kanasta', 'kanasta24', 'pedido', 'envio', 'envios', 'entrega', 'tardanza', 'llego', 'servicio', 'precio'];
     const normName = w.eval('normName');
     w.semEmbed = async (texts, kind) => texts.map(t => { const n = normName(t); let v = VOC.map(k => n.includes(k) ? 1 : 0); if(/kanasta/.test(n)) v[0] = v[1] = 1; const s = Math.hypot(...v) || 1; return v.map(x => x / s); });

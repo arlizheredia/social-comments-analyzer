@@ -4565,6 +4565,8 @@ function trendText(vals, per){
   const word = ch > 5 ? 'más' : ch < -5 ? 'menos' : 'estable';
   return `Tendencia: ${arrow} ${ch > 5 || ch < -5 ? Math.abs(ch) + ' % ' + word : word} ${span} (${fmtN(last)} frente a ${fmtN(prev)})`;
 }
+// Muestra u oculta la tarjeta que contiene un gráfico (sin datos, no se muestra la tarjeta)
+function vizCard(sel, on){ const card = $(sel)?.closest('section.card'); if(card) card.classList.toggle('hidden', !on); }
 function vizEmpty(icon, title, detail){
   return `<div class="viz-empty"><span class="ms">${icon}</span><p><b>${esc(title)}</b></p>${detail?`<p>${esc(detail)}</p>`:''}</div>`;
 }
@@ -4665,14 +4667,15 @@ function renderCharts(){
       $('#chartHours').innerHTML = columnChart(hd, { W: W2, h: chartH(W2), label: 'Actividad por hora del día' });
       $('#hrData > div').innerHTML = vizDataList(hd.map(d => [d.tl, fmtN(d.v)])); $('#hrData').hidden = false;
     } else {
-      $('#hrSub').textContent = '';
-      $('#chartHours').innerHTML = vizEmpty('schedule', 'Las fechas obtenidas no tienen precisión horaria', 'Ocurre con el extractor de Facebook y TikTok, que solo muestran tiempos relativos o el día.');
-      $('#hrData').hidden = true;
+      // sin hora exacta (extractor de Facebook y TikTok: tiempos relativos o solo el día) no hay gráfico posible: no se muestra la tarjeta
+      $('#hrSub').textContent = ''; $('#chartHours').innerHTML = ''; $('#hrData').hidden = true;
     }
+    vizCard('#chartTimeline', true); vizCard('#chartHours', precise);
   } else {
     $('#tlSub').textContent = ''; $('#hrSub').textContent = ''; $('#tlTrend').textContent = '';
-    $('#chartTimeline').innerHTML = $('#chartHours').innerHTML = vizEmpty('event_busy', 'Sin fechas disponibles');
+    $('#chartTimeline').innerHTML = $('#chartHours').innerHTML = '';
     $('#tlData').hidden = $('#hrData').hidden = true;
+    vizCard('#chartTimeline', false); vizCard('#chartHours', false);
   }
   // --- Autores ---
   const au = st.authors.slice(0, 8);
@@ -4700,20 +4703,24 @@ function renderCharts(){
   $('#lkSub').textContent = liked.length ? 'Pulsa un comentario para ver sus detalles' : '';
   $('#topLiked').innerHTML = liked.length
     ? `<ol class="toplist">${liked.map((c, i) => `<li><button class="tl-row" data-open="${esc(c.id)}" aria-label="${esc(c.authorName)}: ${fmtN(c.reactions)} ${PLATFORMS[c.platform]?.reactLabel?.toLowerCase() || 'reacciones'}"><span class="tl-rank">${i + 1}</span>${avatarHtml(c)}<span class="tl-body"><span class="tl-name">${esc(c.authorName || '(desconocido)')}</span><span class="tl-text">${esc(c.text.replace(/\s+/g,' ')) || '(sin texto)'}</span></span><span class="tl-count"><span class="ms">favorite</span>${fmtN(c.reactions)}</span></button></li>`).join('')}</ol>`
-    : vizEmpty('favorite', 'Ningún comentario tiene reacciones registradas');
+    : '';
+  vizCard('#topLiked', liked.length > 0);
   // --- Palabras ---
   const topW = st.words.slice(0, 10), restW = st.words.slice(10, 26);
   $('#wdSub').textContent = topW.length ? 'Excluye palabras vacías · pulsa una para filtrar' : '';
   $('#topWords').innerHTML = rankedBars(topW.map(([w, n]) => ({ l: w, v: n })), 'q', { unit: 'veces' });
   $('#moreWords').innerHTML = restW.length ? '<span>Otras:</span>' + chipList(restW, '') : '';
+  vizCard('#topWords', topW.length > 0);
   // --- Emojis ---
   const topE = st.emojis.slice(0, 8);
   $('#emSub').textContent = topE.length ? `${countTxt(st.emojis.length,'emoji distinto','emojis distintos')}` : '';
-  $('#topEmojis').innerHTML = topE.length ? rankedBars(topE.map(([e, n]) => ({ l: e, v: n })), 'q', { emoji: true, unit: 'veces' }) : vizEmpty('mood', 'Sin emojis');
+  $('#topEmojis').innerHTML = topE.length ? rankedBars(topE.map(([e, n]) => ({ l: e, v: n })), 'q', { emoji: true, unit: 'veces' }) : '';
+  vizCard('#topEmojis', topE.length > 0);
   // --- Hashtags y menciones ---
   $('#tgSub').textContent = st.hashtags.length ? 'Pulsa uno para filtrar' : '';
   $('#topHashtags').innerHTML = chipList(st.hashtags, 'Sin hashtags');
   $('#topMentions').innerHTML = chipList(st.mentions, 'Sin menciones', '@');
+  vizCard('#topHashtags', st.hashtags.length > 0 || st.mentions.length > 0);
 }
 function highlight(text, q){
   const e = esc(text); if(!q) return e;
