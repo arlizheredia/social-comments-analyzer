@@ -251,7 +251,7 @@ const TR = () => w.eval('TR');
     const m = w.eval('REP.model');
     // todo el informe trata solo de los comentarios del criterio («Kanasta24»): 2 por red el lunes (Dinna y Ana) y el de Pedro el martes
     check('El informe solo incluye los comentarios sobre Kanasta24, sin duplicar: 7 de 16', m.list.length === 7 && m.list.every(c => /kanasta/i.test(c.text)) && m.focus.total === 16 && m.focus.n === 7, 'comentarios: ' + m.list.length + ' de ' + (m.focus && m.focus.total));
-    check('Tema del criterio: «Kanasta24 y comentarios relacionados» → «Kanasta24»', m.focus.name === 'Kanasta24' && w.focusSubj('Comentarios sobre los envíos a Holguín') === 'los envíos a Holguín' && w.focusName('quejas por demoras en las entregas') === '«quejas por demoras en las entregas»');
+    check('Tema del criterio: «Kanasta24 y comentarios relacionados» → «Kanasta24»', m.focus.name === 'Kanasta24' && w.focusSubj('Comentarios sobre los envíos a Holguín') === 'los envíos a Holguín' && w.focusSubj('Kanasta24 y comentarios relacionados con la marca') === 'Kanasta24' && w.focusName('quejas por demoras en las entregas') === '«quejas por demoras en las entregas»');
     check('Coincidencia con otra ortografía: «Canasta 24» cuenta como Kanasta24; los textos cortos sin el nombre no', w.focusKeywords('Kanasta24').includes('canasta24') && w.eval('focusText')({ text:'No sé qué es Canasta 24' }).includes('canasta24'));
     check('Evolución por fecha: el martes 4 comentarios sobre Kanasta24 y 1 nuevo (el de Pedro)', m.byDate.length === 2 && m.byDate[1].total === 4 && m.byDate[1].nw === 1, JSON.stringify(m.byDate.map(x => ({ total:x.total, nuevos:x.nw }))));
     const rtxt = d.getElementById('reportDoc').textContent;
@@ -259,7 +259,7 @@ const TR = () => w.eval('TR');
     const cRow = m.cmp.find(r => r.k === 'Comentarios');
     check('Comparativa: el martes 4 comentarios sobre Kanasta24 frente a 6 el lunes', m.last.name === 'Martes' && m.prevT.name === 'Lunes' && cRow.a === 4 && cRow.b === 6 && /▼ -2/.test(cRow.D), JSON.stringify(cRow));
     check('Comparativa con el seguimiento anterior en sección propia', m.postCmp.length === 2 && /Comparativa con el seguimiento anterior/.test(rtxt));
-    check('El resumen empieza por cuántos comentarios hablan del tema y después el seguimiento principal', /^De 16 comentarios revisados, 7 hablan de Kanasta24/.test(m.summary[0]) && m.summary.some(x => /^Seguimiento principal: «Martes».*sobre Kanasta24/.test(x)), m.summary.slice(0, 2).join(' | '));
+    check('El resumen empieza por cuántos comentarios hablan del tema y después el seguimiento principal', /^De 16 comentarios revisados, 7 hablan de Kanasta24\.$/.test(m.summary[0]) && m.summary.some(x => /^Seguimiento principal: «Martes».*sobre Kanasta24/.test(x)), m.summary.slice(0, 2).join(' | '));
     check('El informe nombra el tema y no dice «enfoque» ni menciona la IA', /Informe de comentarios sobre Kanasta24/.test(rtxt) && /Quién más comenta sobre Kanasta24/.test(rtxt) && /Quiénes hablan bien de Kanasta24/.test(rtxt) && !/enfoque/i.test(rtxt) && !/\bIA\b|inteligencia artificial/i.test(rtxt) && !/Estadísticas generales/.test(rtxt), rtxt.match(/enfoque|\bIA\b/i)?.[0]);
     const rdocW = w.reportDocument(m).body, rtext = w.reportText(m);
     check('Texto y Word: centrados en el tema, sin «enfoque» ni IA', /INFORME DE COMENTARIOS SOBRE KANASTA24/.test(rtext) && /Informe de comentarios sobre Kanasta24/.test(rdocW) && !/enfoque|\bIA\b/i.test(rtext + rdocW.replace(/<[^>]+>/g, ' ')));

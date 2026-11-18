@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// sca-extractor 1.4.0 · requiere extensión 1.4.0
+// sca-extractor 1.4.1 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -63,6 +63,7 @@ function fbExtractor(){
     /(respondió|replied|a répondu|respondeu)/i
   ];
   var EXCL = /(ocultar|hide|menos|less|traduc|transl|masquer|esconder|calificar|rate this)/i;
+  var REPLY_BTN_RE = /^.{0,60}\b(respuestas?|replies|reply|réponses?|respostas?|respondió|replied|a répondu|respondeu)\b.{0,20}$/i;
 
   function articles(){
     var all = Array.prototype.slice.call(document.querySelectorAll('div[role="article"]'));
@@ -454,17 +455,25 @@ function fbExtractor(){
     return 0;
   }
   var FB_TOTAL_RE = /(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?|kommentare?|commenti)\b/i;
+  // Total de comentarios de la publicación abierta. En los reels, Facebook carga también los reels vecinos (y el feed),
+  // cada uno con su «N comentarios»: se elige el más cercano a los comentarios que se extraen y, a igualdad, el que está en pantalla.
   function fbTotal(){
-    var best = 0;
+    var cands = [];
     Array.prototype.slice.call(document.querySelectorAll('[aria-label]')).forEach(function(e){
       var l = e.getAttribute('aria-label') || ''; if (l.length > 80 || !/(coment|comment|kommentar)/i.test(l)) return;
-      var m = l.match(FB_TOTAL_RE); if (m && e.offsetParent){ var n = parseCount(m[1]); if (n > best) best = n; }
+      var m = l.match(FB_TOTAL_RE); if (m && e.offsetParent){ var n = parseCount(m[1]); if (n) cands.push({ e: e, n: n }); }
     });
-    if (!best) Array.prototype.slice.call(document.querySelectorAll('span,div[role="button"]')).forEach(function(e){
+    if (!cands.length) Array.prototype.slice.call(document.querySelectorAll('span,div[role="button"]')).forEach(function(e){
       var t = (e.innerText || '').trim(); if (t.length > 30 || !e.offsetParent) return;
-      var m = t.match(/^(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?)$/i); if (m){ var n = parseCount(m[1]); if (n > best) best = n; }
+      var m = t.match(/^(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?)$/i); if (m){ var n = parseCount(m[1]); if (n) cands.push({ e: e, n: n }); }
     });
-    return best;
+    if (!cands.length) return 0;
+    var ref = articles()[0] || null, vw = window.innerWidth, vh = window.innerHeight;
+    var depth = function(e){ if (!ref) return 0; var a = e; while (a && !a.contains(ref)) a = a.parentElement; var d = 0; while (a){ d++; a = a.parentElement; } return d; };
+    var onScreen = function(e){ var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < vh && r.left < vw ? 1 : 0; };
+    cands.forEach(function(c, i){ c.d = depth(c.e); c.v = onScreen(c.e); c.i = i; });
+    cands.sort(function(a, b){ return (b.d - a.d) || (b.v - a.v) || (a.i - b.i); });
+    return cands[0].n;
   }
   function netTotal(){ return TT ? ttTotal() : IG ? 0 : fbTotal(); }
   function ttHandle(a){ var m = ((a && a.getAttribute('href')) || '').match(/^\/@([^/?#]+)/); return m ? decodeURIComponent(m[1]) : ''; }
@@ -752,7 +761,10 @@ function fbExtractor(){
       var r = TT ? ttRoot() : IG ? igRoot() : root();
       var btnSel = TT ? 'p[role="button"],div[role="button"],span[role="button"],button,[data-e2e^="view-more"],p[class*="ReplyActionText"],[class*="DivViewRepliesContainer"]'
         : IG ? 'button,div[role="button"],span[role="button"]' : 'div[role="button"],span[role="button"]';
-      var btns = Array.prototype.slice.call(r.querySelectorAll(btnSel)).filter(function(b){
+      var cand = Array.prototype.slice.call(r.querySelectorAll(btnSel));
+      // Facebook: algunos «Ver N respuestas» son elementos con tabindex sin role="button"
+      if (!TT && !IG) Array.prototype.slice.call(r.querySelectorAll('[tabindex="0"]:not([role]):not(a)')).forEach(function(b){ if (REPLY_BTN_RE.test((b.innerText || '').trim()) && cand.indexOf(b) < 0) cand.push(b); });
+      var btns = cand.filter(function(b){
         if (!b.offsetParent) return false;
         var t = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
