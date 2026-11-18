@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// Extensión 1.3.3
+// sca-extractor 1.4.0 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.

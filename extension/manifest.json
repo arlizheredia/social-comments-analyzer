@@ -2,19 +2,23 @@
   "manifest_version": 3,
   "name": "Social Comments Analyzer – Extractor",
   "short_name": "SCA Extractor",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "Extrae automáticamente los comentarios de publicaciones de Facebook, Instagram y TikTok para los seguimientos de Social Comments Analyzer.",
   "permissions": [
     "scripting",
     "tabs",
     "storage",
     "power",
-    "cookies"
+    "cookies",
+    "userScripts"
   ],
   "host_permissions": [
     "https://*.facebook.com/*",
     "https://*.instagram.com/*",
-    "https://*.tiktok.com/*"
+    "https://*.tiktok.com/*",
+    "https://arlizheredia.github.io/social-comments-analyzer/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
   ],
   "background": {
     "service_worker": "sw.js"

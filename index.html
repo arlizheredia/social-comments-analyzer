@@ -686,6 +686,8 @@ dialog:has(>.dlg-body)>.dlg-body{flex:1 1 auto;min-height:0;max-height:none}
 .viz-actions{display:flex;align-items:center;gap:6px;flex:none}
 .viz-actions .hlp-ic{margin:-6px -8px 0 0}
 .viz-h4{margin:4px 0 -4px;font:500 13px var(--font);color:var(--on-surface-variant)}
+.report .viz-h4{margin-bottom:10px}
+.report .viz-card > .viz-h4{margin-bottom:-4px}
 .viz-plot{min-height:120px}
 .viz-plot svg{display:block;width:100%;height:auto;overflow:visible}
 .viz-plot .tick{fill:var(--viz-axis);font:11px var(--font);font-variant-numeric:tabular-nums}
@@ -1013,14 +1015,12 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 .rep-focus{border:2px solid var(--primary)}
 .rep-focus>h3 .ms{color:var(--primary)}
 .rep-divider{font:500 20px/28px var(--font);margin:28px 0 12px;padding-top:16px;border-top:1px solid var(--outline-variant)}
-.rep-ai-prog{display:grid;gap:8px;margin-top:14px}
 .ai-prog{display:inline-grid;grid-template-columns:auto minmax(0,1fr);gap:4px 8px;align-items:center;width:min(100%,440px);vertical-align:middle;text-align:left}
 .ai-prog .ai-spin{font-size:18px;animation:spin 1.4s linear infinite;color:var(--primary)}
 .ai-prog .ai-prog-t{font-size:13px;line-height:18px;color:var(--on-surface-variant)}
 .ai-prog .pbar{grid-column:1/-1;height:6px}
 @media (prefers-reduced-motion:reduce){ .ai-prog .ai-spin{animation:none} }
 .sem-bar .pbar{flex:1 1 100%;order:9;height:6px;background:color-mix(in srgb,var(--on-primary-container) 18%,transparent)}
-.rep-ai-prog .pbar{max-width:520px}
 .ai-banner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 16px;align-items:center;margin:0 0 16px;padding:14px 18px;border-radius:16px;background:var(--pend-bg);color:var(--on-surface);border:1px solid var(--outline-variant)}
 .ai-banner-t{grid-column:1;grid-row:1}
 .ai-banner-a{grid-column:2;grid-row:1}
@@ -1143,7 +1143,6 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
 .qitem{padding:10px 12px;border-radius:12px;background:var(--surface-container);font-size:13px;line-height:19px}
 .qitem b{font-weight:600}
 .qitem .qm{font-size:12px;color:var(--on-surface-variant);margin-top:2px}
-.rep-ai{white-space:pre-wrap;font-size:14px;line-height:22px}
 .mini-seg{display:flex;gap:2px;height:8px;min-width:90px}
 .mini-seg i{border-radius:3px;min-width:2px}
 @media print{
@@ -1166,8 +1165,13 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
 .crumbs li a{color:inherit;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .crumbs li a:hover{color:var(--primary);text-decoration:underline}
 .crumbs li[aria-current] span{color:var(--on-surface);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.step-n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:700;background:var(--surface-container-high,var(--surface-container));color:var(--on-surface-variant)}
+.step-n{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;background:var(--surface-container-high,var(--surface-container));color:var(--on-surface-variant)}
 .tab[aria-selected="true"] .step-n{background:var(--primary);color:var(--on-primary)}
+/* pestañas con número de paso y contador: todo a 20 px de alto sobre la misma línea central */
+.tab .count-badge{display:inline-flex;align-items:center;justify-content:center;flex:none;box-sizing:border-box;height:20px;min-width:20px;padding:0 6px;line-height:1;font-variant-numeric:tabular-nums}
+.tab[aria-selected="true"] .count-badge{background:var(--primary-container);color:var(--on-primary-container)}
+.tab{line-height:20px}
+.tab .ms.sm{font-size:18px;line-height:20px;margin-left:-2px}
 .tab.tab-link{text-decoration:none;margin-left:auto;color:var(--primary)}
 .tab.tab-link .ms{font-size:16px}
 @media (max-width:720px){ .tab.tab-link{margin-left:0} }
@@ -1237,6 +1241,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
       <button role="menuitem" data-action="shortcuts"><span class="ms">keyboard</span>Atajos de teclado</button>
       <button role="menuitem" data-action="ai"><span class="ms">psychology</span>IA de la aplicación</button>
       <button role="menuitem" data-action="rep-prefs"><span class="ms">tune</span>Preferencias de informes</button>
+      <button role="menuitemcheckbox" aria-checked="false" data-action="show-api" id="showApiItem"><span class="ms">verified_user</span>Mostrar «Conectar con Facebook»</button>
       <hr>
       <button role="menuitem" data-action="theme-light"><span class="ms">light_mode</span>Tema claro</button>
       <button role="menuitem" data-action="theme-dark"><span class="ms">dark_mode</span>Tema oscuro</button>
@@ -1279,6 +1284,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
         </div>
         <div class="head-acts">
           <span class="ext-chip" id="extChip" title="Estado de la extensión de Chrome"><i></i><span id="extTxt">Extensión no detectada</span></span>
+          <button class="btn text sm hidden" id="extAuto" title="Permite que la extensión aplique sola las mejoras publicadas"><span class="ms">autorenew</span>Permitir actualizaciones automáticas</button>
           <a class="btn tonal sm" id="extDl" href="downloads/social-comments-analyzer-extension.zip" download><span class="ms">download</span><span id="extDlTxt">Descargar extensión</span></a>
           <button class="icon-btn" data-menu="segMenu" aria-haspopup="menu" aria-expanded="false" aria-label="Más opciones" title="Más opciones"><span class="ms">more_vert</span></button>
           <div class="menu" id="segMenu" role="menu">
@@ -1805,6 +1811,8 @@ Si administras la página o la cuenta, **Conectar** da los datos más completos.
 
 # Conectar con Facebook {#facebook icon=verified_user}
 
+> Esta opción está **oculta por defecto** en *Obtener*. Para verla, abre {ms:more_vert} (arriba a la derecha) y marca **Mostrar «Conectar con Facebook»**. Se activa sola si pulsas *Iniciar sesión* al responder un comentario.
+
 ## 1. Crear la app (una sola vez) {#fb-app}
 
 1. Entra en [developers.facebook.com/apps](https://developers.facebook.com/apps/) y pulsa **Crear app** (caso de uso para administrar páginas, o tipo *Empresa*).
@@ -2029,7 +2037,15 @@ La extensión **Social Comments Analyzer – Extractor** abre cada publicación 
 
 ## Actualizarla {#ext-actualizar}
 
-Cuando haya una versión nueva, *Seguimiento* mostrará **Actualizar extensión**. Descarga el ZIP, sustituye el contenido de la carpeta y pulsa {ms:refresh} en la tarjeta de la extensión en `chrome://extensions`.
+**Las mejoras de la extracción se instalan solas** (desde la versión 1.4.0): al abrir la app, la extensión recibe la versión publicada, comprueba que está firmada por el autor y la usa desde la siguiente publicación, sin reinstalar nada. Chrome pide un permiso una sola vez: en *Seguimiento* pulsa **Permitir actualizaciones automáticas** y activa **Permitir scripts de usuario** en los detalles de la extensión.
+
+Si una versión nueva cambia la propia extensión, *Seguimiento* mostrará **Actualizar extensión**:
+
+1. Descarga el ZIP y descomprímelo.
+2. Copia sus archivos en la carpeta donde instalaste la extensión, reemplazando los anteriores.
+3. Listo: la extensión detecta la versión nueva en unos segundos, se activa sola y la app se vuelve a conectar (si hay una extracción en marcha, espera a que termine).
+
+> Al pasar desde una versión anterior a la 1.4.0, después de copiar los archivos pulsa {ms:refresh} en la tarjeta de la extensión en `chrome://extensions` y recarga la app (solo esa vez).
 
 > Funciona con la app publicada en GitHub Pages, en `http://localhost` y abriendo el archivo directamente (para esto último activa *Permitir acceso a URLs de archivo* en los detalles de la extensión).
 
@@ -2088,8 +2104,8 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 > El **seguimiento más reciente** de los elegidos es siempre el **principal**: sus indicadores encabezan el informe y se comparan con el seguimiento anterior (variación ▲/▼). La evolución, la audiencia y los temas cubren todo el periodo elegido.
 
 - **Valores por defecto**: el enfoque, los temas a vigilar, *Elaborado por* y *Cliente / marca* empiezan con tus preferencias (⋮ › **Preferencias de informes**, o **Valores por defecto** en el formulario del informe). Lo que cambies en un informe solo afecta a ese informe.
-- **Enfoque** (obligatorio): escribe el criterio en el que se centra el informe; por defecto, *Kanasta24 y comentarios relacionados*. La IA busca los comentarios que lo cumplen y el informe muestra primero sus estadísticas: cuántos son y qué parte del total, positivos, neutrales y negativos, evolución por seguimiento, por publicación, quién más habla del tema, embajadores, quiénes más critican, de qué se habla y los comentarios destacados. Después vienen las estadísticas generales de todos los comentarios.
-- **Resumen ejecutivo** automático y **resumen redactado con IA**, que se genera siempre al crear el informe (verás una barra de progreso mientras se redacta).
+- **Enfoque** (obligatorio): escribe el criterio del informe; por defecto, *Kanasta24 y comentarios relacionados*. Se buscan los comentarios que nombran el tema (también con otra ortografía, como *Canasta 24*) o que hablan claramente de él, y **todo el informe trata solo de esos comentarios**: indicadores, comparativa, evolución, publicaciones, quién comenta, quiénes hablan bien y quiénes critican, qué se dice, comentarios destacados, próximos pasos y el mensaje para WhatsApp. El informe nombra el tema (por ejemplo, *Comentarios sobre Kanasta24*) y no menciona cómo se elaboró.
+- **Resumen** automático con las cifras clave del tema.
 - **Indicadores clave**: comentarios únicos, personas, interacciones, comentarios **positivos** y **negativos** y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
 - **Alertas**: publicaciones con muchos negativos, subida de negativos entre fechas y comentarios negativos o preguntas sin responder.
 - **Evolución por seguimiento**: comentarios por fecha y comentarios **nuevos** respecto a los seguimientos anteriores.
@@ -2636,7 +2652,7 @@ Cada comentario incluye su **plataforma**.
     <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
   </div>
   <div class="dlg-body">
-    <p class="small muted" style="margin:0 0 10px">Una valoración breve, sin tecnicismos, para acompañar el informe en un chat o canal. Habla de los comentarios sobre las marcas o temas vigilados del informe. Revísala y ajústala a tu estilo antes de enviarla.</p>
+    <p class="small muted" style="margin:0 0 10px">Una valoración breve, sin tecnicismos, para acompañar el informe en un chat o canal. Habla de los comentarios sobre el tema del informe. Revísala y ajústala a tu estilo antes de enviarla.</p>
     <div class="row" style="gap:12px;flex-wrap:wrap;margin-bottom:10px">
       <label class="field" style="flex:1 1 180px"><span class="lbl">Tono</span>
         <select class="input" id="waTone"><option value="cercano">Cercano</option><option value="formal">Formal</option><option value="breve">Muy breve</option></select></label>
@@ -2649,6 +2665,26 @@ Cada comentario incluye su **plataforma**.
     <button class="btn text needs-ai" id="waAi" style="margin-right:auto"><span class="ms">auto_awesome</span>Redactar con IA</button>
     <button class="btn tonal" id="waOpen"><span class="ms">send</span>Abrir en WhatsApp</button>
     <button class="btn filled" id="waCopy"><span class="ms">content_copy</span>Copiar mensaje</button>
+  </div>
+</dialog>
+
+<!-- Permiso de Chrome para que la extensión se actualice sola -->
+<dialog id="extAutoDlg" aria-labelledby="extAutoTitle">
+  <div class="dlg-head">
+    <h2 id="extAutoTitle" style="font-size:20px">Actualizaciones automáticas</h2>
+  </div>
+  <div class="dlg-body">
+    <p style="margin:0 0 10px">Para que la extensión aplique sola las mejoras que se publiquen, Chrome pide un permiso que se activa una sola vez:</p>
+    <ol style="margin:0 0 10px;padding-left:20px;line-height:1.6">
+      <li>Pulsa <b>Abrir ajustes de la extensión</b>.</li>
+      <li>Activa <b>Permitir scripts de usuario</b> (<i>Allow User Scripts</i>).</li>
+      <li>Vuelve a esta pestaña: la app lo detecta sola.</li>
+    </ol>
+    <p class="small muted" style="margin:0">Solo se instalan mejoras firmadas por el autor de la app. Sin este permiso, la extensión sigue funcionando con su versión actual.</p>
+  </div>
+  <div class="dlg-actions">
+    <button class="btn text" data-close>Ahora no</button>
+    <button class="btn filled" id="extAutoOpen">Abrir ajustes de la extensión</button>
   </div>
 </dialog>
 
@@ -3597,7 +3633,7 @@ function parseFbDate(str, baseIso){
 }
 
 /* ---------- análisis de texto ---------- */
-const STOP = new Set(('a al algo algunas algunos ante antes como con contra cual cuando de del desde donde durante e el ella ellas ellos en entre era eran es esa esas ese eso esos esta estaba estado estan estar estas este esto estos fue fueron ha hace hacia han hasta hay la las le les lo los mas me mi mis mucho muy nada ni no nos nosotros o os otra otro para pero poco por porque que quien se sea ser si sin sobre son su sus tambien te tiene tienen todo todos tu tus un una uno unos usted ustedes y ya yo vos q k pq xq x d tb tmb jaja jajaja jajajaja jeje ok asi aqui ahi solo cada mismo misma hoy van va voy será sí también así aquí ahí más qué cómo cuál dónde él tú mí ' +
+const STOP = new Set(('sido estoy está están tengo tenía hemos he a al algo algunas algunos ante antes como con contra cual cuando de del desde donde durante e el ella ellas ellos en entre era eran es esa esas ese eso esos esta estaba estado estan estar estas este esto estos fue fueron ha hace hacia han hasta hay la las le les lo los mas me mi mis mucho muy nada ni no nos nosotros o os otra otro para pero poco por porque que quien se sea ser si sin sobre son su sus tambien te tiene tienen todo todos tu tus un una uno unos usted ustedes y ya yo vos q k pq xq x d tb tmb jaja jajaja jajajaja jeje ok asi aqui ahi solo cada mismo misma hoy van va voy será sí también así aquí ahí más qué cómo cuál dónde él tú mí ' +
   'the a an and or but if of to in on at by for with about as is are was were be been being have has had do does did not no yes it its this that these those i you he she we they me my your our their them his her so just than then there here what which who whom will would can could should from up out into over all any some more most very too also').split(/\s+/));
 const POS = ['bueno','buena','buenos','buenas','excelente','genial','gracias','increíble','increible','hermoso','hermosa','bonito','bonita','lindo','linda','perfecto','perfecta','encanta','encantó','amo','amor','felicidades','felicitaciones','bien','mejor','maravilloso','maravillosa','fantástico','fantastico','feliz','super','súper','recomendado','recomiendo','espectacular','bendiciones','éxito','exito','apoyo','top','crack','bravo','precioso','preciosa','divino','fascinante','orgullo','calidad','rápido','rapido','agradecido','agradecida','great','good','love','awesome','amazing','excellent','thanks','thank','nice','beautiful','perfect','best','happy','wonderful','cool','congrats','congratulations','recommend'];
 const NEG = ['malo','mala','malos','malas','pésimo','pesimo','pésima','pesima','horrible','terrible','odio','asco','fraude','estafa','estafadores','mentira','mentiras','mentirosos','peor','basura','triste','decepción','decepcion','decepcionado','decepcionada','problema','problemas','queja','nunca','lamentable','vergüenza','verguenza','robo','ladrones','caro','lento','error','falla','fallas','mal','tarde','molesto','molesta','indignante','abuso','denuncia','cancelar','bad','worst','hate','awful','scam','fraud','poor','sad','angry','disappointed','problem','slow','broken','fake','never'];
@@ -5386,18 +5422,19 @@ function aiProgressHtml(txt, pct){ return `<span class="ai-prog" role="status" a
 function aiProgressSet(sel, txt, pct){ const e = typeof sel === 'string' ? $(sel) : sel; if(e) e.innerHTML = aiProgressHtml(txt, pct); }
 function aiStatusText(t, pct){
   ['#rpAiState', '#waAiState'].forEach(s => { const e = $(s); if(e && e.offsetParent && e.dataset.busy === '1') aiProgressSet(e, t, pct); });
-  const r = $('#repAiState'); if(r && r.offsetParent) r.textContent = t;
   const st = $('#aiStatus'); if(st && st.offsetParent && st.dataset.busy === '1' && $('#aiDlF').classList.contains('hidden')) aiProgressSet(st, t, pct);
 }
 /* ---------- Motor de IA en segundo plano (Web Worker) ----------
    Los modelos se cargan y ejecutan fuera del hilo de la página: la interfaz sigue respondiendo y el navegador
    no muestra el aviso de «página sin respuesta». Si el navegador no permite el Worker, se usa el hilo principal. */
-const AIW = { w:null, seq:0, pend:new Map(), failed:false };
+const AIW = { w:null, seq:0, pend:new Map(), failed:false, crashes:0, notified:false };
 const AIW_SRC = `
 let T = null; const P = {}, O = {};
 async function lib(url){ if(!T){ T = await import(url); T.env.allowLocalModels = false; try{ T.env.backends.onnx.wasm.numThreads = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1)); }catch(e){} } return T; }
 async function load(kind, model, task, tries, url, id){
   if(P[kind]) return P[kind];
+  // un solo modelo en memoria: se libera el otro antes de cargar este (evita que el motor se quede sin memoria)
+  for(const k of Object.keys(P)){ try{ await P[k].dispose?.(); }catch(e){} delete P[k]; delete O[k]; }
   const t = await lib(url); let last;
   for(const o of tries){
     try{ P[kind] = await t.pipeline(task, model, { ...o, progress_callback:p => postMessage({ id, type:'progress', p:{ status:p.status, file:p.file, loaded:p.loaded, total:p.total } }) }); O[kind] = o; return P[kind]; }
@@ -5430,7 +5467,14 @@ function aiWorker(){
     AIW.w.onmessage = e => { const m = e.data, hd = AIW.pend.get(m.id); if(!hd) return;
       if(m.type === 'progress') hd.onProgress?.(m.p); else if(m.type === 'step') hd.onStep?.(m.a, m.b);
       else { AIW.pend.delete(m.id); m.type === 'done' ? hd.res(m.result) : hd.rej(new Error(m.error)); } };
-    AIW.w.onerror = e => { console.warn('IA: el motor en segundo plano falló', e.message); const err = new Error(e.message || 'El motor de IA se detuvo'); for(const hd of AIW.pend.values()) hd.rej(err); AIW.pend.clear(); AIW.w = null; LLM.gen = null; LLM.loading = null; SEM.pipe = null; SEM.loading = null; };
+    AIW.w.onerror = e => {
+      console.warn('IA: el motor en segundo plano se detuvo', e.message || '(sin detalle: suele ser falta de memoria)');
+      AIW.crashes++;
+      const err = Object.assign(new Error('El motor de IA se detuvo' + (e.message ? ': ' + e.message : ' (posible falta de memoria)')), { workerCrash:true });
+      try{ AIW.w.terminate(); }catch(x){}
+      for(const hd of AIW.pend.values()) hd.rej(err); AIW.pend.clear(); AIW.w = null;
+      LLM.gen = null; LLM.loading = null; SEM.pipe = null; SEM.loading = null;
+    };
   }catch(e){ console.warn('IA: sin Web Worker, se usa el hilo principal', e); AIW.failed = true; AIW.w = null; }
   return AIW.w;
 }
@@ -5442,6 +5486,23 @@ function aiCall(msg, { onProgress, onStep, signal } = {}){
     if(signal) signal.addEventListener('abort', () => { if(AIW.pend.delete(id)) rej(Object.assign(new Error('Cancelado'), { name:'AbortError' })); }, { once:true });
     w.postMessage({ ...msg, id, lib:SEM.lib });
   });
+}
+// Ejecuta una tarea en el motor recuperándose de caídas: 1.ª caída → motor nuevo y se repite la tarea;
+// 2.ª caída → modo compatible (la IA pasa al hilo de la página el resto de la sesión). Devuelve null si no hay motor.
+async function aiRun(msg, opts){
+  for(let attempt = 0; ; attempt++){
+    const pr = aiCall(msg, opts); if(!pr) return null;
+    try{ return await pr; }
+    catch(e){
+      if(!e.workerCrash) throw e;
+      if(AIW.crashes >= 2 || attempt >= 1){
+        AIW.failed = true; AIW.w = null;
+        if(!AIW.notified){ AIW.notified = true; toast('La IA se reinició en modo compatible: puede ir algo más lenta'); }
+        return null;   // el llamador sigue en el hilo de la página
+      }
+      toast('La IA se reinició; repitiendo la tarea…');
+    }
+  }
 }
 // Variantes del modelo de lenguaje a probar: primero las ya guardadas en la caché
 async function llmTries(){
@@ -5461,11 +5522,12 @@ async function localModel(){
   LLM.loading ||= (async () => {
     // en segundo plano si se puede
     const filesW = {};
-    const wp = aiCall({ type:'load', kind:'llm', model:LLM.model, task:'text-generation', tries:await llmTries() }, { onProgress:pr => {
+    const wp = aiRun({ type:'load', kind:'llm', model:LLM.model, task:'text-generation', tries:await llmTries() }, { onProgress:pr => {
       if(pr.status === 'progress' && pr.total){ filesW[pr.file] = [pr.loaded, pr.total]; const a = Object.values(filesW).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); LLM.pct = Math.min(99, Math.floor(a[0] / a[1] * 100)); LLM.mb = [a[0] / 1e6, a[1] / 1e6]; aiStatusText(`Cargando la IA… ${LLM.pct} %`, LLM.pct); LLM.onProgress?.(); }
       else if(pr.status === 'initiate' || pr.status === 'ready') aiStatusText('Preparando la IA…', null);
     } });
-    if(wp){ const o = await wp; LLM.gen = 'worker'; LLM.dtype = o && o.dtype; LLM.device = o && o.device; return LLM.gen; }
+    const o = await wp;
+    if(o){ LLM.gen = 'worker'; LLM.dtype = o.dtype; LLM.device = o.device; return LLM.gen; }
     const T = await import(SEM.lib);
     T.env.allowLocalModels = false;
     let device = 'wasm';
@@ -5498,7 +5560,10 @@ async function localGenerate(sys, user, signal, onProgress){
   const MAX = 420, opts = { max_new_tokens:MAX, do_sample:true, temperature:.7, top_p:.9, repetition_penalty:1.1 };
   if(gen === 'worker'){
     const step = (a, b) => { const x = Math.min(.97, a / b); onProgress?.(x); aiStatusText(`Redactando con la IA… ${Math.round(x * 100)} %`, Math.round(x * 100)); };
-    return aiCall({ type:'gen', model:LLM.model, tries:await llmTries(), messages:[{ role:'system', content:sys }, { role:'user', content:user }], opts }, { onStep:step, signal });
+    const r = await aiRun({ type:'gen', model:LLM.model, tries:await llmTries(), messages:[{ role:'system', content:sys }, { role:'user', content:user }], opts }, { onStep:step, signal });
+    if(r !== null) return r;
+    LLM.gen = null; LLM.loading = null;   // modo compatible: se repite en el hilo de la página
+    return localGenerate(sys, user, signal, onProgress);
   }
   // progreso real: se cuentan los fragmentos que el modelo va escribiendo
   if(onProgress){ try{ const T = await import(SEM.lib); let n = 0; opts.streamer = new T.TextStreamer(gen.tokenizer, { skip_prompt:true, skip_special_tokens:true, callback_function:() => { n++; onProgress(Math.min(.97, n / MAX)); } }); }catch(e){} }
@@ -5653,7 +5718,7 @@ function showSession(state){
   box.classList.toggle('checking', state === 'checking');
   $('#rpSessionIc').textContent = state === 'checking' ? 'progress_activity' : 'error';
   $('#rpSessionTitle').textContent = state === 'checking' ? 'Comprobando la sesión de Facebook…' : 'No hay una sesión de Facebook activa';
-  $('#rpSessionMsg').textContent = state === 'nologin' ? 'Para responder comentarios necesitas iniciar sesión con Facebook (Obtener › Conectar con Facebook).'
+  $('#rpSessionMsg').textContent = state === 'nologin' ? 'Para responder comentarios necesitas iniciar sesión con Facebook (Obtener › Conectar con Facebook; si no lo ves, actívalo en ⋮ › Mostrar «Conectar con Facebook»).'
     : state === 'expired' ? 'La sesión de Facebook caducó o se cerró. Vuelve a iniciar sesión para poder responder.' : '';
   $('#rpLogin').classList.toggle('hidden', !block);
   $('#rpSend').disabled = !!state;
@@ -5686,6 +5751,7 @@ function replyLogin(){
     return;
   }
   $('#replyDlg').close();
+  if(!apiShown()) setApiShown(true);   // para responder hace falta la conexión con Facebook: se muestra
   setPlatform(c.platform === 'instagram' ? 'instagram' : 'facebook'); setMethod('fb'); go('obtener');
   toast('Inicia sesión con Facebook y vuelve a Resultados para responder');
 }
@@ -5907,8 +5973,13 @@ function renderPosts(){
 }
 
 /* ---------- Extensión de Chrome ---------- */
-const EXT_LATEST = '1.3.3';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
-const EXT = { version:null, waiters:new Map(), jobs:new Map() };
+const EXT_LATEST = '1.4.0';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
+// Extractor publicado en extension/extractor.js (firmado): las extensiones 1.4.0 o posteriores lo instalan solas.
+// Para corregir la extracción sin que nadie reinstale nada, basta con subir EXTRACTOR_LATEST y ejecutar tools/build_extension.py.
+const EXTRACTOR_LATEST = '1.4.0';
+const EXTRACTOR_MIN_EXT = '1.4.0';   // versión mínima de la extensión que puede usar este extractor
+const EXT_SRC = ['extension/', 'https://arlizheredia.github.io/social-comments-analyzer/extension/'];
+const EXT = { version:null, extractor:null, downloaded:null, userScripts:false, updates:false, waiters:new Map(), jobs:new Map() };
 // pausa entre publicaciones por defecto: 6 s (variable)
 if(PREF.get('eoGap') === null) PREF.set('eoGap', '6');
 const verLt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for(let i = 0; i < 3; i++){ if((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
@@ -5918,9 +5989,11 @@ function renderExt(){
   const on = !!EXT.version, old = on && verLt(EXT.version, EXT_LATEST);
   $('#extDl').classList.toggle('hidden', on && !old);
   $('#extDlTxt').textContent = old ? 'Actualizar extensión (v' + EXT_LATEST + ')' : 'Descargar extensión';
-  $('#extDl').title = old ? 'Hay una versión nueva: descárgala y sustituye la carpeta de la extensión' : 'Descarga la extensión de Chrome (.zip) y sigue los pasos de la ayuda para instalarla';
+  $('#extDl').title = old ? 'Hay una versión nueva: descárgala y copia sus archivos en la carpeta de la extensión' : 'Descarga la extensión de Chrome (.zip) y sigue los pasos de la ayuda para instalarla';
+  // con un extractor nuevo descargado pero sin permiso de Chrome para usarlo, se ofrece activarlo
+  $('#extAuto').classList.toggle('hidden', !(on && EXT.updates && !EXT.userScripts));
   $('#extChip').classList.toggle('on', on);
-  $('#extTxt').textContent = on ? 'Extensión conectada · v' + EXT.version : 'Extensión no instalada';
+  $('#extTxt').textContent = on ? 'Extensión conectada · v' + EXT.version + (EXT.extractor && EXT.extractor !== EXT.version ? ' (extractor ' + EXT.extractor + ')' : '') : 'Extensión no instalada';
   $('#extChip').title = on ? 'La extensión extraerá automáticamente las publicaciones' : 'Sin extensión, las publicaciones que no sean tuyas se extraen a mano con el marcador. Mira la ayuda para instalarla.';
   $('#extChip').classList.toggle('old', old);
 }
@@ -5932,12 +6005,52 @@ function extDetect(){
 window.addEventListener('message', e => {
   if(e.source !== window || !e.data || e.data.source !== 'sca-ext') return;
   const m = e.data;
-  if(m.type === 'hello' || m.type === 'pong' || m.type === 'ready'){ if(m.version && EXT.version !== m.version){ EXT.version = m.version; renderExt(); requestSessions(); } return; }
+  if(m.type === 'hello' || m.type === 'pong' || m.type === 'ready'){ extStatus(m); return; }
+  if(m.type === 'reloading'){ EXT.activating = m.version; toast('Activando la versión ' + m.version + ' de la extensión…'); return; }
+  if(m.type === 'extractor-updated'){
+    EXT.pushing = false; extStatus(m);
+    if(!m.ok) console.warn('Extensión: no se instaló el extractor nuevo:', m.error);
+    else if(m.changed) toast(m.userScripts ? `Extensión actualizada sola: extractor ${m.extractor} activo` : 'Hay una mejora de la extensión lista: actívala con «Permitir actualizaciones automáticas»', m.userScripts ? undefined : { label:'Activar', run:openExtAutoDlg });
+    return;
+  }
   const job = EXT.jobs.get(m.jobId); if(!job) return;
   if(m.type === 'progress') job.onProgress && job.onProgress(m);
   else if(m.type === 'result'){ EXT.jobs.delete(m.jobId); job.resolve(m); }
   else if(m.type === 'error' || m.type === 'stopped'){ EXT.jobs.delete(m.jobId); m.type === 'stopped' ? job.resolve({ stopped:true }) : job.reject(new Error(m.error || 'Error de la extensión')); }
 });
+// Estado que envía la extensión: versión, extractor activo y si puede actualizarse sola
+function extStatus(m){
+  const prev = EXT.version;
+  if(m.version) EXT.version = m.version;
+  if('updates' in m){ EXT.updates = !!m.updates; EXT.extractor = m.extractor || null; EXT.downloaded = m.downloaded || null; if(EXT.userScripts !== !!m.userScripts && EXT.userScripts === false && m.userScripts && EXT.autoAsked) toast('Actualizaciones automáticas activadas'); EXT.userScripts = !!m.userScripts; }
+  if(EXT.activating && EXT.version === EXT.activating){ EXT.activating = null; toast('Extensión actualizada a la versión ' + EXT.version); }
+  renderExt();
+  if(prev !== EXT.version) requestSessions();
+  extPushExtractor();
+  extWatchUpdate();
+}
+// Envía a la extensión el extractor publicado si es más nuevo que el suyo (ella comprueba la firma antes de instalarlo)
+async function extPushExtractor(){
+  if(!EXT.updates || EXT.pushing || verLt(EXT.version, EXTRACTOR_MIN_EXT)) return;
+  const have = [EXT.extractor, EXT.downloaded].filter(Boolean).reduce((a, b) => verLt(a, b) ? b : a, '0.0.0');
+  if(!verLt(have, EXTRACTOR_LATEST)) return;
+  EXT.pushing = true;
+  for(const base of EXT_SRC){
+    try{
+      const [c, s] = await Promise.all([fetch(base + 'extractor.js', { cache:'no-cache' }), fetch(base + 'extractor.sig', { cache:'no-cache' })]);
+      if(c.ok && s.ok){ window.postMessage({ source:'sca-app', type:'extractor-update', code:await c.text(), sig:(await s.text()).trim() }, '*'); setTimeout(() => { EXT.pushing = false; }, 15000); return; }
+    }catch(e){}
+  }
+  EXT.pushing = false;
+}
+// Versión completa nueva: mientras la instalada sea antigua, se pide a la extensión que mire si ya se copiaron los archivos nuevos
+// en su carpeta; si es así, se recarga sola y vuelve a conectarse (desde la 1.4.0)
+function extWatchUpdate(){
+  const need = EXT.version && EXT.updates && verLt(EXT.version, EXT_LATEST);
+  if(need && !EXT.watchT) EXT.watchT = setInterval(() => { if(document.visibilityState === 'visible' && !TR.running) window.postMessage({ source:'sca-app', type:'check-update' }, '*'); }, 5000);
+  if(!need && EXT.watchT){ clearInterval(EXT.watchT); EXT.watchT = null; }
+}
+function openExtAutoDlg(){ EXT.autoAsked = true; $('#extAutoDlg').showModal(); }
 function extExtract(url, onProgress){
   const jobId = uid('j_'), opts = extOpts();
   return { jobId, promise:new Promise((resolve, reject) => {
@@ -6400,7 +6513,16 @@ function initTracking(){
   // copia de seguridad y opciones
   $('#dbExport').onclick = () => { closeMenus(); dbExport(); };
   $('#dbImport').onchange = e => { const f = e.target.files[0]; e.target.value = ''; closeMenus(); if(f) dbImport(f); };
-  $('#extDl').addEventListener('click', () => toast('Descargando la extensión: descomprímela y cárgala en chrome://extensions', { label:'Ver pasos', run:() => go('ayuda', 'ext-instalar') }));
+  $('#extDl').addEventListener('click', () => {
+    const old = EXT.version && verLt(EXT.version, EXT_LATEST);
+    if(!old) return toast('Descargando la extensión: descomprímela y cárgala en chrome://extensions', { label:'Ver pasos', run:() => go('ayuda', 'ext-instalar') });
+    // desde la 1.4.0 basta con copiar los archivos: la extensión detecta la versión nueva y se activa sola
+    toast(EXT.updates ? 'Descomprime el ZIP y copia sus archivos en la carpeta de la extensión: se activará sola' : 'Descomprime el ZIP, copia sus archivos en la carpeta de la extensión y pulsa recargar en chrome://extensions (solo esta vez)', { label:'Ver pasos', run:() => go('ayuda', 'ext-actualizar') });
+  });
+  $('#extAuto').onclick = openExtAutoDlg;
+  $('#extAutoOpen').onclick = () => { window.postMessage({ source:'sca-app', type:'open-settings' }, '*'); $('#extAutoDlg').close(); };
+  // al volver de los ajustes de Chrome se comprueba si ya se dio el permiso
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && EXT.version) window.postMessage({ source:'sca-app', type:'ping' }, '*'); });
   $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
   $('#eoSave').onclick = () => { PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(90, Math.max(2, +$('#eoMax').value || 20)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
   addEventListener('beforeunload', e => { if(TR.running){ e.preventDefault(); e.returnValue = ''; } });
@@ -6479,14 +6601,15 @@ async function generateReport(tids){
   if(!aiInstalled()){ aiNeedInstall(); $('#repOut').innerHTML = '<div class="empty-mini"><span class="ms">psychology</span>Los informes usan la IA para encontrar los comentarios del enfoque: instálala con el aviso de la parte superior.</div>'; return; }
   const fq = reportFocus();
   const prog = (txt, pct) => { $('#repOut').innerHTML = `<div class="empty-mini rep-gen" role="status" aria-live="polite"><span class="ms" style="animation:spin 1.4s linear infinite">progress_activity</span><div style="display:grid;gap:8px;min-width:min(420px,70vw)"><span>${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></div></div>`; };
-  prog(`Buscando con IA los comentarios sobre «${fq}»…`, null);
-  REP.ai = null;
+  prog(`Buscando los comentarios sobre ${focusName(fq)}…`, null);
   try{
-    REP.model = await buildReport(tids, reportTerms().split(',').map(s => s.trim()).filter(Boolean), fq, (a, b) => prog(`Buscando con IA los comentarios sobre «${fq}»… ${Math.round(a / b * 100)} %`, Math.round(a / b * 100)));
+    REP.model = await buildReport(tids, reportTerms().split(',').map(s => s.trim()).filter(Boolean), fq, (a, b) => prog(`Buscando los comentarios sobre ${focusName(fq)}… ${Math.round(a / b * 100)} %`, Math.round(a / b * 100)));
     REP.editing = false; renderReportPicker(); renderReport();
-    reportAI();   // el resumen con IA se genera siempre
   }
-  catch(e){ $('#repOut').innerHTML = `<div class="empty-mini"><span class="ms">error</span>${esc(e.message)}</div>`; }
+  catch(e){
+    REP.lastTids = tids;
+    $('#repOut').innerHTML = `<div class="empty-mini rep-err"><span class="ms">error</span><div style="display:grid;gap:10px;justify-items:center"><span>No se pudo generar el informe: ${esc(e.message)}</span><button class="btn tonal" id="repRetry"><span class="ms">refresh</span>Reintentar</button></div></div>`;
+  }
 }
 // Calcula el pendiente/atendido del equipo sobre una lista cualquiera (reutiliza la lógica del asistente)
 function teamOn(list){
@@ -6498,7 +6621,17 @@ function teamOn(list){
 const nssOf = s => s.total ? Math.round((s.pos - s.neg) / s.total * 100) : 0;
 const sentOf = list => { const s = { total:list.length, pos:0, neg:0, neu:0 }; list.forEach(c => c.sentiment === 'positivo' ? s.pos++ : c.sentiment === 'negativo' ? s.neg++ : s.neu++); return s; };
 // Enfoque del informe: criterio con el que la IA selecciona los comentarios en los que se centra el análisis
-const FOCUS_DEFAULT = 'Kanasta24 y comentarios relacionados', FOCUS_TH = .825;
+const FOCUS_DEFAULT = 'Kanasta24 y comentarios relacionados', FOCUS_TH = .845;
+// Tema del criterio, para redactar el informe con naturalidad: «Kanasta24 y comentarios relacionados» → «Kanasta24»
+function focusSubj(q){
+  const t = String(q || '').trim();
+  const s = t.replace(/^(los\s+)?(comentarios|mensajes|opiniones)\s+(que\s+(hablan|tratan)\s+(de|sobre)|sobre|de|acerca\s+de|relacionad[oa]s\s+con|referentes\s+a)\s+/i, '')
+    .replace(/\s*[,;]?\s+(y|e|o)\s+(los\s+|otros\s+|todos\s+los\s+)?(comentarios|temas|mensajes|asuntos)\s+(relacionad[oa]s|similares|afines|parecidos)(\s+con\s+\S+)?$/i, '')
+    .replace(/\s+(y|e)\s+(todo\s+)?lo\s+relacionado(\s+con\s+\S+)?$/i, '').replace(/[.\s]+$/, '').trim();
+  return s || t;
+}
+// nombre del tema dentro de una frase: entre comillas si es largo
+function focusName(q){ const s = focusSubj(q); return s.split(/\s+/).length > 3 ? `«${s}»` : s; }
 // temas a vigilar: «Kanasta24» por defecto (se aplica una vez a lo guardado antes); si el usuario lo vacía, queda vacío
 // Valores por defecto de los informes: configurables por el usuario en ⋮ › Preferencias de informes.
 // Cada informe puede cambiarlos en su formulario sin modificar las preferencias.
@@ -6526,51 +6659,52 @@ const FOCUS_STOP = new Set('comentario comentarios relacionados relacionadas rel
 // palabras clave del criterio (p. ej. «kanasta24» y «kanasta»): si un comentario las contiene, cumple el criterio
 function focusKeywords(q){
   const ws = normName(q).split(/[^a-z0-9ñ]+/).filter(w => w.length >= 4 && !FOCUS_STOP.has(w));
-  return [...new Set(ws.flatMap(w => { const b = w.replace(/\d+$/, ''); return b.length >= 4 && b !== w ? [w, b] : [w]; }))];
+  // variantes: sin los números finales y con la ortografía habitual (k/c, z/s): «Kanasta24» → «canasta24», «canasta»
+  return [...new Set(ws.flatMap(w => { const b = w.replace(/\d+$/, ''); return b.length >= 4 && b !== w ? [w, b] : [w]; }).flatMap(w => [w, w.replace(/k/g, 'c').replace(/z/g, 's')]))];
 }
+// texto normalizado para buscar las palabras clave también con espacios o guiones de por medio («Canasta 24»)
+const focusText = c => { const t = normName((c.text || '') + ' ' + (c.mentions || []).join(' ')).replace(/k/g, 'c').replace(/z/g, 's'); return t + ' ' + t.replace(/[\s\-_.]+/g, ''); };
 const fkey = (postId, c) => (postId || '') + '|' + normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160);
 async function focusMatch(list, q, onProg){
   const kws = focusKeywords(q), keys = new Set(), items = list.filter(c => c.text && c.text.trim());
   if(!items.length) return keys;
-  const [qv] = await semEmbed([q], 'query');
+  // se compara con el tema limpio («Kanasta24»), no con «… y comentarios relacionados», que acerca cualquier comentario
+  const [qv] = await semEmbed([focusSubj(q)], 'query');
   const vs = await semEmbed(items.map(c => c.text), 'passage', onProg);
-  items.forEach((c, i) => { const t = normName(c.text + ' ' + (c.mentions || []).join(' ')); if(kws.some(k => t.includes(k)) || dot(qv, vs[i]) >= FOCUS_TH) keys.add(fkey(c._ref?.postId, c)); });
+  items.forEach((c, i) => {
+    const t = focusText(c);
+    // los textos muy cortos («Qué lindo», «Mi Holguín, cómo extraño») solo cuentan si nombran el tema
+    const words = normName(c.text).split(/[^a-z0-9ñ]+/).filter(w => w.length > 1).length;
+    if(kws.some(k => t.includes(k)) || (words >= 5 && dot(qv, vs[i]) >= FOCUS_TH)) keys.add(fkey(c._ref?.postId, c));
+  });
   return keys;
 }
-function computeFocus(list, q){
-  const all = list.filter(c => !c.isTeam), fl = all.filter(c => c._focus), s = sentOf(fl);
-  const au = {}; fl.forEach(c => { const k = c.authorName || '(desconocido)'; const a = au[k] ||= { name:k, n:0, pos:0, neg:0, reacts:0 }; a.n++; a.reacts += c.reactions || 0; if(c.sentiment === 'positivo') a.pos++; if(c.sentiment === 'negativo') a.neg++; });
-  const authors = Object.values(au);
-  const bp = {}; list.forEach(c => { if(c.isTeam) return; const k = c._ref?.postId || 'x'; const b = bp[k] ||= { id:k, label:c._post || '(sin nombre)', platform:c.platform, total:0, items:[] }; b.total++; if(c._focus) b.items.push(c); });
-  const posts = Object.values(bp).map(b => ({ id:b.id, label:b.label, platform:b.platform, total:b.total, n:b.items.length, pct:b.total ? Math.round(b.items.length / b.total * 100) : 0, s:sentOf(b.items) })).sort((a, b) => b.n - a.n || b.total - a.total);
-  const byReact = arr => [...arr].sort((a, b) => (b.reactions || 0) - (a.reactions || 0) || b.text.length - a.text.length);
-  const kws = focusKeywords(q);
-  const words = computeStats(fl).words.filter(([w]) => { const n = normName(w); return !kws.some(k => n.includes(k) || k.includes(n)); }).slice(0, 10);
-  return { q, list:fl, n:fl.length, total:all.length, pct:all.length ? Math.round(fl.length / all.length * 100) : 0, s, authorsN:authors.length,
-    topAuthors:[...authors].sort((a, b) => b.n - a.n || b.reacts - a.reacts).slice(0, 8),
-    ambassadors:authors.filter(a => a.pos >= 1 && a.pos > a.neg).sort((a, b) => b.pos - a.pos || b.n - a.n).slice(0, 6),
-    critics:authors.filter(a => a.neg >= 1 && a.neg >= a.pos).sort((a, b) => b.neg - a.neg || b.n - a.n).slice(0, 6),
-    posts, words, topPos:byReact(fl.filter(c => c.sentiment === 'positivo')).slice(0, 4), topNeg:byReact(fl.filter(c => c.sentiment === 'negativo')).slice(0, 4),
-    openQ:byReact(fl.filter(c => c.isQuestion && c.needsTeam)).slice(0, 6), pending:fl.filter(c => c.needsTeam).length, openNeg:fl.filter(c => c.sentiment === 'negativo' && c.needsTeam).length };
+// Comentarios del tema: los que cumplen el criterio y las respuestas de tu equipo en esas conversaciones
+function focusFilter(list, focus){
+  const hit = c => !c.isTeam && focus.keys.has(fkey(c._ref?.postId, c));
+  const roots = new Set(list.filter(hit).map(c => c.root || c.id));
+  return list.filter(c => hit(c) || (c.isTeam && roots.has(c.root || c.id)));
 }
+const focusCtx = (focus, all) => focus && { q:focus.q, name:focus.name, total:all.filter(c => !c.isTeam).length };
 async function buildReport(tids, terms, focusQ, onProg){
   const g = await gatherComments(tids);
   if(!g.comments.length) throw new Error('Los seguimientos elegidos no tienen comentarios.');
   const list = finalize(g.comments.map((c, i) => ({ ...c, id:c.id || ('r' + i) })), { platform:g.platform });
-  const focus = focusQ ? { q:focusQ, keys:await focusMatch(list, focusQ, onProg) } : null;
+  const focus = focusQ ? { q:focusQ, name:focusName(focusQ), keys:await focusMatch(list, focusQ, onProg) } : null;
   const team = teamOn(list);
+  const fl = focus ? focusFilter(list, focus) : list;
+  if(focus && !fl.some(c => !c.isTeam)) throw new Error(`ningún comentario habla de ${focus.name} en estos seguimientos. Prueba con un criterio más amplio.`);
   const tracks = g.tracks, first = tracks[0], last = tracks[tracks.length - 1];
   // Evolución por fecha de seguimiento
   const seen = new Set(), byDate = [];
   for(const t of tracks){
-    const rs = await DB.resultsOf(t.id); let total = 0, nw = 0, fn = 0, fpos = 0, fneg = 0; const day = [];
-    rs.forEach(r => r.comments.forEach(c => { total++; const k = r.postId + '|' + (c.id && !/^(x|local)-/.test(c.id) ? c.id : normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160)); if(!seen.has(k)){ seen.add(k); nw++; } const sl = sentiment(c.text || '').label; day.push(sl);
-      if(focus && focus.keys.has(fkey(r.postId, c))){ fn++; if(sl === 'positivo') fpos++; if(sl === 'negativo') fneg++; } }));
-    byDate.push({ t, total, nw, fn, fpos, fneg, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => t.items[id].status === 'done').length });
+    const rs = await DB.resultsOf(t.id); let total = 0, nw = 0; const day = [];
+    rs.forEach(r => r.comments.forEach(c => { if(focus && !focus.keys.has(fkey(r.postId, c))) return; total++; const k = r.postId + '|' + (c.id && !/^(x|local)-/.test(c.id) ? c.id : normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160)); if(!seen.has(k)){ seen.add(k); nw++; } day.push(sentiment(c.text || '').label); }));
+    byDate.push({ t, total, nw, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => t.items[id].status === 'done').length });
   }
-  const m = computeReportModel(list, team, tracks, byDate, terms, tids, focus);
+  const m = computeReportModel(fl, team, tracks, byDate, terms, tids, focusCtx(focus, list));
   // Seguimiento principal = el más reciente; se compara con el anterior
-  const snap = async t => { const gg = await gatherComments([t.id]); if(!gg.comments.length) return null; const l = finalize(gg.comments.map((c, i) => ({ ...c, id:c.id || ('s' + i) })), { platform:gg.platform }); return computeReportModel(l, teamOn(l), [t], [], terms, [t.id], focus); };
+  const snap = async t => { const gg = await gatherComments([t.id]); if(!gg.comments.length) return null; const l = finalize(gg.comments.map((c, i) => ({ ...c, id:c.id || ('s' + i) })), { platform:gg.platform }); return computeReportModel(focus ? focusFilter(l, focus) : l, teamOn(l), [t], [], terms, [t.id], focusCtx(focus, l)); };
   m.cur = await snap(last) || m;
   m.prevT = tracks.length > 1 ? tracks[tracks.length - 2] : null;
   m.prev = m.prevT ? await snap(m.prevT) : null;
@@ -6578,8 +6712,8 @@ async function buildReport(tids, terms, focusQ, onProg){
   m.prevNew = byDate.length > 1 ? byDate[byDate.length - 2].nw : null;
   m.cmp = compareRows(m);
   m.postCmp = comparePosts(m);
-  const fl = m.summary.fl || 0;
-  m.summary = [...m.summary.slice(0, fl), ...compareSummary(m), ...m.summary.slice(fl)];
+  const sf = m.summary.fl || 0;
+  m.summary = [...m.summary.slice(0, sf), ...compareSummary(m), ...m.summary.slice(sf)];
   return m;
 }
 // Filas de la comparativa: seguimiento más reciente frente al anterior
@@ -6587,9 +6721,6 @@ function compareRows(m){
   const c = m.cur, p = m.prev;
   const negP = x => x && x.s.total ? Math.round(x.s.neg / x.s.total * 100) : null;
   const rows = [];
-  if(c.focus) rows.push({ k:'Comentarios sobre el enfoque', a:c.focus.n, b:p && p.focus ? p.focus.n : null, good:'up', focus:true },
-    { k:'Positivos sobre el enfoque', a:c.focus.s.pos, b:p && p.focus ? p.focus.s.pos : null, good:'up', focus:true },
-    { k:'Negativos sobre el enfoque', a:c.focus.s.neg, b:p && p.focus ? p.focus.s.neg : null, good:'down', focus:true });
   rows.push(
     { k:'Comentarios', a:c.list.length, b:p && p.list.length, good:'up' },
     { k:'Comentarios nuevos', a:m.curNew, b:m.prevNew, good:'up' },
@@ -6614,16 +6745,20 @@ function comparePosts(m){
 }
 function compareSummary(m){
   const t = m.last, c = m.cur, out = [];
-  if(!m.prev){ out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), con ${countTxt(c.list.length, 'comentario', 'comentarios')}: ${countTxt(c.s.pos, 'positivo', 'positivos')} y ${countTxt(c.s.neg, 'negativo', 'negativos')}.`); return out; }
+  const ab = m.focus ? ' sobre ' + m.focus.name : '';
+  if(!m.prev){ out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), con ${countTxt(c.list.length, 'comentario', 'comentarios')}${ab}: ${countTxt(c.s.pos, 'positivo', 'positivos')} y ${countTxt(c.s.neg, 'negativo', 'negativos')}.`); return out; }
   const d = c.list.length - m.prev.list.length;
-  out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), comparado con «${m.prevT.name}» (${fmtDay(m.prevT.date)}). Tiene ${countTxt(c.list.length, 'comentario', 'comentarios')} (${d === 0 ? 'igual que el anterior' : sign(d) + ' frente al anterior'}), ${countTxt(m.curNew, 'nuevo', 'nuevos')}: ${countTxt(c.s.pos, 'positivo', 'positivos')} y ${countTxt(c.s.neg, 'negativo', 'negativos')} (antes, ${fmtN(m.prev.s.pos)} y ${fmtN(m.prev.s.neg)}).`);
+  out.push(`Seguimiento principal: «${t.name}» (${fmtDay(t.date)}), comparado con «${m.prevT.name}» (${fmtDay(m.prevT.date)}). Tiene ${countTxt(c.list.length, 'comentario', 'comentarios')}${ab} (${d === 0 ? 'los mismos que el anterior' : d > 0 ? d + ' más que el anterior' : -d + ' menos que el anterior'}), ${countTxt(m.curNew, 'nuevo', 'nuevos')}: ${countTxt(c.s.pos, 'positivo', 'positivos')} y ${countTxt(c.s.neg, 'negativo', 'negativos')} (antes, ${fmtN(m.prev.s.pos)} y ${fmtN(m.prev.s.neg)}).`);
   return out;
 }
 // Cálculo del informe a partir de una lista de comentarios ya finalizada (seguimientos o los datos de Resultados)
 function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const first = tracks[0], last = tracks[tracks.length - 1];
-  if(focus) list.forEach(c => { c._focus = focus.keys.has(fkey(c._ref?.postId, c)); });
   const st = computeStats(list), s = sentOf(list);
+  // sin el propio tema entre las palabras más usadas (todos los comentarios hablan de él)
+  const fkw = focus ? focusKeywords(focus.q) : [];
+  const notTheme = ([w]) => { const n = normName(w).replace(/k/g, 'c').replace(/z/g, 's'); return !fkw.some(k => n.includes(k) || k.includes(n)); };
+  if(focus) st.words = st.words.filter(notTheme);
   const nonTeam = list.filter(c => !c.isTeam);
   const answered = nonTeam.filter(c => c.teamAnswered && (!c.parentId || c.needsTeam === false)).length, pending = nonTeam.filter(c => c.needsTeam).length;
   // Tiempo de primera respuesta del equipo (solo con fechas exactas)
@@ -6634,23 +6769,23 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const medRT = rts.length ? rts[Math.floor(rts.length / 2)] : null;
   // Por publicación y por red
   const byPost = {}; list.forEach(c => { const k = c._ref?.postId || 'x'; (byPost[k] ||= { label:c._post || '(sin nombre)', platform:c.platform, items:[] }).items.push(c); });
-  const posts = Object.entries(byPost).map(([id, b]) => { const ss = sentOf(b.items); const w = computeStats(b.items).words[0]; return { id, label:b.label, platform:b.platform, total:b.items.length, authors:new Set(b.items.map(c => c.authorName)).size, reacts:b.items.reduce((a, c) => a + (c.reactions || 0), 0), nss:nssOf(ss), negPct:ss.total ? Math.round(ss.neg / ss.total * 100) : 0, pending:b.items.filter(c => c.needsTeam).length, topWord:w ? w[0] : '', s:ss }; }).sort((a, b) => b.total - a.total);
+  const posts = Object.entries(byPost).map(([id, b]) => { const ss = sentOf(b.items); const w = computeStats(b.items).words.find(notTheme); return { id, label:b.label, platform:b.platform, total:b.items.length, authors:new Set(b.items.map(c => c.authorName)).size, reacts:b.items.reduce((a, c) => a + (c.reactions || 0), 0), nss:nssOf(ss), negPct:ss.total ? Math.round(ss.neg / ss.total * 100) : 0, pending:b.items.filter(c => c.needsTeam).length, topWord:w ? w[0] : '', s:ss }; }).sort((a, b) => b.total - a.total);
   const plats = {}; list.forEach(c => (plats[c.platform] ||= []).push(c));
   const platRows = Object.entries(plats).map(([k, v]) => { const ss = sentOf(v); return { k, total:v.length, authors:new Set(v.map(c => c.authorName)).size, reacts:v.reduce((a, c) => a + (c.reactions || 0), 0), nss:nssOf(ss), s:ss }; }).sort((a, b) => b.total - a.total);
   // Audiencia
   const au = {}; nonTeam.forEach(c => { const k = c.authorName || '(desconocido)'; const a = au[k] ||= { name:k, n:0, pos:0, neg:0, reacts:0, dates:new Set(), plats:new Set() }; a.n++; a.reacts += c.reactions || 0; if(c.sentiment === 'positivo') a.pos++; if(c.sentiment === 'negativo') a.neg++; a.dates.add(c._date); a.plats.add(c.platform); });
   const authors = Object.values(au);
   const topAuthors = [...authors].sort((a, b) => b.n - a.n || b.reacts - a.reacts).slice(0, 10);
-  const ambassadors = authors.filter(a => a.pos >= 2 && a.pos > a.neg * 2).sort((a, b) => b.pos - a.pos).slice(0, 8);
+  const ambassadors = authors.filter(a => focus ? a.pos >= 1 && a.pos > a.neg : a.pos >= 2 && a.pos > a.neg * 2).sort((a, b) => b.pos - a.pos || b.n - a.n).slice(0, 8);
   const detractors = authors.filter(a => a.neg >= 1 && a.neg >= a.pos).sort((a, b) => b.neg - a.neg || b.n - a.n).slice(0, 8);
   const influencers = [...authors].sort((a, b) => b.reacts - a.reacts).filter(a => a.reacts > 0).slice(0, 8);
   const recurring = authors.filter(a => a.dates.size > 1).length;
   // Temas vigilados
-  const watch = terms.map(term => { const q = normName(term); const hits = list.filter(c => normName(c.text).includes(q) || (c.mentions || []).some(m => normName(m).includes(q))); const ss = sentOf(hits); return { term, n:hits.length, pct:list.length ? Math.round(hits.length / list.length * 100) : 0, nss:nssOf(ss), s:ss, sample:hits.sort((a, b) => (b.reactions || 0) - (a.reactions || 0))[0] }; });
+  const watch = terms.filter(term => { const n = normName(term).replace(/\s+/g, '').replace(/k/g, 'c').replace(/z/g, 's'); return !fkw.some(k => n.includes(k) || k.includes(n)); }).map(term => { const q = normName(term); const hits = list.filter(c => normName(c.text).includes(q) || (c.mentions || []).some(m => normName(m).includes(q))); const ss = sentOf(hits); return { term, n:hits.length, pct:list.length ? Math.round(hits.length / list.length * 100) : 0, nss:nssOf(ss), s:ss, sample:hits.sort((a, b) => (b.reactions || 0) - (a.reactions || 0))[0] }; }).filter(w => !focus || w.n);   // en un informe por tema solo los que aparecen
   // Destacados
   const byReact = arr => [...arr].sort((a, b) => (b.reactions || 0) - (a.reactions || 0) || b.length - a.length);
-  const topPos = byReact(nonTeam.filter(c => c.sentiment === 'positivo')).slice(0, 5);
-  const topNeg = byReact(nonTeam.filter(c => c.sentiment === 'negativo')).slice(0, 5);
+  const topPos = byReact(nonTeam.filter(c => c.sentiment === 'positivo')).slice(0, 4);
+  const topNeg = byReact(nonTeam.filter(c => c.sentiment === 'negativo')).slice(0, 4);
   const openQ = byReact(nonTeam.filter(c => c.isQuestion && c.needsTeam)).slice(0, 8);
   const openNeg = nonTeam.filter(c => c.sentiment === 'negativo' && c.needsTeam).length;
   // Comparación primer/último seguimiento
@@ -6658,93 +6793,58 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const negShare = d => d.total ? Math.round(d.neg / d.total * 100) : 0;
   const m = { tids, tracks, first, last, list, st, s, nss:nssOf(s), team, answered, pending, respRate:(answered + pending) ? Math.round(answered / (answered + pending) * 100) : null, medRT, rtN:rts.length,
     byDate, posts, platRows, topAuthors, ambassadors, detractors, influencers, recurring, authorsN:authors.length, watch, topPos, topNeg, openQ, openNeg,
-    negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? computeFocus(list, focus.q) : null };
+    negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? { ...focus, n:nonTeam.length, pct:focus.total ? Math.round(nonTeam.length / focus.total * 100) : 0 } : null };
   // por defecto el principal es el propio conjunto (sin seguimiento anterior); buildReport lo sustituye por el más reciente
   m.cur = m; m.prev = null; m.prevT = null; m.curNew = list.length; m.prevNew = null; m.cmp = compareRows(m); m.postCmp = [];
   m.alerts = reportAlerts(m); m.recs = reportRecs(m); m.summary = reportSummary(m);
   return m;
 }
 function reportAlerts(m){
-  const a = [], f = m.focus;
-  if(f && f.n >= 3 && f.s.neg / f.n >= .3) a.push({ lvl:'high', txt:`El ${Math.round(f.s.neg / f.n * 100)} % de los comentarios sobre «${f.q}» son negativos (${fmtN(f.s.neg)} de ${fmtN(f.n)}).` });
-  if(f && m.team && f.openNeg) a.push({ lvl:'high', txt:`${countTxt(f.openNeg, 'comentario negativo sobre el enfoque sigue', 'comentarios negativos sobre el enfoque siguen')} sin respuesta del equipo.` });
+  const a = [], ab = m.focus ? ' sobre ' + m.focus.name : '';
+  if(m.s.total >= 3 && m.s.neg / m.s.total >= .3) a.push({ lvl:'high', txt:`${Math.round(m.s.neg / m.s.total * 100)} de cada 100 comentarios${ab} son negativos (${fmtN(m.s.neg)} de ${fmtN(m.s.total)}).` });
   const emptyT = m.tracks.filter(t => t.postIds && t.postIds.length && !trackProgress(t).comments), emptyP = m.tracks.reduce((s, t) => s + (t.postIds ? emptyPosts(t).length : 0), 0);
-  if(emptyT.length) a.push({ lvl:'high', txt:`${countTxt(emptyT.length, 'seguimiento no tiene', 'seguimientos no tienen')} comentarios (${emptyT.map(t => t.name).join(', ')}): sus datos no cuentan en este informe. Reintenta su extracción.` });
-  else if(emptyP) a.push({ lvl:'mid', txt:`${countTxt(emptyP, 'publicación de los seguimientos quedó', 'publicaciones de los seguimientos quedaron')} sin comentarios: revisa su extracción.` });
+  if(emptyT.length) a.push({ lvl:'high', txt:`${countTxt(emptyT.length, 'seguimiento no tiene', 'seguimientos no tienen')} comentarios (${emptyT.map(t => t.name).join(', ')}): sus datos no cuentan en este informe.` });
+  else if(emptyP) a.push({ lvl:'mid', txt:`${countTxt(emptyP, 'publicación de los seguimientos quedó', 'publicaciones de los seguimientos quedaron')} sin comentarios.` });
   m.posts.filter(p => p.total >= 5 && p.negPct >= 30).forEach(p => a.push({ lvl:'high', txt:`“${p.label}” concentra un ${p.negPct} % de comentarios negativos (${fmtN(p.s.neg)} de ${fmtN(p.total)}).` }));
-  if(m.byDate.length > 1 && m.negLast - m.negFirst >= 10) a.push({ lvl:'high', txt:`La proporción de negativos subió de ${m.negFirst} % a ${m.negLast} % entre el primer y el último seguimiento.` });
+  if(m.byDate.length > 1 && m.negLast - m.negFirst >= 10) a.push({ lvl:'high', txt:`Los comentarios negativos${ab} aumentaron: pasaron de ${m.negFirst} a ${m.negLast} de cada 100 entre el primer y el último seguimiento.` });
   if(m.team && m.openNeg) a.push({ lvl:m.openNeg >= 5 ? 'high' : 'mid', txt:`${countTxt(m.openNeg, 'comentario negativo sigue', 'comentarios negativos siguen')} sin respuesta del equipo.` });
-  if(m.team && m.openQ.length) a.push({ lvl:'mid', txt:`${countTxt(m.list.filter(c => !c.isTeam && c.isQuestion && c.needsTeam).length, 'pregunta sin responder', 'preguntas sin responder')}: son oportunidades de venta o de soporte.` });
-  if(m.team && m.respRate != null && m.respRate < 50) a.push({ lvl:'mid', txt:`La tasa de respuesta del equipo es baja (${m.respRate} %).` });
-  if(!a.length) a.push({ lvl:'ok', txt:'Sin alertas: el sentimiento y la atención están dentro de lo normal.' });
+  if(m.team && m.openQ.length) a.push({ lvl:'mid', txt:`${countTxt(m.list.filter(c => !c.isTeam && c.isQuestion && c.needsTeam).length, 'pregunta sigue', 'preguntas siguen')} sin respuesta: son oportunidades para ayudar o vender.` });
+  if(m.team && m.respRate != null && m.respRate < 50) a.push({ lvl:'mid', txt:`El equipo respondió poco: ${m.respRate} de cada 100 comentarios que pedían respuesta.` });
+  if(!a.length) a.push({ lvl:'ok', txt:'No hay nada preocupante: el tono de los comentarios y la atención del equipo están bien.' });
   return a;
 }
 function reportRecs(m){
-  const r = [], f = m.focus;
-  if(f && f.n){
-    if(m.team && (f.openNeg || f.openQ.length)) r.push(`Atender primero lo relacionado con «${f.q}»: ${[f.openNeg ? countTxt(f.openNeg, 'comentario negativo', 'comentarios negativos') : '', f.openQ.length ? countTxt(f.openQ.length, 'pregunta', 'preguntas') : ''].filter(Boolean).join(' y ')} sin respuesta.`);
-    if(f.critics.length) r.push(`Contactar a quienes más critican sobre el enfoque (${f.critics.slice(0, 3).map(a => a.name).join(', ')}) para entender y resolver sus casos.`);
-    if(f.ambassadors.length) r.push(`Reconocer a los embajadores del enfoque (${f.ambassadors.slice(0, 3).map(a => a.name).join(', ')}) y aprovechar sus opiniones como testimonio.`);
-  }
-  if(m.team && m.pending) r.push(`Responder primero los ${fmtN(m.openNeg)} negativos y las preguntas pendientes con el asistente de respuestas (filtro “Sin respuesta del equipo”).`);
-  if(!m.team) r.push('Definir el equipo en Resultados › Comentarios › Equipo para medir la tasa y el tiempo de respuesta.');
-  if(m.detractors.length) r.push(`Contactar por privado a los detractores más activos (${m.detractors.slice(0, 3).map(a => a.name).join(', ')}) para resolver su caso antes de que escale.`);
-  if(m.ambassadors.length) r.push(`Agradecer y reconocer a los embajadores (${m.ambassadors.slice(0, 3).map(a => a.name).join(', ')}); son candidatos para testimonios o contenido generado por usuarios.`);
-  const best = [...m.posts].filter(p => p.total >= 5).sort((a, b) => b.nss - a.nss)[0];
-  if(best && best.nss > 20) r.push(`Replicar el enfoque de “${best.label}”, la publicación mejor valorada (${fmtN(best.s.pos)} comentarios positivos y ${fmtN(best.s.neg)} negativos).`);
+  const r = [], f = m.focus, ab = f ? ' sobre ' + f.name : '', de = f ? ' de ' + f.name : '';
+  const names = arr => arr.slice(0, 3).map(a => a.name).join(', ');
+  if(m.team && (m.openNeg || m.openQ.length)) r.push(`Responder cuanto antes ${[m.openNeg ? countTxt(m.openNeg, 'comentario negativo', 'comentarios negativos') : '', m.openQ.length ? countTxt(m.list.filter(c => !c.isTeam && c.isQuestion && c.needsTeam).length, 'pregunta', 'preguntas') : ''].filter(Boolean).join(' y ')} que siguen sin respuesta.`);
+  if(m.detractors.length) r.push(`Escribir por privado a quienes más critican${ab} (${names(m.detractors)}) para entender qué pasó y resolverlo.`);
+  if(m.ambassadors.length) r.push(`Agradecer a quienes hablan bien${de} (${names(m.ambassadors)}); sus opiniones pueden servir como testimonio.`);
+  const best = [...m.posts].filter(p => p.total >= 3).sort((a, b) => b.nss - a.nss)[0];
+  if(m.posts.length > 1 && best && best.nss > 20) r.push(`Repetir lo que funcionó en “${best.label}”, la publicación con mejores opiniones (${countTxt(best.s.pos, 'comentario positivo', 'comentarios positivos')} y ${countTxt(best.s.neg, 'negativo', 'negativos')}).`);
   const topW = m.st.words.slice(0, 3).map(w => w[0]);
-  if(topW.length) r.push(`Tener en cuenta los temas más mencionados (${topW.join(', ')}) en las próximas publicaciones y en las respuestas tipo del catálogo.`);
-  if(m.medRT != null && m.medRT > 12) r.push(`Reducir el tiempo de primera respuesta (mediana actual: ${fmtDec(m.medRT)} h); el objetivo habitual en redes es menos de 2–4 h.`);
+  if(topW.length) r.push(`Tener en cuenta lo que más se menciona (${topW.join(', ')}) en las próximas publicaciones y respuestas.`);
+  if(m.medRT != null && m.medRT > 12) r.push(`Responder más rápido: ahora la primera respuesta tarda unas ${fmtDec(m.medRT)} horas; lo ideal es menos de 2 a 4 horas.`);
   return r;
 }
 function reportSummary(m){
-  const out = [], f = m.focus;
-  if(f){
-    out.push(f.n ? `Enfoque «${f.q}»: ${countTxt(f.n, 'comentario se relaciona', 'comentarios se relacionan')} con el criterio (${f.pct} % de ${fmtN(f.total)}): ${countTxt(f.s.pos, 'positivo', 'positivos')}, ${countTxt(f.s.neu, 'neutral', 'neutrales')} y ${countTxt(f.s.neg, 'negativo', 'negativos')}.` : `Enfoque «${f.q}»: ningún comentario cumple el criterio en el periodo analizado.`);
-    if(f.critics.length) out.push(`Sobre el enfoque, quienes más critican son ${f.critics.slice(0, 3).map(a => a.name).join(', ')}; ${f.ambassadors.length ? 'los principales embajadores, ' + f.ambassadors.slice(0, 3).map(a => a.name).join(', ') : 'no hay embajadores destacados'}.`);
-    else if(f.ambassadors.length) out.push(`Sobre el enfoque destacan como embajadores ${f.ambassadors.slice(0, 3).map(a => a.name).join(', ')}.`);
-    if(f.words.length) out.push(`Dentro del enfoque se habla sobre todo de: ${f.words.slice(0, 5).map(w => w[0]).join(', ')}.`);
-  }
-  out.fl = out.length;   // líneas del enfoque: van siempre primero
+  const out = [], f = m.focus, ab = f ? ' sobre ' + f.name : '', de = f ? ' de ' + f.name : '';
+  const names = arr => arr.slice(0, 3).map(a => a.name).join(', ');
+  if(f) out.push(`De ${countTxt(f.total, 'comentario revisado', 'comentarios revisados')}, ${f.n === 1 ? '1 habla' : fmtN(f.n) + ' hablan'} de ${f.name} (${f.pct} de cada 100).`);
+  out.fl = out.length;   // la línea del tema va siempre primero
   const span = m.tracks.length === 1 ? 'el ' + fmtDay(m.first.date) : 'del ' + fmtDay(m.first.date) + ' al ' + fmtDay(m.last.date);
-  out.push(`Se analizaron ${countTxt(m.list.length, 'comentario único', 'comentarios únicos')} de ${countTxt(m.posts.length, 'publicación', 'publicaciones')} en ${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')} (${span}), escritos por ${countTxt(m.authorsN, 'persona', 'personas')}.`);
-  out.push(`El sentimiento es ${m.nss >= 20 ? 'favorable' : m.nss <= -10 ? 'desfavorable' : 'mixto'}: ${countTxt(m.s.pos, 'comentario positivo', 'comentarios positivos')} y ${countTxt(m.s.neg, 'negativo', 'negativos')}.`);
-  if(m.byDate.length > 1){ const d = m.byDate[m.byDate.length - 1].nw; out.push(`En el último seguimiento aparecieron ${countTxt(d, 'comentario nuevo', 'comentarios nuevos')}; la proporción de negativos pasó de ${m.negFirst} % a ${m.negLast} %.`); }
-  if(m.team) out.push(`El equipo respondió ${m.respRate != null ? m.respRate + ' %' : '—'} de los comentarios que lo requerían; quedan ${countTxt(m.pending, 'pendiente', 'pendientes')}${m.medRT != null ? ` y la mediana de primera respuesta es de ${fmtDec(m.medRT)} h` : ''}.`);
-  if(m.posts[0]) out.push(`La publicación con más conversación fue “${m.posts[0].label}” (${countTxt(m.posts[0].total, 'comentario', 'comentarios')}).`);
-  if(m.watch.length){ const w = [...m.watch].sort((a, b) => b.n - a.n)[0]; if(w.n) out.push(`“${w.term}” aparece en ${countTxt(w.n, 'comentario', 'comentarios')} (${w.pct} %): ${countTxt(w.s.pos, 'positivo', 'positivos')} y ${countTxt(w.s.neg, 'negativo', 'negativos')}.`); }
+  if(!f) out.push(`Se analizaron ${countTxt(m.list.length, 'comentario', 'comentarios')} de ${countTxt(m.posts.length, 'publicación', 'publicaciones')} en ${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')} (${span}), escritos por ${countTxt(m.authorsN, 'persona', 'personas')}.`);
+  else out.push(`Los escribieron ${countTxt(m.authorsN, 'persona', 'personas')} en ${countTxt(m.posts.length, 'publicación', 'publicaciones')} (${span}).`);
+  out.push(`${m.nss >= 20 ? 'La mayoría opina bien' : m.nss <= -10 ? 'Predominan las críticas' : 'Las opiniones están divididas'}${f ? ' sobre ' + f.name : ''}: ${countTxt(m.s.pos, 'comentario positivo', 'comentarios positivos')}, ${countTxt(m.s.neg, 'negativo', 'negativos')} y ${countTxt(m.s.neu, 'neutral', 'neutrales')}.`);
+  if(m.detractors.length || m.ambassadors.length) out.push([m.ambassadors.length ? `Quienes más hablan bien${de}: ${names(m.ambassadors)}` : '', m.detractors.length ? `quienes más lo critican: ${names(m.detractors)}` : ''].filter(Boolean).join('; ').replace(/^q/, 'Q') + '.');
+  if(f && m.st.words.length) out.push(`Al hablar de ${f.name} se menciona sobre todo: ${m.st.words.slice(0, 5).map(w => w[0]).join(', ')}.`);
+  if(m.byDate.length > 1){ const d = m.byDate[m.byDate.length - 1].nw; out.push(`En el último seguimiento aparecieron ${countTxt(d, 'comentario nuevo', 'comentarios nuevos')}${ab}; los negativos pasaron de ${m.negFirst} a ${m.negLast} de cada 100.`); }
+  if(m.team && m.answered + m.pending) out.push(`El equipo respondió ${fmtN(m.answered)} de los ${countTxt(m.answered + m.pending, 'comentario que pedía', 'comentarios que pedían')} respuesta${m.pending ? `; quedan ${countTxt(m.pending, 'sin responder', 'sin responder')}` : ''}${m.medRT != null ? ` y suele tardar unas ${fmtDec(m.medRT)} horas en responder` : ''}.`);
+  if(m.posts.length > 1) out.push(`Donde más se comenta${ab} es en “${m.posts[0].label}” (${countTxt(m.posts[0].total, 'comentario', 'comentarios')}).`);
   return out;
 }
 const miniSeg = s => s.total ? `<span class="mini-seg" title="${s.pos} positivos · ${s.neu} neutrales · ${s.neg} negativos">${[['var(--viz-neg)', s.neg], ['var(--viz-neu)', s.neu], ['var(--viz-pos)', s.pos]].filter(x => x[1]).map(([c, v]) => `<i style="flex:${v} 1 0;background:${c}"></i>`).join('')}</span>` : '';
 const sign = n => (n > 0 ? '+' : '') + n;
 function qItem(c){ return `<div class="qitem"><b>${esc(c.authorName || '(desconocido)')}</b>: ${esc(c.text.slice(0, 280))}${c.text.length > 280 ? '…' : ''}<div class="qm">${esc(c._post || '')} · ${esc(platName(c.platform))}${c.reactions ? ' · ' + fmtN(c.reactions) + ' reacciones' : ''}${c._date ? ' · ' + esc(fmtDay(c._date)) : ''}</div></div>`; }
-// Sección principal del informe: estadísticas de los comentarios que cumplen el enfoque
-function focusSection(m){
-  const f = m.focus; if(!f) return '';
-  const kpi = (k, v, d) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d || '&nbsp;'}</div></div>`;
-  if(!f.n) return `<section class="card rep-sec rep-focus"><h3><span class="ms">center_focus_strong</span>Enfoque: «${esc(f.q)}»</h3><p class="sub">Ningún comentario cumple el criterio en el periodo analizado. Prueba con un enfoque más amplio en <b>Cambiar selección</b>.</p></section>`;
-  const tbl = (head, rows) => `<div class="rtable-wrap"><table class="rtable"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
-  const people = (arr, k, lbl) => arr.length ? tbl(`<th>Persona</th><th class="num">${lbl}</th><th class="num">Sobre el enfoque</th>`, arr.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a[k]}</td><td class="num">${a.n}</td></tr>`).join('')) : '<p class="small muted">No hay casos destacados.</p>';
-  return `<section class="card rep-sec rep-focus"><h3><span class="ms">center_focus_strong</span>Enfoque: «${esc(f.q)}»</h3><p class="sub">Comentarios que la IA relacionó con el criterio: es la parte principal del informe.</p>
-    <div class="kpis">${kpi('Comentarios relacionados', fmtN(f.n), `${f.pct} % de ${fmtN(f.total)} comentarios`)}${kpi('Positivos', fmtN(f.s.pos), pctTxt(f.s.pos, f.n))}${kpi('Neutrales', fmtN(f.s.neu), pctTxt(f.s.neu, f.n))}${kpi('Negativos', fmtN(f.s.neg), pctTxt(f.s.neg, f.n))}${kpi('Personas', fmtN(f.authorsN), 'que hablan del enfoque')}${m.team ? kpi('Sin respuesta del equipo', fmtN(f.pending), f.openNeg ? countTxt(f.openNeg, 'negativo', 'negativos') : '') : ''}</div>
-    <div style="margin:12px 0 4px">${miniSeg(f.s)}</div>
-    ${m.byDate.length > 1 ? `<h4 class="viz-h4" style="margin-top:16px">Evolución por seguimiento</h4>${tbl('<th>Fecha</th><th>Seguimiento</th><th class="num">Relacionados</th><th class="num">% del total</th><th class="num">Positivos</th><th class="num">Negativos</th>', m.byDate.map(d => `<tr><td>${esc(fmtDay(d.t.date))}</td><td>${esc(d.t.name)}</td><td class="num"><b>${fmtN(d.fn || 0)}</b></td><td class="num">${d.total ? Math.round((d.fn || 0) / d.total * 100) : 0} %</td><td class="num">${fmtN(d.fpos || 0)}</td><td class="num">${fmtN(d.fneg || 0)}</td></tr>`).join(''))}` : ''}
-    <h4 class="viz-h4" style="margin-top:16px">Por publicación</h4>${tbl('<th>Publicación</th><th>Red</th><th class="num">Relacionados</th><th class="num">% de sus comentarios</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th>', f.posts.map(p => `<tr><td>${esc(p.label)}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num"><b>${fmtN(p.n)}</b></td><td class="num">${p.pct} %</td><td class="sent">${miniSeg(p.s)}</td><td class="num">${fmtN(p.s.pos)}</td><td class="num">${fmtN(p.s.neg)}</td></tr>`).join(''))}
-    <div class="rep-grid" style="margin-top:16px">
-      <div class="viz-card"><h4 class="viz-h4">Quién más habla del enfoque</h4>${rankedBars(f.topAuthors.map(a => ({ l:a.name, v:a.n })), 'rfauthor', { unit:'comentarios' })}</div>
-      <div class="viz-card"><h4 class="viz-h4">De qué se habla dentro del enfoque</h4>${f.words.length ? rankedBars(f.words.map(([w, n]) => ({ l:w, v:n })), 'rfword') : '<p class="small muted">Sin temas destacados.</p>'}</div>
-    </div>
-    <div class="rep-grid" style="margin-top:16px">
-      <div><h4 class="viz-h4">Embajadores del enfoque</h4>${people(f.ambassadors, 'pos', 'Positivos')}</div>
-      <div><h4 class="viz-h4">Quiénes más critican</h4>${people(f.critics, 'neg', 'Negativos')}</div>
-    </div>
-    <div class="rep-grid" style="margin-top:16px">
-      <div><h4 class="viz-h4">Comentarios positivos destacados</h4><div class="qlist">${f.topPos.map(qItem).join('') || '<p class="small muted">Sin comentarios positivos.</p>'}</div></div>
-      <div><h4 class="viz-h4">Comentarios negativos destacados</h4><div class="qlist">${f.topNeg.map(qItem).join('') || '<p class="small muted">Sin comentarios negativos.</p>'}</div></div>
-    </div>
-    ${m.team && f.openQ.length ? `<h4 class="viz-h4" style="margin-top:16px">Preguntas sin responder sobre el enfoque</h4><div class="qlist">${f.openQ.map(qItem).join('')}</div>` : ''}
-  </section>`;
-}
 function renderReport(){
   const m = REP.model; if(!m) return;
   renderRepCrumbs();
@@ -6762,51 +6862,45 @@ function renderReport(){
   const dates = m.byDate.map(d => ({ l:new Date(d.t.date + 'T12:00:00').toLocaleDateString('es', { day:'numeric', month:'short' }), tl:fmtDay(d.t.date) + ' · ' + d.t.name, v:d.total }));
   const kpi = (k, v, d, cls = '') => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d ${cls}">${d || '&nbsp;'}</div></div>`;
   const dNeg = m.byDate.length > 1 ? m.negLast - m.negFirst : null;
+  const f = m.focus, ab = f ? ' sobre ' + esc(f.name) : '', de = f ? ' de ' + esc(f.name) : '';
+  const tbl = (head, rows) => `<div class="rtable-wrap"><table class="rtable"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  const people = (arr, k, lbl, empty) => arr.length ? tbl(`<th>Persona</th><th class="num">${lbl}</th><th class="num">Comentarios</th>`, arr.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a[k]}</td><td class="num">${a.n}</td></tr>`).join('')) : `<p class="small muted">${empty}</p>`;
   $('#repOut').innerHTML = `<div class="report" id="reportDoc">
-    <div class="rep-cover"><h2>Informe de comentarios</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · generado el ${esc(m.generatedAt.toLocaleString('es'))}</p>${m.focus ? `<p><b>Enfoque:</b> «${esc(m.focus.q)}»</p>` : ''}</div>
-    <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen ejecutivo</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div id="repAiOut">${REP.ai ? `<h4 class="viz-h4" style="margin-top:14px">Análisis redactado con IA</h4><div class="rep-ai">${esc(REP.ai)}</div>` : ''}</div></section>
-    ${focusSection(m)}
-    ${m.focus ? '<h2 class="rep-divider">Estadísticas generales de todos los comentarios</h2>' : ''}
-    <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores clave · seguimiento más reciente</h3><p class="sub">«${esc(m.last.name)}» (${esc(fmtDay(m.last.date))})${m.prev ? ` comparado con «${esc(m.prevT.name)}» (${esc(fmtDay(m.prevT.date))})` : ''}.</p>
+    <div class="rep-cover"><h2>Informe de comentarios${ab}</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · ${esc(m.generatedAt.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' }))}</p></div>
+    <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
+    <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores del seguimiento más reciente</h3><p class="sub">«${esc(m.last.name)}» (${esc(fmtDay(m.last.date))})${m.prev ? ` comparado con «${esc(m.prevT.name)}» (${esc(fmtDay(m.prevT.date))})` : ''}${f ? '. Solo comentarios' + ab : ''}.</p>
       <div class="kpis">${m.cmp.map(r => kpi(r.k, r.A, m.prev ? (r.D === '—' ? 'sin dato anterior' : r.D + ' frente al anterior') : '', r.tone)).join('')}
-        ${kpi('Primera respuesta (mediana)', m.cur.medRT != null ? fmtDec(m.cur.medRT) + ' h' : '—', m.cur.medRT != null ? `sobre ${fmtN(m.cur.rtN)} casos con fecha exacta` : 'requiere fechas exactas (API)')}
+        ${m.cur.medRT != null ? kpi('Tiempo de primera respuesta', fmtDec(m.cur.medRT) + ' h', 'valor típico') : ''}
       </div></section>
-    ${m.prev ? `<section class="card rep-sec"><h3><span class="ms">compare_arrows</span>Comparativa con el seguimiento anterior</h3><p class="sub">El seguimiento más reciente es el principal; la variación se calcula frente al anterior.</p>
-      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Indicador</th><th class="num">${esc(fmtDay(m.last.date))}</th><th class="num">${esc(fmtDay(m.prevT.date))}</th><th class="num">Variación</th></tr></thead><tbody>
-      ${m.cmp.map(r => `<tr><td>${esc(r.k)}</td><td class="num"><b>${esc(r.A)}</b></td><td class="num">${esc(r.B)}</td><td class="num cmp-${r.tone || 'eq'}">${esc(r.D)}</td></tr>`).join('')}</tbody></table></div>
-      ${m.postCmp.length ? `<h4 class="viz-h4" style="margin-top:16px">Por publicación</h4><div class="rtable-wrap"><table class="rtable"><thead><tr><th>Publicación</th><th class="num">Comentarios</th><th class="num">Anterior</th><th class="num">Variación</th><th class="num">Positivos</th><th class="num">Anterior</th></tr></thead><tbody>
-      ${m.postCmp.map(x => `<tr><td>${esc(x.label)}</td><td class="num"><b>${fmtN(x.a)}</b></td><td class="num">${x.b == null ? '—' : fmtN(x.b)}</td><td class="num">${x.b == null ? 'nueva' : x.a === x.b ? '=' : sign(x.a - x.b)}</td><td class="num"><b>${fmtN(x.na)}</b></td><td class="num">${x.nb == null ? '—' : fmtN(x.nb)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    ${m.prev ? `<section class="card rep-sec"><h3><span class="ms">compare_arrows</span>Comparativa con el seguimiento anterior</h3>
+      ${tbl(`<th>Indicador</th><th class="num">${esc(fmtDay(m.last.date))}</th><th class="num">${esc(fmtDay(m.prevT.date))}</th><th class="num">Variación</th>`, m.cmp.map(r => `<tr><td>${esc(r.k)}</td><td class="num"><b>${esc(r.A)}</b></td><td class="num">${esc(r.B)}</td><td class="num cmp-${r.tone || 'eq'}">${esc(r.D)}</td></tr>`).join(''))}
+      ${m.postCmp.length > 1 ? `<h4 class="viz-h4" style="margin-top:16px">Por publicación</h4>${tbl('<th>Publicación</th><th class="num">Comentarios</th><th class="num">Anterior</th><th class="num">Positivos</th><th class="num">Anterior</th>', m.postCmp.map(x => `<tr><td>${esc(x.label)}</td><td class="num"><b>${fmtN(x.a)}</b></td><td class="num">${x.b == null ? 'nueva' : fmtN(x.b)}</td><td class="num"><b>${fmtN(x.na)}</b></td><td class="num">${x.nb == null ? '—' : fmtN(x.nb)}</td></tr>`).join(''))}` : ''}
     </section>` : ''}
-    <section class="card rep-sec"><h3><span class="ms">warning</span>Alertas</h3>${m.alerts.map(a => `<div class="rep-alert ${a.lvl}"><span class="ms">${a.lvl === 'ok' ? 'check_circle' : a.lvl === 'high' ? 'error' : 'warning'}</span><span>${esc(a.txt)}</span></div>`).join('')}</section>
-    ${m.byDate.length > 1 ? `<section class="card rep-sec viz-card"><h3><span class="ms">timeline</span>Evolución por seguimiento</h3><p class="sub">Comentarios en cada fecha y nuevos respecto a los seguimientos anteriores.</p>
+    <section class="card rep-sec"><h3><span class="ms">warning</span>Puntos de atención</h3>${m.alerts.map(a => `<div class="rep-alert ${a.lvl}"><span class="ms">${a.lvl === 'ok' ? 'check_circle' : a.lvl === 'high' ? 'error' : 'warning'}</span><span>${esc(a.txt)}</span></div>`).join('')}</section>
+    ${m.byDate.length > 1 ? `<section class="card rep-sec viz-card"><h3><span class="ms">timeline</span>Evolución por seguimiento</h3><p class="sub">Comentarios${ab} en cada fecha y cuántos son nuevos.</p>
       <div class="viz-plot" id="repChartDates"></div>
-      <div class="rtable-wrap" style="margin-top:12px"><table class="rtable"><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="num">Publicaciones</th><th class="num">Comentarios</th><th class="num">Nuevos</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th></tr></thead><tbody>
-      ${m.byDate.map(d => { const ss = { total:d.total, pos:d.pos, neg:d.neg, neu:d.neu }; return `<tr><td>${esc(fmtDay(d.t.date))}</td><td>${esc(d.t.name)}</td><td class="num">${d.posts}</td><td class="num">${fmtN(d.total)}</td><td class="num">${fmtN(d.nw)}</td><td class="sent">${miniSeg(ss)}</td><td class="num">${fmtN(d.pos)}</td><td class="num">${fmtN(d.neg)}</td></tr>`; }).join('')}</tbody></table></div></section>` : ''}
-    <section class="card rep-sec"><h3><span class="ms">article</span>Publicaciones</h3><p class="sub">Ordenadas por volumen de conversación.</p>
-      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Publicación</th><th>Red</th><th class="num">Comentarios</th><th class="num">Personas</th><th class="num">Reacciones</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th>${m.team ? '<th class="num">Pendientes</th>' : ''}<th>Tema principal</th></tr></thead><tbody>
-      ${m.posts.map(p => `<tr><td>${esc(p.label)}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num">${fmtN(p.total)}</td><td class="num">${fmtN(p.authors)}</td><td class="num">${fmtN(p.reacts)}</td><td class="sent">${miniSeg(p.s)}</td><td class="num">${fmtN(p.s.pos)}</td><td class="num">${fmtN(p.s.neg)}</td>${m.team ? `<td class="num">${fmtN(p.pending)}</td>` : ''}<td>${esc(p.topWord)}</td></tr>`).join('')}</tbody></table></div>
-      ${m.platRows.length > 1 ? `<h4 class="viz-h4" style="margin-top:16px">Por red social</h4><div class="rtable-wrap"><table class="rtable"><thead><tr><th>Red</th><th class="num">Comentarios</th><th class="num">Personas</th><th class="num">Reacciones</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th></tr></thead><tbody>${m.platRows.map(r => `<tr><td><i class="pdot ${platDot(r.k)}"></i> ${esc(platName(r.k))}</td><td class="num">${fmtN(r.total)}</td><td class="num">${fmtN(r.authors)}</td><td class="num">${fmtN(r.reacts)}</td><td class="sent">${miniSeg(r.s)}</td><td class="num">${fmtN(r.s.pos)}</td><td class="num">${fmtN(r.s.neg)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      <div style="margin-top:12px">${tbl('<th>Fecha</th><th>Seguimiento</th><th class="num">Comentarios</th><th class="num">Nuevos</th><th class="sent">Tono</th><th class="num">Positivos</th><th class="num">Negativos</th>', m.byDate.map(d => `<tr><td>${esc(fmtDay(d.t.date))}</td><td>${esc(d.t.name)}</td><td class="num">${fmtN(d.total)}</td><td class="num">${fmtN(d.nw)}</td><td class="sent">${miniSeg({ total:d.total, pos:d.pos, neg:d.neg, neu:d.neu })}</td><td class="num">${fmtN(d.pos)}</td><td class="num">${fmtN(d.neg)}</td></tr>`).join(''))}</div></section>` : ''}
+    <section class="card rep-sec"><h3><span class="ms">article</span>Por publicación</h3><p class="sub">Dónde se habla más${de}.</p>
+      ${tbl(`<th>Publicación</th><th>Red</th><th class="num">Comentarios</th><th class="sent">Tono</th><th class="num">Positivos</th><th class="num">Negativos</th>${m.team ? '<th class="num">Sin responder</th>' : ''}<th>Se menciona</th>`, m.posts.map(p => `<tr><td>${esc(p.label)}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num">${fmtN(p.total)}</td><td class="sent">${miniSeg(p.s)}</td><td class="num">${fmtN(p.s.pos)}</td><td class="num">${fmtN(p.s.neg)}</td>${m.team ? `<td class="num">${fmtN(p.pending)}</td>` : ''}<td>${esc(p.topWord)}</td></tr>`).join(''))}
     </section>
     <div class="rep-grid">
-      <section class="card rep-sec viz-card"><h3><span class="ms">groups</span>Quién más comenta</h3><p class="sub">Sin contar a tu equipo.</p>${rankedBars(m.topAuthors.map(a => ({ l:a.name, v:a.n })), 'rauthor', { unit:'comentarios' })}</section>
-      <section class="card rep-sec viz-card"><h3><span class="ms">tag</span>Temas más mencionados</h3><p class="sub">Palabras más frecuentes, sin palabras vacías.</p>${rankedBars(m.st.words.slice(0, 10).map(([w, n]) => ({ l:w, v:n })), 'rword')}</section>
+      <section class="card rep-sec viz-card"><h3><span class="ms">groups</span>Quién más comenta${ab}</h3>${rankedBars(m.topAuthors.slice(0, 8).map(a => ({ l:a.name, v:a.n })), 'rauthor', { unit:'comentarios' })}</section>
+      <section class="card rep-sec viz-card"><h3><span class="ms">tag</span>${f ? 'Qué se dice' + ab : 'Temas más mencionados'}</h3>${m.st.words.length ? rankedBars(m.st.words.slice(0, 8).map(([w, n]) => ({ l:w, v:n })), 'rword') : '<p class="small muted">Sin temas destacados.</p>'}</section>
     </div>
     <div class="rep-grid">
-      <section class="card rep-sec"><h3><span class="ms">favorite</span>Embajadores</h3><p class="sub">Comentan varias veces y casi siempre en positivo.</p>${m.ambassadors.length ? `<div class="rtable-wrap"><table class="rtable"><thead><tr><th>Persona</th><th class="num">Positivos</th><th class="num">Total</th></tr></thead><tbody>${m.ambassadors.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a.pos}</td><td class="num">${a.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="small muted">Aún no hay embajadores claros.</p>'}</section>
-      <section class="card rep-sec"><h3><span class="ms">sentiment_dissatisfied</span>Detractores</h3><p class="sub">Personas con más comentarios negativos.</p>${m.detractors.length ? `<div class="rtable-wrap"><table class="rtable"><thead><tr><th>Persona</th><th class="num">Negativos</th><th class="num">Total</th></tr></thead><tbody>${m.detractors.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${a.neg}</td><td class="num">${a.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="small muted">No hay detractores destacados.</p>'}</section>
-      <section class="card rep-sec"><h3><span class="ms">campaign</span>Más influyentes</h3><p class="sub">Comentarios con más reacciones acumuladas.</p>${m.influencers.length ? `<div class="rtable-wrap"><table class="rtable"><thead><tr><th>Persona</th><th class="num">Reacciones</th><th class="num">Comentarios</th></tr></thead><tbody>${m.influencers.map(a => `<tr><td>${esc(a.name)}</td><td class="num">${fmtN(a.reacts)}</td><td class="num">${a.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="small muted">Sin reacciones registradas.</p>'}</section>
+      <section class="card rep-sec"><h3><span class="ms">favorite</span>Quiénes hablan bien${de}</h3>${people(m.ambassadors, 'pos', 'Positivos', 'Nadie destaca por hablar bien.')}</section>
+      <section class="card rep-sec"><h3><span class="ms">sentiment_dissatisfied</span>Quiénes más critican</h3>${people(m.detractors, 'neg', 'Negativos', 'Nadie destaca por criticar.')}</section>
     </div>
-    ${m.watch.length ? `<section class="card rep-sec"><h3><span class="ms">visibility</span>Marcas y temas vigilados</h3><p class="sub">Comentarios que mencionan cada término (por coincidencia de texto).</p>
-      <div class="rtable-wrap"><table class="rtable"><thead><tr><th>Término</th><th class="num">Menciones</th><th class="num">% del total</th><th class="sent">Sentimiento</th><th class="num">Positivos</th><th class="num">Negativos</th><th>Ejemplo</th></tr></thead><tbody>
-      ${m.watch.map(w => `<tr><td><b>${esc(w.term)}</b></td><td class="num">${fmtN(w.n)}</td><td class="num">${w.pct} %</td><td class="sent">${miniSeg(w.s)}</td><td class="num">${fmtN(w.s.pos)}</td><td class="num">${fmtN(w.s.neg)}</td><td>${w.sample ? esc(w.sample.text.slice(0, 120)) + (w.sample.text.length > 120 ? '…' : '') : ''}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
+    ${m.watch.length ? `<section class="card rep-sec"><h3><span class="ms">visibility</span>Otras marcas y temas</h3><p class="sub">Cuántos de estos comentarios los mencionan.</p>
+      ${tbl('<th>Término</th><th class="num">Menciones</th><th class="num">Positivos</th><th class="num">Negativos</th><th>Ejemplo</th>', m.watch.map(w => `<tr><td><b>${esc(w.term)}</b></td><td class="num">${fmtN(w.n)}</td><td class="num">${fmtN(w.s.pos)}</td><td class="num">${fmtN(w.s.neg)}</td><td>${w.sample ? esc(w.sample.text.slice(0, 120)) + (w.sample.text.length > 120 ? '…' : '') : ''}</td></tr>`).join(''))}</section>` : ''}
     <div class="rep-grid">
       <section class="card rep-sec"><h3><span class="ms">thumb_up</span>Comentarios positivos destacados</h3><div class="qlist">${m.topPos.map(qItem).join('') || '<p class="small muted">Sin comentarios positivos.</p>'}</div></section>
       <section class="card rep-sec"><h3><span class="ms">thumb_down</span>Comentarios negativos destacados</h3><div class="qlist">${m.topNeg.map(qItem).join('') || '<p class="small muted">Sin comentarios negativos.</p>'}</div></section>
     </div>
-    ${m.team ? `<section class="card rep-sec"><h3><span class="ms">help</span>Preguntas sin responder</h3><p class="sub">Ordenadas por reacciones: atiéndelas con el asistente de respuestas.</p><div class="qlist">${m.openQ.map(qItem).join('') || '<p class="small muted">No hay preguntas pendientes. 🎉</p>'}</div></section>` : ''}
-    <section class="card rep-sec"><h3><span class="ms">lightbulb</span>Recomendaciones</h3><ol class="rep-sum">${m.recs.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+    ${m.team && m.openQ.length ? `<section class="card rep-sec"><h3><span class="ms">help</span>Preguntas sin responder</h3><div class="qlist">${m.openQ.slice(0, 5).map(qItem).join('')}</div></section>` : ''}
+    <section class="card rep-sec"><h3><span class="ms">lightbulb</span>Próximos pasos</h3><ol class="rep-sum">${m.recs.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
       <p class="no-print" style="margin:12px 0 0"><button class="btn tonal sm" id="repOpenList"><span class="ms">forum</span>Ver y responder estos comentarios</button></p></section>
-    <p class="small muted">Metodología: sentimiento estimado por diccionario (orientativo); “pendiente” = comentario dirigido a la marca sin respuesta de tu equipo; la tasa de respuesta se calcula sobre los comentarios que la requerían.</p>
+    <p class="small muted">Nota: el tono de cada comentario (positivo, neutral o negativo) es orientativo.${m.team ? ' «Sin responder» son comentarios dirigidos a la marca que aún no tienen respuesta del equipo.' : ''}</p>
   </div>`;
   if(m.byDate.length > 1){ const W = chartW('#repChartDates'); $('#repChartDates').innerHTML = columnChart(dates, { W, h:chartH(W), label:'Comentarios por seguimiento' }); }
   bindVizTips($('#repOut'));
@@ -6814,45 +6908,25 @@ function renderReport(){
 
 /* ---------- Exportar informe: texto, Word, PDF, HTML ---------- */
 function reportText(m){
+  const f = m.focus, ab = f ? ' sobre ' + f.name : '', de = f ? ' de ' + f.name : '';
   const L = [], H = t => { L.push('', t.toUpperCase(), '-'.repeat(Math.min(60, t.length))); };
-  L.push('INFORME DE COMENTARIOS', m.tracks.length === 1 ? `${m.first.name} · ${fmtDay(m.first.date)}` : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`, `Generado el ${m.generatedAt.toLocaleString('es')}`);
-  if(m.focus) L.push(`Enfoque: «${m.focus.q}»`);
-  H('Resumen ejecutivo'); m.summary.forEach(x => L.push('• ' + x)); if(REP.ai) L.push('', REP.ai);
-  const f = m.focus;
-  if(f){
-    H(`Enfoque: «${f.q}»`);
-    L.push(`Comentarios relacionados: ${fmtN(f.n)} de ${fmtN(f.total)} (${f.pct} %)`, `Sentimiento: ${countTxt(f.s.pos, 'positivo', 'positivos')}, ${countTxt(f.s.neu, 'neutral', 'neutrales')} y ${countTxt(f.s.neg, 'negativo', 'negativos')}`, `Personas que hablan del enfoque: ${fmtN(f.authorsN)}`);
-    if(m.team) L.push(`Sin respuesta del equipo: ${fmtN(f.pending)}`);
-    if(m.byDate.length > 1) m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.fn || 0)} relacionados (${countTxt(d.fpos || 0, 'positivo', 'positivos')} y ${countTxt(d.fneg || 0, 'negativo', 'negativos')})`));
-    f.posts.filter(p => p.n).forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.n)} relacionados (${p.pct} % de sus comentarios)`));
-    if(f.topAuthors.length) L.push('Quién más habla del enfoque: ' + f.topAuthors.slice(0, 5).map(a => `${a.name} (${a.n})`).join(', '));
-    if(f.ambassadors.length) L.push('Embajadores: ' + f.ambassadors.map(a => `${a.name} (${a.pos} positivos)`).join(', '));
-    if(f.critics.length) L.push('Quiénes más critican: ' + f.critics.map(a => `${a.name} (${a.neg} negativos)`).join(', '));
-    if(f.words.length) L.push('Temas dentro del enfoque: ' + f.words.slice(0, 8).map(([w, n]) => `${w} (${n})`).join(', '));
-    f.topNeg.forEach(c => L.push(`• Negativo · ${c.authorName}: ${c.text.slice(0, 240)}`));
-    f.topPos.forEach(c => L.push(`• Positivo · ${c.authorName}: ${c.text.slice(0, 240)}`));
-    H('Estadísticas generales');
-  }
+  L.push('INFORME DE COMENTARIOS' + ab.toUpperCase(), m.tracks.length === 1 ? `${m.first.name} · ${fmtDay(m.first.date)}` : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`, m.generatedAt.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' }));
+  H('Resumen'); m.summary.forEach(x => L.push('• ' + x));
   H('Seguimiento más reciente' + (m.prev ? ' frente al anterior' : ''));
-  L.push(`Principal: ${m.last.name} (${fmtDay(m.last.date)})` + (m.prev ? ` · Comparado con: ${m.prevT.name} (${fmtDay(m.prevT.date)})` : ''));
-  m.cmp.forEach(r => L.push(`${r.k}: ${r.A}` + (m.prev ? ` (anterior ${r.B}; variación ${r.D})` : '')));
-  if(m.postCmp.length){ L.push(''); m.postCmp.forEach(x => L.push(`${x.label}: ${fmtN(x.a)} comentarios` + (x.b == null ? ' (nueva)' : ` (anterior ${fmtN(x.b)}; ${x.a === x.b ? '=' : sign(x.a - x.b)})`) + `, ${fmtN(x.na)} positivos` + (x.nb == null ? '' : ` (anterior ${fmtN(x.nb)})`))); }
-  H('Indicadores del periodo completo');
-  L.push(`Comentarios: ${fmtN(m.list.length)} (${fmtN(m.st.comments)} principales, ${fmtN(m.st.replies)} respuestas)`, `Personas que comentan: ${fmtN(m.authorsN)} (${fmtN(m.recurring)} recurrentes)`, `Interacciones: ${fmtN(m.st.reacts)}`,
-    `Sentimiento: ${fmtN(m.s.pos)} positivos, ${fmtN(m.s.neu)} neutrales y ${fmtN(m.s.neg)} negativos (${pctTxt(m.s.pos, m.s.total)} positivos, ${pctTxt(m.s.neu, m.s.total)} neutrales, ${pctTxt(m.s.neg, m.s.total)} negativos)`, `Preguntas: ${fmtN(m.st.q)}`,
-    `Tasa de respuesta del equipo: ${m.team && m.respRate != null ? m.respRate + ' %' : '—'}${m.team ? ` (${fmtN(m.pending)} pendientes)` : ''}`, `Primera respuesta (mediana): ${m.medRT != null ? fmtDec(m.medRT) + ' h' : '—'}`);
-  H('Alertas'); m.alerts.forEach(a => L.push('• ' + a.txt));
+  L.push(`${m.last.name} (${fmtDay(m.last.date)})` + (m.prev ? ` comparado con ${m.prevT.name} (${fmtDay(m.prevT.date)})` : ''));
+  m.cmp.forEach(r => L.push(`${r.k}: ${r.A}` + (m.prev ? ` (antes ${r.B}; ${r.D})` : '')));
+  H('Puntos de atención'); m.alerts.forEach(a => L.push('• ' + a.txt));
   if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, ${countTxt(d.pos, 'positivo', 'positivos')} y ${countTxt(d.neg, 'negativo', 'negativos')}`)); }
-  H('Publicaciones'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.total)} comentarios, ${fmtN(p.authors)} personas, ${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')}${m.team ? `, ${fmtN(p.pending)} pendientes` : ''}`));
-  H('Quién más comenta'); m.topAuthors.forEach((a, i) => L.push(`${i + 1}. ${a.name}: ${a.n} comentarios`));
-  if(m.ambassadors.length){ H('Embajadores'); m.ambassadors.forEach(a => L.push(`• ${a.name} (${a.pos} positivos de ${a.n})`)); }
-  if(m.detractors.length){ H('Detractores'); m.detractors.forEach(a => L.push(`• ${a.name} (${a.neg} negativos de ${a.n})`)); }
-  H('Temas más mencionados'); L.push(m.st.words.slice(0, 15).map(([w, n]) => `${w} (${n})`).join(', '));
-  if(m.watch.length){ H('Marcas y temas vigilados'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones (${w.pct} %): ${countTxt(w.s.pos, 'positivo', 'positivos')} y ${countTxt(w.s.neg, 'negativo', 'negativos')}`)); }
-  H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`));
-  H('Comentarios positivos destacados'); m.topPos.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`));
-  if(m.team && m.openQ.length){ H('Preguntas sin responder'); m.openQ.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 280)}`)); }
-  H('Recomendaciones'); m.recs.forEach((x, i) => L.push(`${i + 1}. ${x}`));
+  H('Por publicación'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)}): ${fmtN(p.total)} comentarios, ${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')}${m.team ? `, ${fmtN(p.pending)} sin responder` : ''}`));
+  H('Quién más comenta' + ab); m.topAuthors.slice(0, 5).forEach((a, i) => L.push(`${i + 1}. ${a.name}: ${countTxt(a.n, 'comentario', 'comentarios')}`));
+  if(m.ambassadors.length){ H('Quiénes hablan bien' + de); m.ambassadors.slice(0, 5).forEach(a => L.push(`• ${a.name} (${countTxt(a.pos, 'positivo', 'positivos')})`)); }
+  if(m.detractors.length){ H('Quiénes más critican'); m.detractors.slice(0, 5).forEach(a => L.push(`• ${a.name} (${countTxt(a.neg, 'negativo', 'negativos')})`)); }
+  if(m.st.words.length){ H(f ? 'Qué se dice' + ab : 'Temas más mencionados'); L.push(m.st.words.slice(0, 10).map(([w, n]) => `${w} (${n})`).join(', ')); }
+  if(m.watch.length){ H('Otras marcas y temas'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones, ${countTxt(w.s.pos, 'positivo', 'positivos')} y ${countTxt(w.s.neg, 'negativo', 'negativos')}`)); }
+  H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 240)}`));
+  H('Comentarios positivos destacados'); m.topPos.forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 240)}`));
+  if(m.team && m.openQ.length){ H('Preguntas sin responder'); m.openQ.slice(0, 5).forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 240)}`)); }
+  H('Próximos pasos'); m.recs.forEach((x, i) => L.push(`${i + 1}. ${x}`));
   return L.join('\n').trim();
 }
 // Documento del informe para exportar: sencillo, en blanco y negro, Arial 12 (independiente del tema de la app)
@@ -6875,32 +6949,6 @@ const DOC_CSS = `.scadoc,.scadoc *{color:#000!important;background:#fff!importan
   .scadoc .small{font-size:10pt}
   .scadoc .q{margin:0 0 5pt}
   .scadoc .avoid,.scadoc tr,.scadoc li{page-break-inside:avoid;break-inside:avoid}`;
-function focusDoc(m){
-  const f = m.focus; if(!f) return '';
-  const e = esc, n = fmtN;
-  const UL = items => items.map(x => `<p class="li">•&nbsp;&nbsp;${x}</p>`).join('');
-  const quote = c => `<p class="q avoid"><b>${e(c.authorName || '(desconocido)')}</b> (${e(platName(c.platform))}${c.reactions ? ', ' + n(c.reactions) + ' reacciones' : ''}): «${e(c.text.slice(0, 300))}${c.text.length > 300 ? '…' : ''}»</p>`;
-  if(!f.n) return `<h2>Enfoque: «${e(f.q)}»</h2><p>Ningún comentario cumple el criterio en el periodo analizado.</p>`;
-  let b = `<div class="avoid"><h2>Enfoque: «${e(f.q)}»</h2><p>Comentarios que la IA relacionó con el criterio; es la parte principal de este informe.</p>
-  <table><tbody>
-    <tr><td>Comentarios relacionados</td><td class="n"><b>${n(f.n)}</b></td><td>${f.pct} % de ${n(f.total)} comentarios</td></tr>
-    <tr><td>Positivos</td><td class="n">${n(f.s.pos)}</td><td>${pctTxt(f.s.pos, f.n)}</td></tr>
-    <tr><td>Neutrales</td><td class="n">${n(f.s.neu)}</td><td>${pctTxt(f.s.neu, f.n)}</td></tr>
-    <tr><td>Negativos</td><td class="n">${n(f.s.neg)}</td><td>${pctTxt(f.s.neg, f.n)}</td></tr>
-    <tr><td>Personas que hablan del enfoque</td><td class="n">${n(f.authorsN)}</td><td></td></tr>
-    ${m.team ? `<tr><td>Sin respuesta del equipo</td><td class="n">${n(f.pending)}</td><td>${f.openNeg ? countTxt(f.openNeg, 'negativo', 'negativos') : ''}</td></tr>` : ''}
-  </tbody></table></div>`;
-  if(m.byDate.length > 1) b += `<div class="avoid"><h3>Evolución por seguimiento</h3><table><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="n">Relacionados</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>${m.byDate.map(d => `<tr><td>${e(fmtDay(d.t.date))}</td><td>${e(d.t.name)}</td><td class="n">${n(d.fn || 0)}</td><td class="n">${n(d.fpos || 0)}</td><td class="n">${n(d.fneg || 0)}</td></tr>`).join('')}</tbody></table></div>`;
-  b += `<div class="avoid"><h3>Por publicación</h3><table><thead><tr><th>Publicación</th><th class="n">Relacionados</th><th class="n">% de sus comentarios</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>${f.posts.map(p => `<tr><td>${e(p.label)}</td><td class="n">${n(p.n)}</td><td class="n">${p.pct} %</td><td class="n">${n(p.s.pos)}</td><td class="n">${n(p.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
-  if(f.topAuthors.length) b += `<div class="avoid"><h3>Quién más habla del enfoque</h3>${UL(f.topAuthors.map(a => `${e(a.name)}: ${countTxt(a.n, 'comentario', 'comentarios')}`))}</div>`;
-  if(f.ambassadors.length) b += `<div class="avoid"><h3>Embajadores del enfoque</h3>${UL(f.ambassadors.map(a => `${e(a.name)} (${countTxt(a.pos, 'positivo', 'positivos')})`))}</div>`;
-  if(f.critics.length) b += `<div class="avoid"><h3>Quiénes más critican</h3>${UL(f.critics.map(a => `${e(a.name)} (${countTxt(a.neg, 'negativo', 'negativos')})`))}</div>`;
-  if(f.words.length) b += `<h3>De qué se habla dentro del enfoque</h3><p>${f.words.slice(0, 10).map(([w, c]) => `${e(w)} (${c})`).join(', ')}</p>`;
-  if(f.topNeg.length) b += `<h3>Comentarios negativos destacados</h3>${f.topNeg.map(quote).join('')}`;
-  if(f.topPos.length) b += `<h3>Comentarios positivos destacados</h3>${f.topPos.map(quote).join('')}`;
-  if(m.team && f.openQ.length) b += `<h3>Preguntas sin responder sobre el enfoque</h3>${f.openQ.map(quote).join('')}`;
-  return b;
-}
 function reportDocument(m){
   const e = esc, n = fmtN;
   const UL = items => items.map(x => `<p class="li">•&nbsp;&nbsp;${x}</p>`).join('');
@@ -6911,19 +6959,16 @@ function reportDocument(m){
   const today = m.generatedAt.toLocaleDateString('es', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
   const quote = c => `<p class="q avoid"><b>${e(c.authorName || '(desconocido)')}</b> (${e(platName(c.platform))}${c.reactions ? ', ' + n(c.reactions) + ' reacciones' : ''}${c._date ? ', ' + e(fmtDay(c._date)) : ''}): «${e(c.text.slice(0, 300))}${c.text.length > 300 ? '…' : ''}»</p>`;
   const sentTxt = s => s.total ? `${pctTxt(s.pos, s.total)} positivos, ${pctTxt(s.neu, s.total)} neutrales, ${pctTxt(s.neg, s.total)} negativos` : '—';
-  let b = `<h1>Informe de comentarios en redes sociales</h1>
+  const f = m.focus, ab = f ? ' sobre ' + e(f.name) : '', de = f ? ' de ' + e(f.name) : '';
+  let b = `<h1>Informe de comentarios${ab}</h1>
   <div class="meta">
     <p><b>Fecha:</b> ${e(today.charAt(0).toUpperCase() + today.slice(1))}</p>
     ${author ? `<p><b>Elaborado por:</b> ${e(author)}</p>` : ''}
     ${brand ? `<p><b>Cliente / marca:</b> ${e(brand)}</p>` : ''}
     <p><b>Periodo analizado:</b> ${e(period)} (${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')}, ${countTxt(m.posts.length, 'publicación', 'publicaciones')})</p>
-    ${m.focus ? `<p><b>Enfoque:</b> «${e(m.focus.q)}»</p>` : ''}
   </div>
   <h2>Resumen</h2>
   ${m.summary.map(x => `<p>${e(x)}</p>`).join('')}
-  ${REP.ai ? `<p>${e(REP.ai).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>')}</p>` : ''}
-  ${focusDoc(m)}
-  ${m.focus ? '<h2>Estadísticas generales de todos los comentarios</h2>' : ''}
   <div class="avoid"><h2>Indicadores del seguimiento más reciente</h2>
   <p><b>Seguimiento principal:</b> ${e(m.last.name)} (${e(fmtDay(m.last.date))})${m.prev ? ` · <b>comparado con:</b> ${e(m.prevT.name)} (${e(fmtDay(m.prevT.date))})` : ''}</p>
   <table><thead><tr><th>Indicador</th><th class="n">${e(fmtDay(m.last.date))}</th>${m.prev ? `<th class="n">${e(fmtDay(m.prevT.date))}</th><th class="n">Variación</th>` : ''}</tr></thead><tbody>
@@ -6931,43 +6976,27 @@ function reportDocument(m){
   </tbody></table></div>
   ${m.postCmp.length ? `<div class="avoid"><h2>Comparativa por publicación</h2><table><thead><tr><th>Publicación</th><th class="n">Comentarios</th><th class="n">Anterior</th><th class="n">Variación</th><th class="n">Positivos</th><th class="n">Anterior</th></tr></thead><tbody>
   ${m.postCmp.map(x => `<tr><td>${e(x.label)}</td><td class="n"><b>${n(x.a)}</b></td><td class="n">${x.b == null ? '—' : n(x.b)}</td><td class="n">${x.b == null ? 'nueva' : x.a === x.b ? '=' : sign(x.a - x.b)}</td><td class="n"><b>${n(x.na)}</b></td><td class="n">${x.nb == null ? '—' : n(x.nb)}</td></tr>`).join('')}</tbody></table></div>` : ''}
-  <div class="avoid"><h2>Indicadores del periodo completo</h2>
-  <table><tbody>
-    <tr><td>Comentarios únicos</td><td class="n">${n(m.list.length)}</td><td>${n(m.st.comments)} principales y ${n(m.st.replies)} respuestas</td></tr>
-    <tr><td>Personas que comentan</td><td class="n">${n(m.authorsN)}</td><td>${n(m.recurring)} recurrentes</td></tr>
-    <tr><td>Interacciones</td><td class="n">${n(m.st.reacts)}</td><td>reacciones y me gusta</td></tr>
-    <tr><td>Comentarios positivos</td><td class="n">${n(m.s.pos)}</td><td>${sentTxt(m.s)}</td></tr>
-    <tr><td>Comentarios negativos</td><td class="n">${n(m.s.neg)}</td><td>${m.team ? 'de ellos, sin responder: ' + n(m.list.filter(x => !x.isTeam && x.sentiment === 'negativo' && x.needsTeam).length) : ''}</td></tr>
-    <tr><td>Preguntas</td><td class="n">${n(m.st.q)}</td><td>${pctTxt(m.st.q, m.list.length)} de los comentarios</td></tr>
-    <tr><td>Tasa de respuesta del equipo</td><td class="n">${m.team && m.respRate != null ? m.respRate + ' %' : '—'}</td><td>${m.team ? countTxt(m.pending, 'comentario pendiente', 'comentarios pendientes') : 'equipo no definido'}</td></tr>
-    <tr><td>Primera respuesta (mediana)</td><td class="n">${m.medRT != null ? fmtDec(m.medRT) + ' h' : '—'}</td><td>${m.medRT != null ? 'sobre ' + n(m.rtN) + ' casos con fecha exacta' : 'requiere fechas exactas'}</td></tr>
-  </tbody></table></div>
-  <div class="avoid"><h2>Alertas</h2>
+  <div class="avoid"><h2>Puntos de atención</h2>
   ${UL(m.alerts.map(a => e(a.txt)))}</div>`;
   if(m.byDate.length > 1) b += `<div class="avoid"><h2>Evolución por seguimiento</h2>
   <table><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="n">Comentarios</th><th class="n">Nuevos</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
   ${m.byDate.map(d => `<tr><td>${e(fmtDay(d.t.date))}</td><td>${e(d.t.name)}</td><td class="n">${n(d.total)}</td><td class="n">${n(d.nw)}</td><td class="n">${n(d.pos)}</td><td class="n">${n(d.neg)}</td></tr>`).join('')}</tbody></table></div>`;
-  b += `<h2>Detalle por publicación</h2>
-  ${m.posts.map((p, i) => `<div class="avoid"><h3>${i + 1}. ${e(p.label)}</h3>
-    <p><b>Red:</b> ${e(platName(p.platform))} · <b>Comentarios:</b> ${n(p.total)} · <b>Personas:</b> ${n(p.authors)} · <b>Reacciones:</b> ${n(p.reacts)}<br>
-    <b>Sentimiento:</b> ${sentTxt(p.s)} (${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')})${m.team ? ` · <b>Pendientes de respuesta:</b> ${n(p.pending)}` : ''}${p.topWord ? ` · <b>Tema principal:</b> ${e(p.topWord)}` : ''}</p></div>`).join('')}`;
-  if(m.platRows.length > 1) b += `<div class="avoid"><h2>Por red social</h2><table><thead><tr><th>Red</th><th class="n">Comentarios</th><th class="n">Personas</th><th class="n">Reacciones</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
-    ${m.platRows.map(r => `<tr><td>${e(platName(r.k))}</td><td class="n">${n(r.total)}</td><td class="n">${n(r.authors)}</td><td class="n">${n(r.reacts)}</td><td class="n">${n(r.s.pos)}</td><td class="n">${n(r.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
-  b += `<h2>Audiencia</h2>
-  <div class="avoid"><h3>Quién más comenta</h3>${OL(m.topAuthors.map(a => `${e(a.name)}: ${countTxt(a.n, 'comentario', 'comentarios')}`))}</div>
-  ${m.ambassadors.length ? `<div class="avoid"><h3>Embajadores</h3>${UL(m.ambassadors.map(a => `${e(a.name)} (${a.pos} positivos de ${a.n})`))}</div>` : ''}
-  ${m.detractors.length ? `<div class="avoid"><h3>Detractores</h3>${UL(m.detractors.map(a => `${e(a.name)} (${a.neg} negativos de ${a.n})`))}</div>` : ''}
-  ${m.influencers.length ? `<div class="avoid"><h3>Más influyentes</h3>${UL(m.influencers.map(a => `${e(a.name)} (${n(a.reacts)} reacciones en ${countTxt(a.n, 'comentario', 'comentarios')})`))}</div>` : ''}
-  <h2>Temas más mencionados</h2><p>${m.st.words.slice(0, 15).map(([w, c]) => `${e(w)} (${c})`).join(', ') || '—'}</p>`;
-  if(m.watch.length) b += `<div class="avoid"><h2>Marcas y temas vigilados</h2><table><thead><tr><th>Término</th><th class="n">Menciones</th><th class="n">% del total</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
-    ${m.watch.map(w => `<tr><td>${e(w.term)}</td><td class="n">${n(w.n)}</td><td class="n">${w.pct} %</td><td class="n">${n(w.s.pos)}</td><td class="n">${n(w.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
+  b += `<div class="avoid"><h2>Por publicación</h2><table><thead><tr><th>Publicación</th><th>Red</th><th class="n">Comentarios</th><th class="n">Positivos</th><th class="n">Negativos</th>${m.team ? '<th class="n">Sin responder</th>' : ''}</tr></thead><tbody>
+    ${m.posts.map(p => `<tr><td>${e(p.label)}</td><td>${e(platName(p.platform))}</td><td class="n">${n(p.total)}</td><td class="n">${n(p.s.pos)}</td><td class="n">${n(p.s.neg)}</td>${m.team ? `<td class="n">${n(p.pending)}</td>` : ''}</tr>`).join('')}</tbody></table></div>`;
+  b += `<h2>Quiénes comentan${ab}</h2>
+  <div class="avoid"><h3>Quién más comenta</h3>${OL(m.topAuthors.slice(0, 5).map(a => `${e(a.name)}: ${countTxt(a.n, 'comentario', 'comentarios')}`))}</div>
+  ${m.ambassadors.length ? `<div class="avoid"><h3>Quiénes hablan bien${de}</h3>${UL(m.ambassadors.slice(0, 5).map(a => `${e(a.name)} (${countTxt(a.pos, 'positivo', 'positivos')})`))}</div>` : ''}
+  ${m.detractors.length ? `<div class="avoid"><h3>Quiénes más critican</h3>${UL(m.detractors.slice(0, 5).map(a => `${e(a.name)} (${countTxt(a.neg, 'negativo', 'negativos')})`))}</div>` : ''}
+  ${m.st.words.length ? `<h2>${f ? 'Qué se dice' + ab : 'Temas más mencionados'}</h2><p>${m.st.words.slice(0, 10).map(([w, c]) => `${e(w)} (${c})`).join(', ')}</p>` : ''}`;
+  if(m.watch.length) b += `<div class="avoid"><h2>Otras marcas y temas</h2><table><thead><tr><th>Término</th><th class="n">Menciones</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
+    ${m.watch.map(w => `<tr><td>${e(w.term)}</td><td class="n">${n(w.n)}</td><td class="n">${n(w.s.pos)}</td><td class="n">${n(w.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
   b += `<h2>Comentarios destacados</h2>
   <h3>Negativos</h3>${m.topNeg.map(quote).join('') || '<p>Sin comentarios negativos.</p>'}
   <h3>Positivos</h3>${m.topPos.map(quote).join('') || '<p>Sin comentarios positivos.</p>'}`;
-  if(m.team && m.openQ.length) b += `<h2>Preguntas sin responder</h2>${m.openQ.map(quote).join('')}`;
-  b += `<div class="avoid"><h2>Próximos pasos</h2>${m.recs.length ? OL(m.recs.map(e)) : '<p>Sin tareas pendientes de esta jornada.</p>'}</div>
-  <p class="small">Metodología: sentimiento estimado por diccionario (orientativo); “pendiente” = comentario dirigido a la marca sin respuesta del equipo.</p>`;
-  const footer = 'Informe de comentarios · ' + (today.charAt(0).toUpperCase() + today.slice(1));
+  if(m.team && m.openQ.length) b += `<h2>Preguntas sin responder</h2>${m.openQ.slice(0, 5).map(quote).join('')}`;
+  b += `<div class="avoid"><h2>Próximos pasos</h2>${m.recs.length ? OL(m.recs.map(e)) : '<p>Sin tareas pendientes.</p>'}</div>
+  <p class="small">Nota: el tono de cada comentario (positivo, neutral o negativo) es orientativo.${m.team ? ' «Sin responder» son comentarios dirigidos a la marca que aún no tienen respuesta del equipo.' : ''}</p>`;
+  const footer = 'Informe de comentarios' + (f ? ' sobre ' + f.name : '') + ' · ' + (today.charAt(0).toUpperCase() + today.slice(1));
   return { body:`<div class="scadoc">${b}</div>`, css:DOC_CSS, footer,
     html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Informe de comentarios</title><style>body{margin:2cm;background:#fff}${DOC_CSS}</style></head><body><div class="scadoc">${b}<p class="small" style="margin-top:18pt;border-top:0.75pt solid #000;padding-top:4pt">${e(footer)}</p></div></body></html>` };
 }
@@ -7035,30 +7064,6 @@ async function reportCopy(){
     toast('Informe copiado: pégalo en Word, Google Docs o un correo (con formato)');
   }catch(e){ copyText(text, 'Informe copiado como texto'); }
 }
-async function reportAI(){
-  const m = REP.model, cfg = AI.cfg();
-  if(REP.aiBusy || !m) return;
-  const out = $('#repAiOut'); if(!out) return;
-  if(!aiConfigured(cfg)){ out.innerHTML = '<p class="small muted">El resumen con IA aparecerá cuando la IA esté instalada.</p>'; return; }
-  REP.aiBusy = true;
-  const t0 = Date.now(), local = cfg.prov === 'local';
-  const prog = (txt, pct) => { const o = $('#repAiOut'); if(!o) return; o.innerHTML = `<div class="rep-ai-prog" role="status" aria-live="polite"><span class="small muted" id="repAiState">${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-label="Progreso del resumen con IA" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></div>`; };
-  prog(`Redactando el resumen con IA (${AI_PROV[cfg.prov].name})…${local ? ' En tu equipo puede tardar uno o dos minutos.' : ''}`, local ? 0 : null);
-  // el modelo de la app es pequeño y se ejecuta en tu equipo: se le da un resumen más corto para que responda en un tiempo razonable
-  const facts = reportText(m).slice(0, local ? 2200 : 6000), f = m.focus;
-  const sys = 'Eres un consultor senior de marketing digital y comunicación. Redactas resúmenes ejecutivos claros y accionables en español, sin inventar datos ni usar tecnicismos.';
-  const user = `A partir de este informe de comentarios en redes sociales, escribe un resumen ejecutivo de 2 o 3 párrafos breves.${f ? ` Céntrate sobre todo en el enfoque «${f.q}»: qué se dice, el tono de esos comentarios, quiénes critican y quiénes defienden.` : ''} Incluye la situación general, las causas de los comentarios negativos, oportunidades y 3 acciones prioritarias. Usa solo los datos dados.\n\n${facts}`;
-  try{
-    let txt = await aiRequest(cfg, sys, user, null, local ? (x => prog(`Redactando el resumen con IA… ${Math.round(x * 100)} %`, Math.round(x * 100))) : null);
-    txt = String(txt || '').replace(/^```\w*\n?|```$/g, '').trim();
-    try{ const j = JSON.parse(txt); txt = j.resumen || j.summary || Object.values(j).join('\n\n'); }catch(e){}
-    REP.ai = txt;
-    if(!txt) throw new Error('La IA no devolvió texto. Inténtalo de nuevo.');
-    const o = $('#repAiOut'); if(o) o.innerHTML = `<h4 class="viz-h4" style="margin-top:14px">Análisis redactado con IA (${esc(AI_PROV[cfg.prov].name)})</h4><div class="rep-ai">${esc(txt)}</div><p class="small muted">Generado automáticamente en ${Math.max(1, Math.round((Date.now() - t0) / 1000))} s: revísalo antes de compartirlo.</p>`;
-    toast('Resumen con IA listo');
-  }catch(e){ const o = $('#repAiOut'); if(o) o.innerHTML = `<p class="small" style="color:var(--error)">No se pudo redactar el resumen con IA: ${esc(e.message)}</p><button class="btn tonal sm" id="repAiRetry"><span class="ms">refresh</span>Reintentar</button>`; }
-  finally{ REP.aiBusy = false; }
-}
 function initReports(){
   $('#repPicker').addEventListener('click', e => {
     const pr = e.target.closest('[data-rpp]');
@@ -7077,10 +7082,12 @@ function initReports(){
     if(e.target.closest('#repEdit')){ REP.editing = true; renderReportPicker(); renderRepCrumbs(); $('#repPicker').scrollIntoView({ behavior:'smooth' }); }
     if(e.target.closest('#repCopy')) reportCopy();
     if(e.target.closest('#repWa')) openWaDlg();
-    if(e.target.closest('#repAiRetry')) reportAI();
     const x = e.target.closest('[data-rexp]'); if(x){ closeMenus(); reportExport(x.dataset.rexp); }
   });
-  $('#repOut').addEventListener('click', e => { if(e.target.closest('#repOpenList') && REP.model) viewTrackingsComments(REP.model.tids, 'informe').then(() => selectTab('list')); });
+  $('#repOut').addEventListener('click', e => {
+    if(e.target.closest('#repOpenList') && REP.model) viewTrackingsComments(REP.model.tids, 'informe').then(() => selectTab('list'));
+    if(e.target.closest('#repRetry') && REP.lastTids) generateReport(REP.lastTids);
+  });
 }
 
 /* =====================================================================
@@ -7098,10 +7105,10 @@ async function semLoad(){
   if(SEM.pipe) return SEM.pipe;
   SEM.loading ||= (async () => {
     const filesW = {};
-    const wp = aiCall({ type:'load', kind:'sem', model:SEM.model, task:'feature-extraction', tries:await semTries() }, { onProgress:p => {
+    const wp = aiRun({ type:'load', kind:'sem', model:SEM.model, task:'feature-extraction', tries:await semTries() }, { onProgress:p => {
       if(p.status === 'progress' && p.total){ filesW[p.file] = [p.loaded, p.total]; const a = Object.values(filesW).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); SEM.mb = a; if(SEM.onProgress) SEM.onProgress(a); else semStatus(`Cargando el modelo de búsqueda… ${Math.round(a[0] / a[1] * 100)} %`, true, false, Math.round(a[0] / a[1] * 100)); }
     } });
-    if(wp){ await wp; SEM.pipe = 'worker'; PREF.set('aiSem', '1'); return SEM.pipe; }
+    if(await wp){ SEM.pipe = 'worker'; PREF.set('aiSem', '1'); return SEM.pipe; }
     const T = await import(SEM.lib);
     T.env.allowLocalModels = false;
     const files = {};
@@ -7121,7 +7128,8 @@ async function semEmbed(texts, kind, onProg){
   texts.forEach((t, i) => { const k = kind + '|' + t; if(SEM.cache.has(k)) out[i] = SEM.cache.get(k); else todo.push(i); });
   if(pipe === 'worker'){
     if(todo.length){
-      const vs = await aiCall({ type:'embed', model:SEM.model, tries:await semTries(), texts:todo.map(j => kind + ': ' + texts[j].slice(0, 512)) }, { onStep:(a, b) => onProg && onProg(a, b) });
+      const vs = await aiRun({ type:'embed', model:SEM.model, tries:await semTries(), texts:todo.map(j => kind + ': ' + texts[j].slice(0, 512)) }, { onStep:(a, b) => onProg && onProg(a, b) });
+      if(vs === null){ SEM.pipe = null; SEM.loading = null; return semEmbed(texts, kind, onProg); }   // modo compatible
       todo.forEach((j, n) => { out[j] = vs[n]; SEM.cache.set(kind + '|' + texts[j], vs[n]); });
     }
     return out;
@@ -7320,12 +7328,12 @@ window.addEventListener('message', e => {
 function whatsappMessage(m, tone = 'cercano'){
   const c = m.cur || m, terms = (m.terms || []).filter(Boolean), fq = m.focus ? m.focus.q : '';
   const brand = repOpt('client') || terms[0] || '';
-  const crit = fq || (terms.length ? terms.join(', ') : '');
+  const crit = fq ? focusSubj(fq) : (terms.length ? terms.join(', ') : '');
   const day = d => new Date(d + 'T12:00:00').toLocaleDateString('es', { weekday:'long', day:'numeric', month:'long' });
   const people = arr => arr.length === 1 ? arr[0] : arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
   const others = c.list.filter(x => !x.isTeam);
-  // comentarios que hablan del criterio (marcas o temas vigilados); sin criterio, todos
-  const about = fq ? others.filter(x => x._focus) : terms.length ? others.filter(x => terms.some(t => normName(x.text).includes(normName(t)) || (x.mentions || []).some(mm => normName(mm).includes(normName(t))))) : others;
+  // comentarios que hablan del criterio (el informe ya trae solo esos); sin criterio, los de las marcas vigiladas
+  const about = fq ? others : terms.length ? others.filter(x => terms.some(t => normName(x.text).includes(normName(t)) || (x.mentions || []).some(mm => normName(mm).includes(normName(t))))) : others;
   const pos = about.filter(x => x.sentiment === 'positivo'), neg = about.filter(x => x.sentiment === 'negativo');
   const topBy = arr => { const k = {}; arr.forEach(x => { const n = x.authorName || ''; if(n) k[n] = (k[n] || 0) + 1; }); return Object.entries(k).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]); };
   const critics = topBy(neg), fans = topBy(pos);
@@ -7335,19 +7343,20 @@ function whatsappMessage(m, tone = 'cercano'){
   const likeW = pos.length ? topWord(pos) : '', badW = neg.length ? topWord(neg) : '';
   const pendNeg = c.team ? others.filter(x => x.sentiment === 'negativo' && x.needsTeam).length : 0;
   const pendQ = c.team ? others.filter(x => x.isQuestion && x.needsTeam).length : 0;
-  const diff = m.prev ? c.list.length - m.prev.list.length : null;
+  const diff = m.prev ? others.length - m.prev.list.filter(x => !x.isTeam).length : null;
   const vsPrev = diff == null ? '' : diff > 0 ? ` (${diff} más que en el seguimiento anterior)` : diff < 0 ? ` (${-diff} menos que en el seguimiento anterior)` : ' (los mismos que en el seguimiento anterior)';
   const formal = tone === 'formal', L = [];
   L.push(`📊 *Informe de comentarios${brand ? ' · ' + brand : ''}*`);
   L.push(m.prev ? `Seguimiento del ${day(m.last.date)}, comparado con el del ${day(m.prevT.date)}.` : `Seguimiento del ${day(m.last.date)}.`);
   L.push('');
-  L.push(`${formal ? 'Se analizaron' : 'Analizamos'} *${countTxt(c.list.length, 'comentario', 'comentarios')}* de ${countTxt(c.authorsN, 'persona', 'personas')}${vsPrev}.`);
-  const aboutTxt = crit ? `Sobre *${crit}* ${about.length === 1 ? 'hay 1 comentario' : `hay ${about.length} comentarios`}` : 'De ellos';
+  if(fq) L.push(`${formal ? 'Se revisaron' : 'Revisamos'} *${countTxt(c.focus ? c.focus.total : others.length, 'comentario', 'comentarios')}*.`);
+  else L.push(`${formal ? 'Se analizaron' : 'Analizamos'} *${countTxt(c.list.length, 'comentario', 'comentarios')}* de ${countTxt(c.authorsN, 'persona', 'personas')}${vsPrev}.`);
+  const aboutTxt = crit ? `Sobre *${crit}* ${about.length === 1 ? 'hay 1 comentario' : `hay ${about.length} comentarios`}${fq ? vsPrev : ''}` : 'De ellos';
   if(about.length) L.push(`${aboutTxt}: *${pos.length} ${pos.length === 1 ? 'positivo' : 'positivos'}* 👍 y *${neg.length} ${neg.length === 1 ? 'negativo' : 'negativos'}* 👎${about.length - pos.length - neg.length ? ` (el resto, neutrales)` : ''}.`);
   else if(crit) L.push(`Nadie mencionó *${crit}* en este seguimiento.`);
   if(tone !== 'breve'){
     if(critics.length) L.push(`👎 ${formal ? 'Quienes más críticas hicieron' : 'Quienes más critican'}: ${people(critics)}.`);
-    if(fans.length) L.push(`👍 ${formal ? 'Los principales embajadores' : 'Nuestros embajadores'}: ${people(fans)}.`);
+    if(fans.length) L.push(`👍 ${formal ? 'Quienes mejor hablan' : 'Quienes hablan bien'}${crit ? ' de ' + crit : ''}: ${people(fans)}.`);
     // opinión personal sobre lo que se dice del criterio
     const op = [];
     if(about.length){
@@ -7392,8 +7401,8 @@ async function waAi(){
   const wst = $('#waAiState'); wst.dataset.busy = '1'; $('#waAi').disabled = true; aiProgressSet(wst, 'Redactando el mensaje con ' + AI_PROV[cfg.prov].name + '…', cfg.prov === 'local' ? 0 : null);
   try{
     const tone = { cercano:'cercano y profesional, en primera persona', formal:'formal, en primera persona', breve:'muy breve (2 o 3 frases), en primera persona' }[$('#waTone').value];
-    const sys = 'Eres un especialista en comunicación y redes sociales. Escribes mensajes para WhatsApp en español, claros y humanos, para personas sin conocimientos técnicos. Nunca uses términos técnicos como "índice neto", "puntos", "KPI" o porcentajes complicados: habla de cantidades de comentarios. No inventes datos. Usa *negrita* de WhatsApp con moderación y como mucho 3 emojis. Responde solo con el mensaje.';
-    const user = `Escribe un mensaje ${tone} para un canal de WhatsApp que acompañe un informe de comentarios en redes sociales. Incluye: cuántos comentarios se analizaron; cuántos hablan del criterio (${(m.terms || []).join(', ') || 'la marca'}) y cuántos de esos son positivos y negativos; quiénes son los que más critican y quiénes los embajadores que hablan bien; y mi opinión personal sobre lo que se dice del criterio (qué se valora, de qué se quejan, qué conviene hacer). Máximo 700 caracteres. Termina indicando que se adjunta el informe.${$('#waSign').value.trim() ? ' Firma: ' + $('#waSign').value.trim() + '.' : ''}\n\nMensaje base con los datos correctos (reescríbelo con naturalidad):\n${whatsappMessage(m, 'cercano')}`;
+    const sys = 'Eres un especialista en comunicación y redes sociales. Escribes mensajes para WhatsApp en español, claros y humanos, para personas sin conocimientos técnicos. Usa lenguaje sencillo. Nunca uses términos técnicos como "índice neto", "puntos", "KPI" o porcentajes complicados: habla de cantidades de comentarios. No menciones la inteligencia artificial. No inventes datos. Usa *negrita* de WhatsApp con moderación y como mucho 3 emojis. Responde solo con el mensaje.';
+    const user = `Escribe un mensaje ${tone} para un canal de WhatsApp que acompañe un informe de comentarios en redes sociales. Incluye: cuántos comentarios se analizaron; cuántos hablan de ${m.focus ? focusSubj(m.focus.q) : ((m.terms || []).join(', ') || 'la marca')} y cuántos de esos son positivos y negativos; quiénes más critican y quiénes hablan bien; y mi opinión personal sobre lo que se dice de ese tema (qué se valora, de qué se quejan, qué conviene hacer). Máximo 700 caracteres. Termina indicando que se adjunta el informe.${$('#waSign').value.trim() ? ' Firma: ' + $('#waSign').value.trim() + '.' : ''}\n\nMensaje base con los datos correctos (reescríbelo con naturalidad):\n${whatsappMessage(m, 'cercano')}`;
     let txt = String(await aiRequest(cfg, sys, user, null, cfg.prov === 'local' ? (x => aiProgressSet(wst, `Redactando el mensaje… ${Math.round(x * 100)} %`, Math.round(x * 100))) : null) || '').replace(/^```\w*\n?|```$/g, '').trim();
     try{ const j = JSON.parse(txt); txt = j.mensaje || j.message || Object.values(j).join('\n'); }catch(e){}
     if(!txt) throw new Error('La IA no devolvió texto.');
@@ -7599,7 +7608,7 @@ function doExport(kind){
       edited:c.edited, hidden:c.hidden, permalink:c.permalink, source:c.source, platform:c.platform }))},null,2), 'application/json');
   if(kind==='txt') download(`comentarios-${st}.txt`, summaryText(list)+'\n\n'+'─'.repeat(60)+'\n\n'+toText(list), 'text/plain;charset=utf-8');
   if(kind==='html') download(`informe-comentarios-${st}.html`, toHTMLReport(list), 'text/html;charset=utf-8');
-  if(kind==='word'){ const aiBak = REP.ai; REP.ai = null; try{ downloadWord(reportDocument(resultsReportModel(list)), `informe-comentarios-${st}`); } finally { REP.ai = aiBak; } }
+  if(kind==='word'){ downloadWord(reportDocument(resultsReportModel(list)), `informe-comentarios-${st}`); }
   if(kind==='xlsx') exportXLSX(list);
 }
 function doCopy(kind){
@@ -7692,13 +7701,21 @@ function selectTab(name){
   PREF.set('tab', name);
   if(name==='summary') requestAnimationFrame(renderChartsIfVisible);
 }
+// «Conectar con Facebook» (API) se muestra solo si se activa en ⋮ › Mostrar «Conectar con Facebook» (oculto por defecto)
+const apiShown = () => PREF.get('showApi', '0') === '1';
+function setApiShown(on){
+  PREF.set('showApi', on ? '1' : '0');
+  $('#showApiItem').setAttribute('aria-checked', String(on));
+  setPlatform(curPlatform(), true);
+}
 function setPlatform(p, silent){
   p = PLATFORMS[p] ? p : 'facebook';
   PREF.set('platform', p);
   const P = PLATFORMS[p];
-  // TikTok no tiene API pública de comentarios: se oculta ese método
-  $('.method[data-method="fb"]').classList.toggle('hidden', !!P.noApi);
-  if(P.noApi && PREF.get('method','fb')==='fb') setMethod('extractor');
+  // TikTok no tiene API pública de comentarios; en las demás redes se oculta salvo que se active en la configuración
+  const noApi = !!P.noApi || !apiShown();
+  $('.method[data-method="fb"]').classList.toggle('hidden', noApi);
+  if(noApi && PREF.get('method','fb')==='fb') setMethod('extractor');
   $$('#platSeg [data-plat]').forEach(b=>{ b.setAttribute('aria-checked', b.dataset.plat===p); b.tabIndex = b.dataset.plat===p ? 0 : -1; });
   $('#mFbTitle').textContent = P.mTitle; $('#mFbDesc').textContent = P.mDesc; $('#mExDesc').textContent = P.exDesc;
   $('#mpFbTitle').textContent = P.mTitle; $('#mpFbHelp').href = '#ayuda/'+P.help; $('#mpExHelp').href = '#ayuda/'+P.exHelp;
@@ -7908,10 +7925,11 @@ function filterHelp(raw){
       if(a==='shortcuts') go('ayuda','atajos');
       if(a==='ai') openAiCfg();
       if(a==='rep-prefs') openRepPrefs();
+      if(a==='show-api'){ const on = !apiShown(); setApiShown(on); toast(on ? '«Conectar con Facebook» visible en Obtener' : '«Conectar con Facebook» oculto'); }
       if(a==='theme-light') setTheme('light');
       if(a==='theme-dark') setTheme('dark');
       if(a==='theme-system') setTheme('system');
-      if(a==='reset-prefs'){ ['onboarding','theme','method','tab','appId','configId'].forEach(k=>PREF.del(k)); applyTheme('system'); toast('Preferencias restablecidas. El tutorial se mostrará al recargar.'); }
+      if(a==='reset-prefs'){ ['onboarding','theme','method','tab','appId','configId','showApi'].forEach(k=>PREF.del(k)); setApiShown(false); applyTheme('system'); toast('Preferencias restablecidas. El tutorial se mostrará al recargar.'); }
       if(a==='reset-filters'){ Object.values(S.f).forEach(s=>s.clear()); $('#q').value=''; S.page=1; renderTable(); }
     }
     const cp = e.target.closest('[data-copy]'); if(cp){ closeMenus(); doCopy(cp.dataset.copy); }
@@ -7944,7 +7962,8 @@ function filterHelp(raw){
     const n = bs[(i + (e.key==='ArrowRight'||e.key==='ArrowDown'?1:-1) + bs.length) % bs.length];
     e.preventDefault(); setMethod(n.dataset.method); n.focus();
   });
-  setMethod(PREF.get('method','fb'));
+  setMethod(apiShown() ? PREF.get('method','fb') : (PREF.get('method') === 'import' ? 'import' : 'extractor'));
+  $('#showApiItem').setAttribute('aria-checked', String(apiShown()));
 
   // extractor
   const code = '(' + fbExtractor.toString() + ')();';

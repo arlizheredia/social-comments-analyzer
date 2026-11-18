@@ -249,38 +249,44 @@ const TR = () => w.eval('TR');
     w.openReport([t1.id, t2.id]);
     await until(() => w.eval('REP.model') && d.getElementById('reportDoc'), 30000);
     const m = w.eval('REP.model');
-    check('El informe combina sin duplicar: 5+5+5 del lunes y 1 nuevo del martes = 16', m.list.length === 16, 'comentarios únicos: ' + m.list.length);
-    check('Evolución por fecha: el martes 9 comentarios (6 de Facebook + 3 de TikTok) y solo 1 nuevo (los de TikTok ya estaban el lunes)', m.byDate.length === 2 && m.byDate[1].total === 9 && m.byDate[1].nw === 1, JSON.stringify(m.byDate.map(x => ({ total:x.total, nuevos:x.nw }))));
-    check('Indicadores del seguimiento más reciente (Martes) con variación frente al anterior (Lunes)', d.querySelectorAll('#reportDoc .kpi').length >= 8 && /más reciente/.test(d.getElementById('reportDoc').textContent) && /Martes/.test(d.getElementById('reportDoc').textContent) && /frente al anterior/.test(d.getElementById('reportDoc').textContent));
+    // todo el informe trata solo de los comentarios del criterio («Kanasta24»): 2 por red el lunes (Dinna y Ana) y el de Pedro el martes
+    check('El informe solo incluye los comentarios sobre Kanasta24, sin duplicar: 7 de 16', m.list.length === 7 && m.list.every(c => /kanasta/i.test(c.text)) && m.focus.total === 16 && m.focus.n === 7, 'comentarios: ' + m.list.length + ' de ' + (m.focus && m.focus.total));
+    check('Tema del criterio: «Kanasta24 y comentarios relacionados» → «Kanasta24»', m.focus.name === 'Kanasta24' && w.focusSubj('Comentarios sobre los envíos a Holguín') === 'los envíos a Holguín' && w.focusName('quejas por demoras en las entregas') === '«quejas por demoras en las entregas»');
+    check('Coincidencia con otra ortografía: «Canasta 24» cuenta como Kanasta24; los textos cortos sin el nombre no', w.focusKeywords('Kanasta24').includes('canasta24') && w.eval('focusText')({ text:'No sé qué es Canasta 24' }).includes('canasta24'));
+    check('Evolución por fecha: el martes 4 comentarios sobre Kanasta24 y 1 nuevo (el de Pedro)', m.byDate.length === 2 && m.byDate[1].total === 4 && m.byDate[1].nw === 1, JSON.stringify(m.byDate.map(x => ({ total:x.total, nuevos:x.nw }))));
+    const rtxt = d.getElementById('reportDoc').textContent;
+    check('Indicadores del seguimiento más reciente (Martes) con variación frente al anterior (Lunes)', d.querySelectorAll('#reportDoc .kpi').length >= 6 && /más reciente/.test(rtxt) && /Martes/.test(rtxt) && /frente al anterior/.test(rtxt));
     const cRow = m.cmp.find(r => r.k === 'Comentarios');
-    check('Comparativa: el principal es el más reciente (9 comentarios) frente al anterior (15)', m.last.name === 'Martes' && m.prevT.name === 'Lunes' && cRow.a === 9 && cRow.b === 15 && /▼ -6/.test(cRow.D), JSON.stringify(cRow));
-    check('Comparativa por publicación y sección propia', m.postCmp.length === 2 && /Comparativa con el seguimiento anterior/.test(d.getElementById('reportDoc').textContent));
-    check('El resumen empieza por el enfoque y después el seguimiento principal', /^Enfoque «Kanasta24 y comentarios relacionados»/.test(m.summary[0]) && m.summary.some(x => /^Seguimiento principal: «Martes»/.test(x)), m.summary.slice(0, 2).join(' | '));
-    const kanN = m.list.filter(c => !c.isTeam && /kanasta/i.test(c.text)).length;
-    check('Enfoque por defecto «Kanasta24 y comentarios relacionados»: la IA selecciona los comentarios relacionados', m.focus && m.focus.q === 'Kanasta24 y comentarios relacionados' && m.focus.n === kanN && kanN > 0 && m.focus.list.every(c => /kanasta/i.test(c.text)), m.focus && (m.focus.n + ' de ' + m.focus.total + ' (esperados ' + kanN + ')'));
-    const rdoc = d.getElementById('reportDoc').textContent;
-    check('El informe muestra primero la sección del enfoque y después las estadísticas generales', rdoc.indexOf('Enfoque: «Kanasta24') > -1 && rdoc.indexOf('Enfoque: «Kanasta24') < rdoc.indexOf('Estadísticas generales de todos los comentarios'));
-    check('La comparativa empieza por los comentarios sobre el enfoque', m.cmp[0].k === 'Comentarios sobre el enfoque' && m.cmp[0].a === m.cur.focus.n);
-    check('Texto y Word incluyen el enfoque', /ENFOQUE: «KANASTA24/.test(w.reportText(m)) && /Enfoque: «Kanasta24/.test(w.reportDocument(m).body));
-    check('El informe habla de positivos y negativos, sin “índice neto”', /Comentarios positivos/.test(d.getElementById('reportDoc').textContent) && !/índice neto/i.test(d.getElementById('reportDoc').textContent));
-    const kan = m.watch.find(x => x.term === 'Kanasta24');
-    check('Temas vigilados: “Kanasta24” se cuenta en sus menciones', kan && kan.n >= 4, kan && JSON.stringify({ n:kan.n, pct:kan.pct, nss:kan.nss }));
-    check('Quién más comenta: Ana López encabeza la lista', m.topAuthors[0].name === 'Ana López', m.topAuthors.slice(0, 3).map(a => a.name + ' ' + a.n).join(', '));
+    check('Comparativa: el martes 4 comentarios sobre Kanasta24 frente a 6 el lunes', m.last.name === 'Martes' && m.prevT.name === 'Lunes' && cRow.a === 4 && cRow.b === 6 && /▼ -2/.test(cRow.D), JSON.stringify(cRow));
+    check('Comparativa con el seguimiento anterior en sección propia', m.postCmp.length === 2 && /Comparativa con el seguimiento anterior/.test(rtxt));
+    check('El resumen empieza por cuántos comentarios hablan del tema y después el seguimiento principal', /^De 16 comentarios revisados, 7 hablan de Kanasta24/.test(m.summary[0]) && m.summary.some(x => /^Seguimiento principal: «Martes».*sobre Kanasta24/.test(x)), m.summary.slice(0, 2).join(' | '));
+    check('El informe nombra el tema y no dice «enfoque» ni menciona la IA', /Informe de comentarios sobre Kanasta24/.test(rtxt) && /Quién más comenta sobre Kanasta24/.test(rtxt) && /Quiénes hablan bien de Kanasta24/.test(rtxt) && !/enfoque/i.test(rtxt) && !/\bIA\b|inteligencia artificial/i.test(rtxt) && !/Estadísticas generales/.test(rtxt), rtxt.match(/enfoque|\bIA\b/i)?.[0]);
+    const rdocW = w.reportDocument(m).body, rtext = w.reportText(m);
+    check('Texto y Word: centrados en el tema, sin «enfoque» ni IA', /INFORME DE COMENTARIOS SOBRE KANASTA24/.test(rtext) && /Informe de comentarios sobre Kanasta24/.test(rdocW) && !/enfoque|\bIA\b/i.test(rtext + rdocW.replace(/<[^>]+>/g, ' ')));
+    check('El informe habla de positivos y negativos, sin “índice neto”', /Comentarios positivos/.test(rtxt) && !/índice neto/i.test(rtxt));
+    check('Otras marcas y temas: no repite el propio tema (Kanasta24) ni muestra términos sin menciones («envío»)', !m.watch.some(x => x.term === 'Kanasta24') && !m.watch.some(x => x.term === 'envío'), JSON.stringify(m.watch.map(x => x.term)));
+    check('Quién más comenta sobre Kanasta24: Dinna Ramírez y Ana López', m.topAuthors.slice(0, 2).map(a => a.name).sort().join() === 'Ana López,Dinna Ramírez', m.topAuthors.slice(0, 3).map(a => a.name + ' ' + a.n).join(', '));
+    check('Las palabras más usadas no repiten el tema', !m.st.words.some(([x]) => /kanasta/i.test(x)), m.st.words.slice(0, 5).map(x => x[0]).join(', '));
     check('Hay resumen ejecutivo y recomendaciones', m.summary.length >= 3 && m.recs.length >= 2);
     check('El gráfico de evolución por seguimiento se dibuja', !!d.querySelector('#repChartDates svg'));
 
-    // 6a. El resumen con IA se genera siempre, con indicador de progreso
-    check('No hay botón «Resumen con IA»: el resumen se genera solo', !d.getElementById('repAI'));
-    const progVisible = !!d.querySelector('#repAiOut .pbar') || /Análisis redactado con IA/.test(d.getElementById('repAiOut').textContent);
-    check('Mientras se redacta el resumen con IA se ve una barra de progreso', progVisible, d.getElementById('repAiOut').textContent.slice(0, 80));
-    await until(() => /reputación sobre Kanasta24/.test(d.getElementById('repAiOut').textContent), 5000).catch(() => {});
-    check('Al terminar aparece el resumen redactado con IA (una sola petición)', /reputación sobre Kanasta24/.test(d.getElementById('repAiOut').textContent) && w.eval('__aiN') === 1, 'peticiones: ' + w.eval('__aiN'));
+    // Si el informe falla, ofrece «Reintentar» y funciona
+    w.eval(`window.__bkBuild = buildReport; window.__failOnce = true; buildReport = async (...a) => { if(__failOnce){ __failOnce = false; throw new Error('El motor de IA se detuvo'); } return __bkBuild(...a); }`);
+    await w.eval(`generateReport(${JSON.stringify([t1.id, t2.id])})`); await wait(100);
+    check('Si falla la generación del informe aparece «Reintentar»', !!d.getElementById('repRetry') && /No se pudo generar el informe/.test(d.getElementById('repOut').textContent));
+    d.getElementById('repRetry').click();
+    await until(() => d.getElementById('reportDoc'), 15000).catch(() => {});
+    check('«Reintentar» vuelve a generar el informe', !!d.getElementById('reportDoc'));
+    w.eval('buildReport = __bkBuild');
+    // 6a. Los informes no redactan ningún resumen con IA
+    await wait(900);
+    check('El informe no redacta resumen con IA: sin petición al modelo ni sección «Valoración»', w.eval('__aiN') === 0 && !d.getElementById('repAiOut') && !/Valoración/.test(d.getElementById('reportDoc').textContent), 'peticiones: ' + w.eval('__aiN'));
     w.eval(`aiRequest = __aiBak`);
 
     // 6b. Mensaje para WhatsApp
     d.getElementById('repWa').click(); await wait(150);
     const wa1 = d.getElementById('waText').value;
-    check('“Mensaje para WhatsApp” abre el diálogo con una valoración del seguimiento principal', d.getElementById('waDlg').open && /\*Informe de comentarios/.test(wa1) && /Seguimiento del/.test(wa1) && /Analizamos \*9 comentarios\*/.test(wa1) && /positiv/.test(wa1) && /negativ/.test(wa1) && !/índice neto/i.test(wa1) && /informe completo/.test(wa1), wa1.slice(0, 300));
+    check('“Mensaje para WhatsApp” abre el diálogo con una valoración del seguimiento principal', d.getElementById('waDlg').open && /\*Informe de comentarios/.test(wa1) && /Seguimiento del/.test(wa1) && /Revisamos \*9 comentarios\*/.test(wa1) && /Sobre \*Kanasta24\* hay 4 comentarios \(2 menos/.test(wa1) && !/embajador/i.test(wa1) && /positiv/.test(wa1) && /negativ/.test(wa1) && !/índice neto/i.test(wa1) && /informe completo/.test(wa1), wa1.slice(0, 300));
     d.getElementById('waTone').value = 'breve'; d.getElementById('waTone').dispatchEvent(new Event('change'));
     const wa2 = d.getElementById('waText').value;
     check('El tono “Muy breve” genera un mensaje más corto', wa2.length < wa1.length && /seguimiento anterior/.test(wa2) && !/índice neto/i.test(wa2), wa2.length + ' frente a ' + wa1.length + ' caracteres');
@@ -334,7 +340,7 @@ const TR = () => w.eval('TR');
 
     // 7. Exportaciones
     const txt = w.reportText(m);
-    check('Copiar texto: incluye resumen, indicadores, publicaciones y recomendaciones', /RESUMEN EJECUTIVO/.test(txt) && /SEGUIMIENTO MÁS RECIENTE FRENTE AL ANTERIOR/.test(txt) && /INDICADORES DEL PERIODO COMPLETO/.test(txt) && /PUBLICACIONES/.test(txt) && /RECOMENDACIONES/.test(txt), txt.slice(0, 200));
+    check('Copiar texto: incluye resumen, indicadores, publicaciones y próximos pasos', /\nRESUMEN\n/.test(txt) && /SEGUIMIENTO MÁS RECIENTE FRENTE AL ANTERIOR/.test(txt) && /POR PUBLICACIÓN/.test(txt) && /PRÓXIMOS PASOS/.test(txt), txt.slice(0, 200));
     const files = []; w.download = (name, content) => files.push({ name, content });
     await w.reportExport('word');
     const doc = files.find(f => /\.doc$/.test(f.name));
@@ -342,7 +348,7 @@ const TR = () => w.eval('TR');
     check('Word: se descarga un .doc con el informe', !!doc && /urn:schemas-microsoft-com:office:word/.test(wordHtml) && /Informe de comentarios/.test(wordHtml) && /<h2>Resumen<\/h2>/.test(wordHtml), doc ? doc.name + ' · ' + Math.round(wordHtml.length / 1024) + ' KB' : 'sin archivo');
     check('Word: documento en blanco y negro con Arial 12 y pie de página numerado', /Arial/.test(wordHtml) && /font-size:12pt/.test(wordHtml) && !/#(0b57d0|1877f2|d93025|188038|e8f0fe)/i.test(wordHtml) && /mso-element:footer/.test(wordHtml) && /NUMPAGES/.test(wordHtml));
     const docB = w.reportDocument(m);
-    check('Documento del informe: sin colores y con las secciones del modelo', !(docB.body.match(/#[0-9a-f]{3,6}\b|rgb\(/gi) || []).length && /Resumen/.test(docB.body) && /Indicadores del seguimiento más reciente/.test(docB.body) && /Comparativa por publicación/.test(docB.body) && /Detalle por publicación/.test(docB.body) && /Próximos pasos/.test(docB.body));
+    check('Documento del informe: sin colores y con las secciones del modelo', !(docB.body.match(/#[0-9a-f]{3,6}\b|rgb\(/gi) || []).length && /Resumen/.test(docB.body) && /Indicadores del seguimiento más reciente/.test(docB.body) && /Comparativa por publicación/.test(docB.body) && /<h2>Por publicación<\/h2>/.test(docB.body) && /Próximos pasos/.test(docB.body));
     await w.reportExport('html');
     check('HTML: se descarga un informe autónomo', files.some(f => /\.html$/.test(f.name) && /<table/.test(f.content)));
     const pdfLoaded = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js').then(() => typeof w.html2pdf === 'function', () => false);

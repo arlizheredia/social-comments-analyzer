@@ -1,8 +1,10 @@
 // Puente entre la página de Social Comments Analyzer y la extensión.
 // La app habla con window.postMessage({ source: 'sca-app', ... }); la extensión responde con { source: 'sca-ext', ... }.
 (() => {
-  if (window.__scaBridge) return;
-  window.__scaBridge = true;
+  // tras activarse una versión nueva, la extensión vuelve a inyectar este puente: el anterior queda sin conexión y se retira solo
+  const alive = () => { try { return !!chrome.runtime.id; } catch (e) { return false; } };
+  if (typeof window.__scaBridge === 'function' && window.__scaBridge()) return;
+  window.__scaBridge = alive;
   const VERSION = chrome.runtime.getManifest().version;
   let port = null;
 
@@ -14,8 +16,9 @@
   }
   connect();
 
-  window.addEventListener('message', e => {
+  window.addEventListener('message', function onMsg(e) {
     if (e.source !== window || !e.data || e.data.source !== 'sca-app') return;
+    if (!alive()) { window.removeEventListener('message', onMsg); return; }
     if (e.data.type === 'ping') { toPage({ type: 'pong', version: VERSION }); }
     try {
       if (!port) connect();
