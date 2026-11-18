@@ -240,7 +240,12 @@ const TR = () => w.eval('TR');
     const VOC0 = ['kanasta', 'pedido', 'envio', 'entrega', 'servicio', 'precio'];
     w.eval(`window.__semBak = semEmbed; semEmbed = async (texts) => texts.map(t => { const n = normName(t); const v = ${JSON.stringify(VOC0)}.map(k => n.includes(k) ? 1 : 0); const s = Math.hypot(...v) || 1; return v.map(x => x / s); });
       window.__aiBak = aiRequest; window.__aiN = 0; aiRequest = async () => { window.__aiN++; await new Promise(r => setTimeout(r, 700)); return 'La reputación sobre Kanasta24 es favorable. Conviene responder las preguntas pendientes.'; }`);
-    w.localStorage.setItem('fbca:repTermsV2', '1'); w.localStorage.setItem('fbca:repTerms', 'Kanasta24, envío'); w.localStorage.removeItem('fbca:repFocus');
+    for(const k of ['defFocus', 'defTerms', 'defAuthor', 'defClient']) w.localStorage.removeItem('fbca:' + k);
+    check('Valores por defecto de los informes: enfoque, temas, autor y cliente', w.eval("repDef('focus')") === 'Kanasta24 y comentarios relacionados' && w.eval("repDef('terms')") === 'Kanasta24' && w.eval("repDef('author')") === 'Lic. Yaimara Salinas Goite' && w.eval("repDef('client')") === 'Kanasta24');
+    w.eval('openRepPrefs()'); await wait(80);
+    check('⋮ › Preferencias de informes muestra los valores por defecto', d.getElementById('repPrefsDlg').open && d.getElementById('rpf-focus').value === 'Kanasta24 y comentarios relacionados' && d.getElementById('rpf-terms').value === 'Kanasta24');
+    d.getElementById('rpf-terms').value = 'Kanasta24, envío'; d.getElementById('rpfSave').click(); await wait(80);
+    check('Guardar cambia los valores por defecto', !d.getElementById('repPrefsDlg').open && w.localStorage.getItem('fbca:defTerms') === 'Kanasta24, envío');
     w.openReport([t1.id, t2.id]);
     await until(() => w.eval('REP.model') && d.getElementById('reportDoc'), 30000);
     const m = w.eval('REP.model');
@@ -316,6 +321,15 @@ const TR = () => w.eval('TR');
     const n0 = w.eval('__fetchN = 0, window.__f0 = fetch, fetch = (...a) => { __fetchN++; return __f0(...a); }, 0');
     await w.eval('installAI()');
     check('«Instalar IA» con la IA ya descargada no descarga nada', w.eval('__fetchN') === 0 && /ya estaba instalada/.test(d.getElementById('snackMsg').textContent), d.getElementById('snackMsg').textContent);
+    // Paquete de IA: exportar desde este navegador e instalar desde el archivo, sin Internet
+    const packBlob = await w.eval('exportAIPack({ download:false })');
+    await w.eval(`(async () => { const c = await caches.open('transformers-cache'); for(const k of await c.keys()) await c.delete(k); localStorage.removeItem('fbca:aiLocal'); localStorage.removeItem('fbca:aiSem'); await aiScanCache(); renderAiState(); return 1; })()`);
+    check('Sin los archivos, la IA vuelve a figurar como no instalada', !w.eval('aiInstalled()') && !d.getElementById('aiBanner').classList.contains('hidden'));
+    await w.installAIFromFile(new w.File([packBlob], 'sca-ia-pack.zip', { type:'application/zip' }));
+    check('«Instalar desde archivo» instala la IA con el paquete exportado', w.eval('aiInstalled()') && d.getElementById('aiBanner').classList.contains('hidden') && /sin usar Internet/.test(d.getElementById('snackMsg').textContent), w.eval('AIINST.err') || d.getElementById('snackMsg').textContent);
+    await w.installAIFromFile(new w.File(['no soy un paquete'], 'x.zip'));
+    check('Un archivo que no es un paquete de IA se rechaza con un mensaje claro', /no es un paquete de IA/.test(w.eval('AIINST.err')), w.eval('AIINST.err'));
+    w.eval("AIINST.err = ''");
     await w.eval(`(async () => { fetch = __f0; const c = await caches.open('transformers-cache'); for(const k of await c.keys()) await c.delete(k); localStorage.removeItem('fbca:aiLocal'); localStorage.removeItem('fbca:aiSem'); renderAiState(); return 1; })()`);
 
     // 7. Exportaciones

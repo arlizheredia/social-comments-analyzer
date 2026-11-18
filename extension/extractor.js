@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// Extensión 1.3.2
+// Extensión 1.3.3
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -588,17 +588,26 @@ function fbExtractor(){
   // ---- Facebook: cambiar "Más relevantes" por "Todos los comentarios" para no perder ninguno ----
   var SORT_RE = /^(más relevantes|most relevant|los más relevantes|top comments|comentarios destacados|plus pertinents|mais relevantes|newest|más recientes)$/i;
   var ALL_RE = /^(todos los comentarios|all comments|tous les commentaires|todos os comentários|alle kommentare|tutti i commenti)/i;
+  // Estado del orden: 'cambiado' | 'ya' (ya mostraba todos) | 'sin-selector' | 'sin-opcion'
+  var sortState = '', sortTries = 0, sortMenu = [], LOOP = { round: 0, second: false };   // LOOP: datos del bucle para el diagnóstico final
+  function sortButtons(){ return Array.prototype.slice.call(root().querySelectorAll('div[role="button"],span[role="button"]')).filter(function(b){ return b.offsetParent; }); }
   async function fbAllComments(){
-    var r = root();
-    var sortBtn = Array.prototype.slice.call(r.querySelectorAll('div[role="button"],span[role="button"]')).filter(function(b){ return b.offsetParent && SORT_RE.test((b.innerText || '').trim()); })[0];
-    if (!sortBtn) return;
-    try { sortBtn.click(); } catch(e){ return; }
-    for (var t = 0; t < 10; t++){
+    if (sortState === 'cambiado' || sortState === 'ya') return sortState;
+    sortTries++;
+    var bs = sortButtons();
+    if (bs.some(function(b){ return ALL_RE.test((b.innerText || '').trim()); })) return (sortState = 'ya');
+    var sortBtn = bs.filter(function(b){ return SORT_RE.test((b.innerText || '').trim()); })[0];
+    if (!sortBtn) return (sortState = 'sin-selector');
+    try { sortBtn.click(); } catch(e){ return (sortState = 'sin-selector'); }
+    for (var t = 0; t < 14; t++){
       await sleep(150);
-      var item = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
-      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); for (var t2 = 0; t2 < 12; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; } return; }
+      var items = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]'));
+      if (items.length && !sortMenu.length) sortMenu = items.map(function(m){ return ((m.innerText || '').trim().split('\n')[0] || '').slice(0, 40); }).slice(0, 6);
+      var item = items.filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
+      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); for (var t2 = 0; t2 < 16; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; } return (sortState = 'cambiado'); }
     }
     try { document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); } catch(e){}
+    return (sortState = 'sin-opcion');
   }
   function platformExtract(onlyNew){
     if (TT) return ttExtractAll(onlyNew);
@@ -665,7 +674,13 @@ function fbExtractor(){
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
     var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
-    if (!TT && !IG && onOriginal) Object.assign(data.diag, { totalSegunFacebook: netTot, botonesPulsados: pressed.slice(0, 40) });
+    if (!TT && !IG && onOriginal){
+      var pend = sortButtons().map(function(b){ return (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
+      Object.assign(data.diag, { totalSegunFacebook: netTot, extraidos: comments.length, sinId: comments.filter(function(c){ return !c.id; }).length,
+        respuestas: comments.filter(function(c){ return c.isReply; }).length, orden: sortState || 'sin-intentar', intentosOrden: sortTries, opcionesOrden: sortMenu,
+        segundaPasada: LOOP.second, rondas: LOOP.round, botonesPulsados: pressed.slice(0, 40), botonesSinPulsarAlFinal: pend.map(function(t){ return t.replace(/\d+/g, 'N'); }).slice(0, 20),
+        fuenteComentarios: document.querySelectorAll('[data-sca-art]').length ? 'estructura' : 'articulos' });
+    }
     if (!TT && !IG) Object.assign(data.diag, { articulos: document.querySelectorAll('div[role="article"]').length, articulosComentario: articles().length,
       enlacesComentario: document.querySelectorAll('a[href*="comment_id="]').length, cargando: loadingVisible(), dialogos: document.querySelectorAll('div[role="dialog"]').length,
       botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || (b.innerText || '').trim()).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
@@ -691,7 +706,7 @@ function fbExtractor(){
     window.__fbcx = false;
   }
   (async function(){
-    var clicks = new Map(), idle = 0, round = 0, lastCollected = 0;
+    var clicks = new Map(), idle = 0, round = 0, lastCollected = 0, secondPass = false;
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
     // En cuanto aparece el botón de comentarios se abre la sección (los reels no muestran comentarios sin pulsarlo).
     // Si no hay botón, se espera a que la red pinte los comentarios (Instagram sin sesión tarda 10–15 s) o a la pantalla de acceso.
@@ -724,8 +739,9 @@ function fbExtractor(){
     startKey = postKey(); snapshot();
     if (AUTO) AUTO.emit({ type: 'progress', round: 0, count: collected.length, visible: countNow(), note: collected.length ? 'comentarios abiertos' : '' });
     while (!stop && round < 600){
-      round++;
+      round++; LOOP.round = round;
       if (AUTO && AUTO.stopRequested){ stop = true; break; }
+      if (!TT && !IG && round <= 6 && sortState !== 'cambiado' && sortState !== 'ya' && round % 2 === 0) await fbAllComments();
       if (postKey() !== startKey){
         if (AUTO){ useCollectedOnly = true; break; }   // sin usuario delante: se conserva solo lo de la publicación original
         var dec = await waitDecision();
@@ -774,7 +790,16 @@ function fbExtractor(){
         if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
         lastCollected = collected.length;
         // el total de la red incluye respuestas y a veces comentarios ocultos o eliminados: se acepta un 3 % de diferencia
-        if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)) break;
+        if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)){
+          if (!TT && !IG && !secondPass && total && collected.length < total * 0.97){
+            // segunda pasada: volver a intentar «Todos los comentarios», reiniciar los botones y recorrer el panel de nuevo
+            secondPass = true; LOOP.second = true; idle = 0; clicks = new Map(); sortState = sortState === 'cambiado' || sortState === 'ya' ? sortState : '';
+            status('Faltan comentarios frente al total de Facebook: revisando de nuevo…', true);
+            await fbAllComments(); scrollNudge(); await sleep(800); scrollAll(); await sleep(1200);
+            continue;
+          }
+          break;
+        }
       }
       snapshot();   // recoger en cada ronda mientras se sigue en la publicación original
       var tot = netTotal();

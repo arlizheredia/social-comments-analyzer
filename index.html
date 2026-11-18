@@ -281,6 +281,8 @@ details.adv[open] summary .ms{transform:rotate(180deg)}
 .fchips{display:contents}
 #fBar.collapsed .fchips,#fBar.collapsed #fPostSep{display:none}
 #fBar.collapsed.fempty{display:none}
+.qrow{margin-bottom:16px}
+#fBar{margin:0 0 16px}
 .btn.ftoggle{height:48px;border-radius:24px;padding:0 20px 0 16px}
 .btn.ftoggle[aria-expanded="true"]{background:var(--secondary-container);color:var(--on-secondary-container);border-color:transparent}
 .btn.ftoggle .fcount{margin-left:2px}
@@ -1012,14 +1014,22 @@ tr.pend>td:first-child{box-shadow:inset 3px 0 0 var(--pend-bar)}
 .rep-focus>h3 .ms{color:var(--primary)}
 .rep-divider{font:500 20px/28px var(--font);margin:28px 0 12px;padding-top:16px;border-top:1px solid var(--outline-variant)}
 .rep-ai-prog{display:grid;gap:8px;margin-top:14px}
+.ai-prog{display:inline-grid;grid-template-columns:auto minmax(0,1fr);gap:4px 8px;align-items:center;width:min(100%,440px);vertical-align:middle;text-align:left}
+.ai-prog .ai-spin{font-size:18px;animation:spin 1.4s linear infinite;color:var(--primary)}
+.ai-prog .ai-prog-t{font-size:13px;line-height:18px;color:var(--on-surface-variant)}
+.ai-prog .pbar{grid-column:1/-1;height:6px}
+@media (prefers-reduced-motion:reduce){ .ai-prog .ai-spin{animation:none} }
+.sem-bar .pbar{flex:1 1 100%;order:9;height:6px;background:color-mix(in srgb,var(--on-primary-container) 18%,transparent)}
 .rep-ai-prog .pbar{max-width:520px}
-.ai-banner{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px 16px;align-items:center;margin:0 0 16px;padding:14px 18px;border-radius:16px;background:var(--pend-bg);color:var(--on-surface);border:1px solid var(--outline-variant)}
-.ai-banner-ic{font-size:28px;color:var(--pend-fg)}
+.ai-banner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 16px;align-items:center;margin:0 0 16px;padding:14px 18px;border-radius:16px;background:var(--pend-bg);color:var(--on-surface);border:1px solid var(--outline-variant)}
+.ai-banner-t{grid-column:1;grid-row:1}
+.ai-banner-a{grid-column:2;grid-row:1}
 .ai-banner-t{display:grid;gap:4px;min-width:0}
 .ai-banner-t>span:not(.pbar){font-size:14px;line-height:20px;color:var(--on-surface-variant)}
 .ai-banner-t .pbar{margin-top:6px;background:var(--surface-container-highest,var(--outline-variant))}
-.ai-banner-a{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-@media (max-width:720px){ .ai-banner{grid-template-columns:auto minmax(0,1fr)} .ai-banner-a{grid-column:1/-1} }
+.ai-banner-a{display:flex;gap:12px;align-items:center;flex-wrap:nowrap;white-space:nowrap}
+/* en anchos medios las acciones pasan debajo del texto para no salirse del aviso */
+@media (max-width:1180px){ .ai-banner{grid-template-columns:minmax(0,1fr)} .ai-banner-a{grid-column:1;grid-row:2;flex-wrap:wrap} }
 /* Sin IA instalada, las opciones que dependen de ella no se muestran */
 body.no-ai .needs-ai{display:none!important}
 .ai-dl{display:grid;gap:10px;padding:14px 16px;border-radius:12px;background:var(--surface-container);margin:0 0 14px;text-align:left}
@@ -1226,6 +1236,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
       <button role="menuitem" data-action="docs"><span class="ms">menu_book</span>Documentación</button>
       <button role="menuitem" data-action="shortcuts"><span class="ms">keyboard</span>Atajos de teclado</button>
       <button role="menuitem" data-action="ai"><span class="ms">psychology</span>IA de la aplicación</button>
+      <button role="menuitem" data-action="rep-prefs"><span class="ms">tune</span>Preferencias de informes</button>
       <hr>
       <button role="menuitem" data-action="theme-light"><span class="ms">light_mode</span>Tema claro</button>
       <button role="menuitem" data-action="theme-dark"><span class="ms">dark_mode</span>Tema oscuro</button>
@@ -1251,10 +1262,10 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
 
   <main id="main" tabindex="-1">
     <div class="ai-banner hidden" id="aiBanner" role="region" aria-label="Instalación de la IA">
-      <span class="ms ai-banner-ic" aria-hidden="true">psychology</span>
       <div class="ai-banner-t"><b id="aiBnTitle">Instala la IA para usar la aplicación completa</b><span id="aiBnSub">La búsqueda de comentarios, los informes, las sugerencias de respuesta y el mensaje para WhatsApp necesitan la IA. Se instala una sola vez en este navegador (≈ 620 MB), es gratuita y funciona sin conexión.</span>
         <span class="pbar hidden" id="aiBnBar" role="progressbar" aria-label="Instalación de la IA" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span></div>
-      <div class="ai-banner-a"><button class="btn filled" id="aiBnBtn"><span class="ms">download</span>Instalar IA</button><a class="hlp" href="#ayuda/ia-local"><span class="ms">help</span>Más información</a></div>
+      <div class="ai-banner-a"><button class="btn filled" id="aiBnFile"><span class="ms">folder_open</span>Instalar desde archivo</button><button class="btn text" id="aiBnBtn"><span class="ms">download</span>Instalar desde Internet</button><a class="hlp" href="#ayuda/ia-local"><span class="ms">help</span>Más información</a></div>
+      <input type="file" id="aiPackInput" accept=".zip,application/zip" hidden>
     </div>
     <!-- ======================= OBTENER ======================= -->
 
@@ -1644,7 +1655,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
         </div>
 
         <div class="tabpanel" id="tp-list" role="tabpanel" aria-labelledby="tab-list">
-          <div class="row">
+          <div class="row qrow">
             <label class="searchbar needs-ai">
               <span class="ms">search</span>
               <input type="search" id="q" placeholder="Buscar en comentarios o autores" aria-label="Buscar comentarios" autocomplete="off">
@@ -1657,7 +1668,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
             <button class="btn outlined ftoggle" id="fToggle" aria-expanded="false" aria-controls="fChips"><span class="ms">filter_list</span>Filtros<b class="fcount hidden" id="fActiveN"></b></button>
           </div>
           <div class="sem-bar hidden needs-ai" id="semBar" role="status" aria-live="polite">
-            <span class="ms" id="semIc">psychology</span><span class="sem-txt" id="semTxt"></span>
+            <span class="ms" id="semIc">psychology</span><span class="sem-txt" id="semTxt"></span><span class="pbar hidden" id="semPb" role="progressbar" aria-label="Progreso de la búsqueda con IA" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span>
             <select class="input sm hidden" id="semLevel" aria-label="Precisión de la búsqueda" title="Precisión">
               <option value="0.80">Amplia</option><option value="0.825" selected>Media</option><option value="0.85">Estricta</option>
             </select>
@@ -2076,6 +2087,7 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 
 > El **seguimiento más reciente** de los elegidos es siempre el **principal**: sus indicadores encabezan el informe y se comparan con el seguimiento anterior (variación ▲/▼). La evolución, la audiencia y los temas cubren todo el periodo elegido.
 
+- **Valores por defecto**: el enfoque, los temas a vigilar, *Elaborado por* y *Cliente / marca* empiezan con tus preferencias (⋮ › **Preferencias de informes**, o **Valores por defecto** en el formulario del informe). Lo que cambies en un informe solo afecta a ese informe.
 - **Enfoque** (obligatorio): escribe el criterio en el que se centra el informe; por defecto, *Kanasta24 y comentarios relacionados*. La IA busca los comentarios que lo cumplen y el informe muestra primero sus estadísticas: cuántos son y qué parte del total, positivos, neutrales y negativos, evolución por seguimiento, por publicación, quién más habla del tema, embajadores, quiénes más critican, de qué se habla y los comentarios destacados. Después vienen las estadísticas generales de todos los comentarios.
 - **Resumen ejecutivo** automático y **resumen redactado con IA**, que se genera siempre al crear el informe (verás una barra de progreso mientras se redacta).
 - **Indicadores clave**: comentarios únicos, personas, interacciones, comentarios **positivos** y **negativos** y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
@@ -2127,9 +2139,17 @@ La app usa IA para **sugerir respuestas**, **clasificar comentarios por un crite
 
 La IA es **necesaria** para buscar comentarios, sugerir respuestas, redactar el resumen del informe y el mensaje para WhatsApp. Mientras no esté instalada, esas opciones **no se muestran** y la app enseña un aviso en la parte superior de todas las pantallas.
 
-1. Pulsa **Instalar IA** en el aviso (o en ⋮ › *IA de la aplicación* › **Descargar e instalar**).
-2. Se descargan el **modelo de lenguaje** (≈ 500 MB) y el **modelo de búsqueda** (≈ 120 MB). Verás el porcentaje y los MB; con una conexión lenta puede tardar varios minutos. Puedes seguir trabajando mientras tanto: te avisamos al terminar.
-3. Al terminar, el aviso desaparece y todas las opciones de IA quedan disponibles, **sin claves y sin conexión**.
+**Desde el paquete de IA (recomendado, sin usar Internet):**
+
+1. Consigue el archivo **sca-ia-pack.zip** (≈ 620 MB): [descárgalo](https://github.com/arlizheredia/social-comments-analyzer/releases/latest/download/sca-ia-pack.zip) una sola vez, o pídeselo a alguien que ya tenga la IA (lo genera con **Exportar paquete de IA**).
+2. Pulsa **Instalar desde archivo** en el aviso (o en ⋮ › *IA de la aplicación*) y elige el archivo.
+3. Los modelos se copian al navegador en uno o dos minutos, con barra de progreso y **sin usar Internet**. El mismo archivo sirve para otros navegadores y otros ordenadores (USB, red local).
+
+**Desde Internet:** pulsa **Instalar desde Internet**. Se descargan el **modelo de lenguaje** (≈ 500 MB) y el **modelo de búsqueda** (≈ 120 MB); con una conexión lenta puede tardar varios minutos. Puedes seguir trabajando mientras tanto.
+
+Al terminar, el aviso desaparece y todas las opciones de IA quedan disponibles, **sin claves y sin conexión**.
+
+**Exportar paquete de IA:** en ⋮ › *IA de la aplicación*, con la IA instalada, crea el archivo *sca-ia-pack.zip* con los modelos que ya tiene este navegador, para instalarlos en otro sin descargarlos.
 
 - Todo se ejecuta **en tu equipo**: los comentarios no salen del navegador.
 - Se descarga **una sola vez**: queda guardada en el navegador, en el espacio de la propia app (no en la extensión). **Actualizar, reinstalar o quitar la extensión no la borra**, ni tampoco cerrar el navegador o actualizar la app. Al abrir la app se comprueba que los archivos siguen ahí; si ya están, no se descarga nada.
@@ -2474,7 +2494,7 @@ Cada comentario incluye su **plataforma**.
 <!-- Configuración de la IA para sugerencias -->
 <dialog id="aiDlg" aria-labelledby="aiTitle">
   <div class="dlg-head">
-    <h2 id="aiTitle" style="font-size:20px">Sugerencias con IA</h2>
+    <h2 id="aiTitle" style="font-size:20px">IA de la aplicación</h2>
     <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
   </div>
   <div class="dlg-body ai-form">
@@ -2492,7 +2512,8 @@ Cada comentario incluye su **plataforma**.
     <div class="ai-dl hidden" id="aiDlF">
       <div class="ai-dl-t"><b id="aiDlTitle">Modelo no descargado</b><span class="small muted" id="aiDlSub">Se descarga una sola vez (≈ 500 MB) y queda guardado en este navegador. Después funciona sin conexión y sin claves.</span></div>
       <span class="pbar hidden" id="aiDlBar" role="progressbar" aria-label="Descarga del modelo" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span>
-      <div class="ai-dl-a"><button class="btn filled" id="aiDlBtn"><span class="ms">download</span>Descargar e instalar</button><button class="btn text hidden" id="aiDlDel"><span class="ms">delete</span>Desinstalar</button></div>
+      <div class="ai-dl-a"><button class="btn filled" id="aiDlFile"><span class="ms">folder_open</span>Instalar desde archivo</button><button class="btn text" id="aiDlBtn"><span class="ms">download</span>Descargar e instalar</button><button class="btn tonal hidden" id="aiDlExport"><span class="ms">archive</span>Exportar paquete de IA</button><button class="btn text hidden" id="aiDlDel"><span class="ms">delete</span>Desinstalar</button></div>
+      <p class="small muted" style="margin:0">¿No tienes el paquete? <a href="https://github.com/arlizheredia/social-comments-analyzer/releases/latest/download/sca-ia-pack.zip" id="aiPackLink" target="_blank" rel="noopener">Descarga el paquete de IA</a> o expórtalo desde otro navegador que ya tenga la IA instalada.</p>
     </div>
     <div class="field" id="aiUrlF"><label for="aiUrl">URL del servidor</label><input class="input" id="aiUrl" placeholder="http://localhost:11434/v1"></div>
     <div class="field" id="aiKeyF"><label for="aiKey">Clave de API</label><input class="input" id="aiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Pega aquí tu clave">
@@ -2512,6 +2533,27 @@ Cada comentario incluye su **plataforma**.
     <span style="margin-right:auto"><a class="hlp" href="#ayuda/ia-config"><span class="ms">help</span>Cómo configurar la IA</a></span>
     <button class="btn text" id="aiTest"><span class="ms">bolt</span>Probar</button>
     <button class="btn filled" id="aiSave">Guardar</button>
+  </div>
+</dialog>
+
+<!-- Preferencias de informes -->
+<dialog id="repPrefsDlg" aria-labelledby="repPrefsTitle">
+  <div class="dlg-head">
+    <h2 id="repPrefsTitle" style="font-size:20px">Preferencias de informes</h2>
+    <button class="icon-btn" data-close aria-label="Cerrar"><span class="ms">close</span></button>
+  </div>
+  <div class="dlg-body" style="display:flex;flex-direction:column;gap:12px;text-align:left">
+    <p class="small muted" style="margin:0">Valores con los que empieza cada informe. Puedes cambiarlos en cada informe sin modificar estas preferencias.</p>
+    <label class="field"><span class="lbl">Enfoque del informe</span><input class="input" id="rpf-focus" maxlength="200" required><span class="hint">Criterio con el que la IA selecciona los comentarios en los que se centra el informe.</span></label>
+    <label class="field"><span class="lbl">Temas a vigilar</span><input class="input" id="rpf-terms" maxlength="300"><span class="hint">Separados por comas. Puede quedar vacío.</span></label>
+    <label class="field"><span class="lbl">Elaborado por</span><input class="input" id="rpf-author" maxlength="120"></label>
+    <label class="field"><span class="lbl">Cliente / marca</span><input class="input" id="rpf-client" maxlength="120"></label>
+    <p class="status" id="rpfStatus" aria-live="polite"></p>
+  </div>
+  <div class="dlg-actions">
+    <button class="btn text" id="rpfReset" style="margin-right:auto">Restaurar originales</button>
+    <button class="btn text" data-close>Cancelar</button>
+    <button class="btn filled" id="rpfSave">Guardar</button>
   </div>
 </dialog>
 
@@ -3215,17 +3257,26 @@ function fbExtractor(){
   // ---- Facebook: cambiar "Más relevantes" por "Todos los comentarios" para no perder ninguno ----
   var SORT_RE = /^(más relevantes|most relevant|los más relevantes|top comments|comentarios destacados|plus pertinents|mais relevantes|newest|más recientes)$/i;
   var ALL_RE = /^(todos los comentarios|all comments|tous les commentaires|todos os comentários|alle kommentare|tutti i commenti)/i;
+  // Estado del orden: 'cambiado' | 'ya' (ya mostraba todos) | 'sin-selector' | 'sin-opcion'
+  var sortState = '', sortTries = 0, sortMenu = [], LOOP = { round: 0, second: false };   // LOOP: datos del bucle para el diagnóstico final
+  function sortButtons(){ return Array.prototype.slice.call(root().querySelectorAll('div[role="button"],span[role="button"]')).filter(function(b){ return b.offsetParent; }); }
   async function fbAllComments(){
-    var r = root();
-    var sortBtn = Array.prototype.slice.call(r.querySelectorAll('div[role="button"],span[role="button"]')).filter(function(b){ return b.offsetParent && SORT_RE.test((b.innerText || '').trim()); })[0];
-    if (!sortBtn) return;
-    try { sortBtn.click(); } catch(e){ return; }
-    for (var t = 0; t < 10; t++){
+    if (sortState === 'cambiado' || sortState === 'ya') return sortState;
+    sortTries++;
+    var bs = sortButtons();
+    if (bs.some(function(b){ return ALL_RE.test((b.innerText || '').trim()); })) return (sortState = 'ya');
+    var sortBtn = bs.filter(function(b){ return SORT_RE.test((b.innerText || '').trim()); })[0];
+    if (!sortBtn) return (sortState = 'sin-selector');
+    try { sortBtn.click(); } catch(e){ return (sortState = 'sin-selector'); }
+    for (var t = 0; t < 14; t++){
       await sleep(150);
-      var item = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
-      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); for (var t2 = 0; t2 < 12; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; } return; }
+      var items = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]'));
+      if (items.length && !sortMenu.length) sortMenu = items.map(function(m){ return ((m.innerText || '').trim().split('\n')[0] || '').slice(0, 40); }).slice(0, 6);
+      var item = items.filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
+      if (item){ try { item.click(); } catch(e){} status('Mostrando todos los comentarios…', true); for (var t2 = 0; t2 < 16; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; } return (sortState = 'cambiado'); }
     }
     try { document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); } catch(e){}
+    return (sortState = 'sin-opcion');
   }
   function platformExtract(onlyNew){
     if (TT) return ttExtractAll(onlyNew);
@@ -3292,7 +3343,13 @@ function fbExtractor(){
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
     var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
-    if (!TT && !IG && onOriginal) Object.assign(data.diag, { totalSegunFacebook: netTot, botonesPulsados: pressed.slice(0, 40) });
+    if (!TT && !IG && onOriginal){
+      var pend = sortButtons().map(function(b){ return (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
+      Object.assign(data.diag, { totalSegunFacebook: netTot, extraidos: comments.length, sinId: comments.filter(function(c){ return !c.id; }).length,
+        respuestas: comments.filter(function(c){ return c.isReply; }).length, orden: sortState || 'sin-intentar', intentosOrden: sortTries, opcionesOrden: sortMenu,
+        segundaPasada: LOOP.second, rondas: LOOP.round, botonesPulsados: pressed.slice(0, 40), botonesSinPulsarAlFinal: pend.map(function(t){ return t.replace(/\d+/g, 'N'); }).slice(0, 20),
+        fuenteComentarios: document.querySelectorAll('[data-sca-art]').length ? 'estructura' : 'articulos' });
+    }
     if (!TT && !IG) Object.assign(data.diag, { articulos: document.querySelectorAll('div[role="article"]').length, articulosComentario: articles().length,
       enlacesComentario: document.querySelectorAll('a[href*="comment_id="]').length, cargando: loadingVisible(), dialogos: document.querySelectorAll('div[role="dialog"]').length,
       botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || (b.innerText || '').trim()).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
@@ -3318,7 +3375,7 @@ function fbExtractor(){
     window.__fbcx = false;
   }
   (async function(){
-    var clicks = new Map(), idle = 0, round = 0, lastCollected = 0;
+    var clicks = new Map(), idle = 0, round = 0, lastCollected = 0, secondPass = false;
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
     // En cuanto aparece el botón de comentarios se abre la sección (los reels no muestran comentarios sin pulsarlo).
     // Si no hay botón, se espera a que la red pinte los comentarios (Instagram sin sesión tarda 10–15 s) o a la pantalla de acceso.
@@ -3351,8 +3408,9 @@ function fbExtractor(){
     startKey = postKey(); snapshot();
     if (AUTO) AUTO.emit({ type: 'progress', round: 0, count: collected.length, visible: countNow(), note: collected.length ? 'comentarios abiertos' : '' });
     while (!stop && round < 600){
-      round++;
+      round++; LOOP.round = round;
       if (AUTO && AUTO.stopRequested){ stop = true; break; }
+      if (!TT && !IG && round <= 6 && sortState !== 'cambiado' && sortState !== 'ya' && round % 2 === 0) await fbAllComments();
       if (postKey() !== startKey){
         if (AUTO){ useCollectedOnly = true; break; }   // sin usuario delante: se conserva solo lo de la publicación original
         var dec = await waitDecision();
@@ -3401,7 +3459,16 @@ function fbExtractor(){
         if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
         lastCollected = collected.length;
         // el total de la red incluye respuestas y a veces comentarios ocultos o eliminados: se acepta un 3 % de diferencia
-        if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)) break;
+        if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)){
+          if (!TT && !IG && !secondPass && total && collected.length < total * 0.97){
+            // segunda pasada: volver a intentar «Todos los comentarios», reiniciar los botones y recorrer el panel de nuevo
+            secondPass = true; LOOP.second = true; idle = 0; clicks = new Map(); sortState = sortState === 'cambiado' || sortState === 'ya' ? sortState : '';
+            status('Faltan comentarios frente al total de Facebook: revisando de nuevo…', true);
+            await fbAllComments(); scrollNudge(); await sleep(800); scrollAll(); await sleep(1200);
+            continue;
+          }
+          break;
+        }
       }
       snapshot();   // recoger en cada ronda mientras se sigue en la publicación original
       var tot = netTotal();
@@ -3715,7 +3782,7 @@ function fromExtractor(obj){
   const author = obj.postAuthor ? (platform!=='facebook' ? '@'+String(obj.postAuthor).replace(/^@/,'') : obj.postAuthor) : '';
   // Instagram publica la fecha exacta (atributo datetime); Facebook solo tiempos relativos.
   const exact = c => c.datetime && !isNaN(Date.parse(c.datetime)) ? new Date(c.datetime).toISOString() : null;
-  return { meta:{ url:obj.url, title: caption ? caption.slice(0,160) : obj.title, postAuthor:author, postDate: obj.postDate||'', extractedAt:obj.extractedAt, source:'Extractor de navegador', platform, netTotal:+obj.total || 0 },
+  return { meta:{ url:obj.url, title: caption ? caption.slice(0,160) : obj.title, postAuthor:author, postDate: obj.postDate||'', extractedAt:obj.extractedAt, source:'Extractor de navegador', platform, netTotal:+obj.total || 0, diag:obj.diag || null },
     comments:raw.map(c=>({
       id:c.id, parentId:c.parentId, authorName:c.authorName, authorId:c.authorId, authorUrl:c.authorUrl, authorAvatar:c.authorAvatar,
       badges:c.badges, text:c.text, createdAt: exact(c) || parseFbDate(c.dateText, base) || parseFbDate(c.labelDate, base), dateText:c.dateText, dateApprox: !exact(c),
@@ -4875,7 +4942,7 @@ function renderReply(){
     : `<span class="ms">content_paste_go</span><span>${c.platform === 'tiktok' ? 'TikTok no permite publicar desde otras apps.' : 'Estos datos no vienen de la API de tu página, así que la app no puede publicar por ti.'} <b>Copiar y abrir</b> copia la respuesta y abre el comentario: pégala allí y envíala. Después se marcará como respondido.</span>`;
   setStatus('#rpStatus', '');
   RP.sel = null; $('#rpText').value = ''; $('#rpSearch').value = '';
-  if(RP.ai && RP.ai.for !== c.id){ aiAbort?.abort(); RP.ai = null; $('#rpAi').disabled = false; }
+  if(RP.ai && RP.ai.for !== c.id){ aiAbort?.abort(); RP.ai = null; $('#rpAi').disabled = false; $('#rpAiState').dataset.busy = ''; }
   $('#rpAiState').textContent = aiConfigured() ? '' : 'Configura un modelo gratuito para recibir propuestas.';
   renderReplyOpts();
   const first = $('#rpOpts .rp-opt'); if(first && /Sugerida/.test(first.textContent)) pickReply(first.dataset.rid);
@@ -5148,7 +5215,7 @@ const AI_SIZE = { sem:118e6, llm:512e6 };   // tamaños aproximados para el prog
 async function installAI(){
   if(AIINST.busy) return;
   if(!navigator.onLine){ toast('Sin conexión: conéctate a internet para instalar la IA'); return; }
-  Object.assign(AIINST, { busy:true, pct:0, err:'' }); renderAiState();
+  Object.assign(AIINST, { busy:true, pct:0, err:'', errFile:false, mode:'net' }); renderAiState();
   await aiScanCache();
   if(aiInstalled()){ AIINST.busy = false; AIINST.pct = 100; renderAiState(); toast('La IA ya estaba instalada en este navegador'); return; }
   try{ await navigator.storage?.persist?.(); }catch(e){}   // que el navegador no la borre para liberar espacio
@@ -5180,16 +5247,126 @@ function renderAiState(){
   document.body.classList.toggle('no-ai', !ok);
   const bn = $('#aiBanner'); if(!bn) return;
   bn.classList.toggle('hidden', ok);
-  $('#aiBnTitle').textContent = AIINST.busy ? `Instalando la IA… ${AIINST.pct} %` : AIINST.err ? 'No se pudo instalar la IA' : 'Instala la IA para usar la aplicación completa';
-  $('#aiBnSub').textContent = AIINST.busy ? (AIINST.mb[1] ? `${fmtN(Math.round(AIINST.mb[0]))} de ${fmtN(Math.round(AIINST.mb[1]))} MB. Puedes seguir trabajando mientras se descarga; te avisaremos al terminar.` : 'Preparando la descarga…')
-    : AIINST.err ? AIINST.err + ' Comprueba la conexión y vuelve a intentarlo.'
-    : 'La búsqueda de comentarios, los informes, las sugerencias de respuesta y el mensaje para WhatsApp necesitan la IA. Se instala una sola vez en este navegador (≈ 620 MB), es gratuita y funciona sin conexión.';
+  $('#aiBnTitle').textContent = AIINST.busy ? `${AIINST.mode === 'file' ? 'Instalando la IA desde el archivo' : 'Instalando la IA'}… ${AIINST.pct} %` : AIINST.err ? 'No se pudo instalar la IA' : 'Instala la IA para usar la aplicación completa';
+  $('#aiBnSub').textContent = AIINST.busy ? (AIINST.mode === 'file' ? `${AIINST.step || 'Copiando los modelos'}: ${fmtN(Math.round(AIINST.mb[0]))} de ${fmtN(Math.round(AIINST.mb[1]))} MB. No se usa Internet.` : AIINST.mb[1] ? `${fmtN(Math.round(AIINST.mb[0]))} de ${fmtN(Math.round(AIINST.mb[1]))} MB. Puedes seguir trabajando mientras se descarga; te avisaremos al terminar.` : 'Preparando la descarga…')
+    : AIINST.err ? AIINST.err + (AIINST.errFile ? '' : ' Comprueba la conexión y vuelve a intentarlo.')
+    : 'La búsqueda de comentarios, los informes, las sugerencias de respuesta y el mensaje para WhatsApp necesitan la IA. Se instala una sola vez en este navegador: desde el paquete de IA (archivo .zip de ≈ 620 MB, sin usar Internet) o descargándola desde Internet. Es gratuita y funciona sin conexión.';
   const bar = $('#aiBnBar'); bar.classList.toggle('hidden', !AIINST.busy); bar.classList.toggle('indet', AIINST.busy && !AIINST.pct);
   bar.firstElementChild.style.width = AIINST.pct + '%'; bar.setAttribute('aria-valuenow', String(AIINST.pct));
-  const b = $('#aiBnBtn'); b.disabled = AIINST.busy;
-  b.innerHTML = AIINST.busy ? '<span class="ms">downloading</span>Instalando…' : AIINST.err ? '<span class="ms">refresh</span>Reintentar' : '<span class="ms">download</span>Instalar IA';
+  const b = $('#aiBnBtn'); b.disabled = AIINST.busy; $('#aiBnFile').disabled = AIINST.busy;
+  b.innerHTML = AIINST.busy && AIINST.mode !== 'file' ? '<span class="ms">downloading</span>Instalando…' : AIINST.err && !AIINST.errFile ? '<span class="ms">refresh</span>Reintentar desde Internet' : '<span class="ms">download</span>Instalar desde Internet';
   if($('#aiDlg')?.open && $('#aiProv').value === 'local') aiDlRender();
 }
+/* ---------- Paquete de IA (.zip sin compresión): instalar sin Internet y exportar ----------
+   Contiene los archivos de los dos modelos tal como los guarda Transformers.js y un índice «sca-ia.json».
+   Al instalar se copian a la caché del navegador con las mismas direcciones que usaría la descarga,
+   así que la IA funciona igual que si se hubiera descargado. */
+const AIPACK = { name:'sca-ia-pack.zip', manifest:'sca-ia.json', url:'https://github.com/arlizheredia/social-comments-analyzer/releases/latest/download/sca-ia-pack.zip' };
+const HF_BASE = 'https://huggingface.co/';
+const hfUrl = (model, file) => HF_BASE + model + '/resolve/main/' + file;
+let CRC_T = null;
+function crc32Update(crc, u8){
+  if(!CRC_T){ CRC_T = new Uint32Array(256); for(let n = 0; n < 256; n++){ let c = n; for(let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC_T[n] = c >>> 0; } }
+  let c = (crc ^ 0xFFFFFFFF) >>> 0;
+  for(let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+// Lee el índice de un ZIP sin cargarlo entero en memoria (solo los archivos sin compresión son válidos aquí)
+async function zipEntries(file){
+  const tailLen = Math.min(file.size, 66000);
+  const tail = new DataView(await file.slice(file.size - tailLen).arrayBuffer());
+  let eocd = -1; for(let i = tailLen - 22; i >= 0; i--) if(tail.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  if(eocd < 0) throw new Error('El archivo no es un paquete de IA válido.');
+  const n = tail.getUint16(eocd + 10, true), cdSize = tail.getUint32(eocd + 12, true), cdOff = tail.getUint32(eocd + 16, true);
+  const cd = new DataView(await file.slice(cdOff, cdOff + cdSize).arrayBuffer()), dec = new TextDecoder(), out = [];
+  let q = 0;
+  for(let i = 0; i < n; i++){
+    if(cd.getUint32(q, true) !== 0x02014b50) throw new Error('El paquete de IA está dañado.');
+    const nl = cd.getUint16(q + 28, true), xl = cd.getUint16(q + 30, true), cl = cd.getUint16(q + 32, true);
+    out.push({ method:cd.getUint16(q + 10, true), size:cd.getUint32(q + 24, true), lho:cd.getUint32(q + 42, true), name:dec.decode(new Uint8Array(cd.buffer, q + 46, nl)) });
+    q += 46 + nl + xl + cl;
+  }
+  for(const e of out){
+    const lh = new DataView(await file.slice(e.lho, e.lho + 30).arrayBuffer());
+    if(lh.getUint32(0, true) !== 0x04034b50) throw new Error('El paquete de IA está dañado.');
+    e.start = e.lho + 30 + lh.getUint16(26, true) + lh.getUint16(28, true);
+  }
+  return out;
+}
+async function installAIFromFile(file){
+  if(AIINST.busy || !file) return;
+  Object.assign(AIINST, { busy:true, pct:0, err:'', errFile:false, mode:'file', step:'Leyendo el paquete', mb:[0, file.size / 1e6] }); renderAiState();
+  try{
+    const ents = await zipEntries(file);
+    const me = ents.find(e => e.name === AIPACK.manifest);
+    if(!me) throw new Error('El archivo no es un paquete de IA de Social Comments Analyzer.');
+    const man = JSON.parse(await file.slice(me.start, me.start + me.size).text());
+    const files = (man.files || []).filter(f => f && f.model && f.file);
+    if(![LLM.model, SEM.model].every(m => files.some(f => f.model === m && /\.onnx$/.test(f.file)))) throw new Error('El paquete no contiene los modelos que usa esta versión de la app.');
+    try{ await navigator.storage?.persist?.(); }catch(e){}
+    const cache = await caches.open(LLM_CACHE), total = files.reduce((s, f) => s + (f.size || 0), 0); let done = 0;
+    for(const f of files){
+      const e = ents.find(x => x.name === f.path);
+      if(!e || e.method !== 0 || (f.size != null && e.size !== f.size)) throw new Error('El paquete de IA está incompleto o dañado (' + f.path + ').');
+      AIINST.step = f.model === LLM.model ? 'Copiando el modelo de lenguaje' : 'Copiando el modelo de búsqueda'; renderAiState();
+      await cache.put(hfUrl(f.model, f.file), new Response(file.slice(e.start, e.start + e.size), { headers:{ 'content-type':/\.json$/.test(f.file) ? 'application/json' : 'application/octet-stream', 'content-length':String(e.size) } }));
+      done += e.size; AIINST.pct = Math.min(99, Math.floor(done / Math.max(1, total) * 100)); AIINST.mb = [done / 1e6, total / 1e6]; renderAiState();
+    }
+    await aiScanCache();
+    if(!aiInstalled()) throw new Error('El paquete se copió, pero faltan archivos de los modelos.');
+    const c = AI.cfg(); if(!aiConfigured(c) || c.prov === 'chrome'){ c.prov = 'local'; AI.save(c); }
+    AIINST.pct = 100; toast('IA instalada desde el archivo, sin usar Internet');
+  }catch(e){ AIINST.err = e.message || String(e); AIINST.errFile = true; toast('No se pudo instalar la IA desde el archivo'); }
+  finally{ AIINST.busy = false; AIINST.mode = ''; renderAiState(); }
+}
+// Crea el paquete con los modelos que ya están en este navegador (para instalarlos en otro sin descargar nada)
+async function exportAIPack({ download = true, onProgress } = {}){
+  await aiScanCache(); if(!aiInstalled()) throw new Error('La IA no está instalada en este navegador.');
+  const cache = await caches.open(LLM_CACHE), entries = [];
+  for(const r of await cache.keys()){
+    const u = decodeURIComponent(r.url).split('?')[0];
+    for(const m of [LLM.model, SEM.model]){ const pre = HF_BASE + m + '/resolve/main/'; if(u.startsWith(pre)) entries.push({ model:m, file:u.slice(pre.length), req:r }); }
+  }
+  for(const e of entries){ e.blob = await (await cache.match(e.req)).blob(); e.path = e.model + '/' + e.file; }
+  const total = entries.reduce((s, e) => s + e.blob.size, 0); let doneB = 0;
+  for(const e of entries){   // CRC32 por partes, cediendo el turno para no congelar la página
+    let crc = 0;
+    for(let o = 0; o < e.blob.size; o += 8 << 20){ crc = crc32Update(crc, new Uint8Array(await e.blob.slice(o, o + (8 << 20)).arrayBuffer())); doneB += Math.min(8 << 20, e.blob.size - o); onProgress?.(doneB / total); await new Promise(r => setTimeout(r)); }
+    e.crc = crc;
+  }
+  const man = { app:'Social Comments Analyzer', kind:'sca-ia-pack', version:1, created:new Date().toISOString(), files:entries.map(e => ({ model:e.model, file:e.file, path:e.path, size:e.blob.size })) };
+  const manBytes = new TextEncoder().encode(JSON.stringify(man, null, 2));
+  const items = [{ path:AIPACK.manifest, blob:new Blob([manBytes]), crc:crc32Update(0, manBytes) }, ...entries];
+  const enc = new TextEncoder(), parts = [], cds = []; let off = 0;
+  for(const it of items){
+    const name = enc.encode(it.path), size = it.blob.size;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint32(14, it.crc, true); lh.setUint32(18, size, true); lh.setUint32(22, size, true); lh.setUint16(26, name.length, true);
+    parts.push(lh.buffer, name, it.blob);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint32(16, it.crc, true); ch.setUint32(20, size, true); ch.setUint32(24, size, true); ch.setUint16(28, name.length, true); ch.setUint32(42, off, true);
+    cds.push(ch.buffer, name);
+    off += 30 + name.length + size;
+  }
+  const cdSize = cds.reduce((s, x) => s + (x.byteLength ?? x.length), 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, items.length, true); end.setUint16(10, items.length, true); end.setUint32(12, cdSize, true); end.setUint32(16, off, true);
+  const blob = new Blob([...parts, ...cds, end.buffer], { type:'application/zip' });
+  if(download){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = AIPACK.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000); }
+  return blob;
+}
+async function aiExportUI(){
+  const st = $('#aiStatus'); $('#aiDlExport').disabled = true;
+  try{
+    aiProgressSet(st, 'Preparando el paquete de IA…', 0);
+    await exportAIPack({ onProgress:x => aiProgressSet(st, `Preparando el paquete de IA… ${Math.round(x * 100)} %`, Math.round(x * 100)) });
+    setStatus('#aiStatus', '✓ Paquete de IA exportado (' + AIPACK.name + '). Llévalo a otro navegador o PC y pulsa «Instalar desde archivo».');
+  }catch(e){ setStatus('#aiStatus', e.message, true); }
+  finally{ $('#aiDlExport').disabled = false; }
+}
+function aiPickPack(){ const i = $('#aiPackInput'); i.value = ''; i.click(); }
 function aiNeedInstall(){ toast('Primero instala la IA (aviso en la parte superior)'); $('#aiBanner')?.scrollIntoView({ behavior:'smooth', block:'start' }); $('#aiBnBtn')?.focus(); }
 async function localDownload(){
   const gen = await localModel();
@@ -5204,10 +5381,91 @@ async function localDelete(){
   SEM.pipe = null; SEM.loading = null; PREF.set('aiSem', '');
   renderAiState();
 }
-function aiStatusText(t){ ['#rpAiState', '#waAiState', '#repAiState', '#aiStatus'].forEach(s => { const e = $(s); if(e && e.offsetParent && !(s === '#aiStatus' && !$('#aiDlF').classList.contains('hidden'))) e.textContent = t; }); }
+// Indicador de carga de IA: icono girando, texto y barra (con porcentaje si se conoce)
+function aiProgressHtml(txt, pct){ return `<span class="ai-prog" role="status" aria-live="polite"><span class="ms ai-spin" aria-hidden="true">progress_activity</span><span class="ai-prog-t">${esc(txt)}</span><span class="pbar${pct == null ? ' indet' : ''}" role="progressbar" aria-label="${esc(txt)}" aria-valuemin="0" aria-valuemax="100"${pct == null ? '' : ` aria-valuenow="${pct}"`}><i style="width:${pct || 0}%"></i></span></span>`; }
+function aiProgressSet(sel, txt, pct){ const e = typeof sel === 'string' ? $(sel) : sel; if(e) e.innerHTML = aiProgressHtml(txt, pct); }
+function aiStatusText(t, pct){
+  ['#rpAiState', '#waAiState'].forEach(s => { const e = $(s); if(e && e.offsetParent && e.dataset.busy === '1') aiProgressSet(e, t, pct); });
+  const r = $('#repAiState'); if(r && r.offsetParent) r.textContent = t;
+  const st = $('#aiStatus'); if(st && st.offsetParent && st.dataset.busy === '1' && $('#aiDlF').classList.contains('hidden')) aiProgressSet(st, t, pct);
+}
+/* ---------- Motor de IA en segundo plano (Web Worker) ----------
+   Los modelos se cargan y ejecutan fuera del hilo de la página: la interfaz sigue respondiendo y el navegador
+   no muestra el aviso de «página sin respuesta». Si el navegador no permite el Worker, se usa el hilo principal. */
+const AIW = { w:null, seq:0, pend:new Map(), failed:false };
+const AIW_SRC = `
+let T = null; const P = {}, O = {};
+async function lib(url){ if(!T){ T = await import(url); T.env.allowLocalModels = false; try{ T.env.backends.onnx.wasm.numThreads = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1)); }catch(e){} } return T; }
+async function load(kind, model, task, tries, url, id){
+  if(P[kind]) return P[kind];
+  const t = await lib(url); let last;
+  for(const o of tries){
+    try{ P[kind] = await t.pipeline(task, model, { ...o, progress_callback:p => postMessage({ id, type:'progress', p:{ status:p.status, file:p.file, loaded:p.loaded, total:p.total } }) }); O[kind] = o; return P[kind]; }
+    catch(e){ last = e; }
+  }
+  throw last || new Error('No se pudo cargar el modelo');
+}
+onmessage = async e => {
+  const m = e.data, id = m.id;
+  try{
+    if(m.type === 'load'){ await load(m.kind, m.model, m.task, m.tries, m.lib, id); postMessage({ id, type:'done', result:O[m.kind] }); }
+    else if(m.type === 'embed'){
+      const pipe = await load('sem', m.model, 'feature-extraction', m.tries, m.lib, id), out = [];
+      for(let i = 0; i < m.texts.length; i += 16){ const r = await pipe(m.texts.slice(i, i + 16), { pooling:'mean', normalize:true }); out.push(...r.tolist()); postMessage({ id, type:'step', a:Math.min(m.texts.length, i + 16), b:m.texts.length }); }
+      postMessage({ id, type:'done', result:out });
+    }
+    else if(m.type === 'gen'){
+      const gen = await load('llm', m.model, 'text-generation', m.tries, m.lib, id), t = await lib(m.lib); let n = 0;
+      const opts = { ...m.opts };
+      if(t.TextStreamer && gen.tokenizer) opts.streamer = new t.TextStreamer(gen.tokenizer, { skip_prompt:true, skip_special_tokens:true, callback_function:() => { n++; postMessage({ id, type:'step', a:n, b:m.opts.max_new_tokens }); } });
+      const out = await gen(m.messages, opts), g = out[0].generated_text;
+      postMessage({ id, type:'done', result:Array.isArray(g) ? (g[g.length - 1].content || '') : String(g || '') });
+    }
+  }catch(err){ postMessage({ id, type:'error', error:String(err && err.message || err) }); }
+};`;
+function aiWorker(){
+  if(AIW.w || AIW.failed) return AIW.w;
+  try{
+    AIW.w = new Worker(URL.createObjectURL(new Blob([AIW_SRC], { type:'text/javascript' })), { type:'module' });
+    AIW.w.onmessage = e => { const m = e.data, hd = AIW.pend.get(m.id); if(!hd) return;
+      if(m.type === 'progress') hd.onProgress?.(m.p); else if(m.type === 'step') hd.onStep?.(m.a, m.b);
+      else { AIW.pend.delete(m.id); m.type === 'done' ? hd.res(m.result) : hd.rej(new Error(m.error)); } };
+    AIW.w.onerror = e => { console.warn('IA: el motor en segundo plano falló', e.message); const err = new Error(e.message || 'El motor de IA se detuvo'); for(const hd of AIW.pend.values()) hd.rej(err); AIW.pend.clear(); AIW.w = null; LLM.gen = null; LLM.loading = null; SEM.pipe = null; SEM.loading = null; };
+  }catch(e){ console.warn('IA: sin Web Worker, se usa el hilo principal', e); AIW.failed = true; AIW.w = null; }
+  return AIW.w;
+}
+// Envía una tarea al motor; con signal, el resultado se descarta si se cancela (el modelo no se descarga de memoria)
+function aiCall(msg, { onProgress, onStep, signal } = {}){
+  const w = aiWorker(); if(!w) return null;
+  return new Promise((res, rej) => {
+    const id = ++AIW.seq; AIW.pend.set(id, { res, rej, onProgress, onStep });
+    if(signal) signal.addEventListener('abort', () => { if(AIW.pend.delete(id)) rej(Object.assign(new Error('Cancelado'), { name:'AbortError' })); }, { once:true });
+    w.postMessage({ ...msg, id, lib:SEM.lib });
+  });
+}
+// Variantes del modelo de lenguaje a probar: primero las ya guardadas en la caché
+async function llmTries(){
+  let device = 'wasm';
+  try{ if(navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; }catch(e){}
+  if(!AISTATE.checked) await aiScanCache();
+  const pref = device === 'webgpu' ? ['q4f16', 'q4', 'fp16', 'q8', 'int8', 'uint8', 'bnb4', 'fp32'] : ['q4', 'q8', 'int8', 'uint8', 'bnb4', 'q4f16', 'fp32', 'fp16'];
+  const cached = pref.filter(d => AISTATE.llmTypes.includes(d));
+  const tries = [...cached.map(d => ({ dtype:d, device:device === 'webgpu' && /f16/.test(d) ? 'webgpu' : device })), ...(cached.length ? [] : [{ dtype:device === 'webgpu' ? 'q4f16' : 'q8', device }])];
+  if(device === 'webgpu') tries.push(...cached.filter(d => !/f16/.test(d)).map(d => ({ dtype:d, device:'wasm' })));
+  if(!tries.some(t => t.dtype === 'q8' && t.device === 'wasm')) tries.push({ dtype:'q8', device:'wasm' });   // último recurso
+  return tries;
+}
+async function semTries(){ if(!AISTATE.checked) await aiScanCache(); return [{ dtype:AISTATE.semTypes.includes('q8') ? 'q8' : (AISTATE.semTypes[0] || 'q8') }]; }
 async function localModel(){
   if(LLM.gen) return LLM.gen;
   LLM.loading ||= (async () => {
+    // en segundo plano si se puede
+    const filesW = {};
+    const wp = aiCall({ type:'load', kind:'llm', model:LLM.model, task:'text-generation', tries:await llmTries() }, { onProgress:pr => {
+      if(pr.status === 'progress' && pr.total){ filesW[pr.file] = [pr.loaded, pr.total]; const a = Object.values(filesW).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); LLM.pct = Math.min(99, Math.floor(a[0] / a[1] * 100)); LLM.mb = [a[0] / 1e6, a[1] / 1e6]; aiStatusText(`Cargando la IA… ${LLM.pct} %`, LLM.pct); LLM.onProgress?.(); }
+      else if(pr.status === 'initiate' || pr.status === 'ready') aiStatusText('Preparando la IA…', null);
+    } });
+    if(wp){ const o = await wp; LLM.gen = 'worker'; LLM.dtype = o && o.dtype; LLM.device = o && o.device; return LLM.gen; }
     const T = await import(SEM.lib);
     T.env.allowLocalModels = false;
     let device = 'wasm';
@@ -5236,8 +5494,12 @@ async function localGenerate(sys, user, signal, onProgress){
   if(!localReady()) throw new Error('La IA no está instalada: pulsa «Instalar IA» en el aviso de la parte superior.');
   const gen = await localModel();
   if(signal && signal.aborted) throw Object.assign(new Error('Cancelado'), { name:'AbortError' });
-  aiStatusText('Redactando con la IA de la app…');
+  aiStatusText('Redactando con la IA…', onProgress ? 0 : null);
   const MAX = 420, opts = { max_new_tokens:MAX, do_sample:true, temperature:.7, top_p:.9, repetition_penalty:1.1 };
+  if(gen === 'worker'){
+    const step = (a, b) => { const x = Math.min(.97, a / b); onProgress?.(x); aiStatusText(`Redactando con la IA… ${Math.round(x * 100)} %`, Math.round(x * 100)); };
+    return aiCall({ type:'gen', model:LLM.model, tries:await llmTries(), messages:[{ role:'system', content:sys }, { role:'user', content:user }], opts }, { onStep:step, signal });
+  }
   // progreso real: se cuentan los fragmentos que el modelo va escribiendo
   if(onProgress){ try{ const T = await import(SEM.lib); let n = 0; opts.streamer = new T.TextStreamer(gen.tokenizer, { skip_prompt:true, skip_special_tokens:true, callback_function:() => { n++; onProgress(Math.min(.97, n / MAX)); } }); }catch(e){} }
   const out = await gen([{ role:'system', content:sys }, { role:'user', content:user }], opts);
@@ -5252,10 +5514,11 @@ async function aiSuggest(){
   aiAbort?.abort(); aiAbort = new AbortController();
   const forC = c;
   RP.ai = { for:c.id, items:[], loading:true }; renderReplyOpts();
-  $('#rpAiState').textContent = 'Pensando con ' + AI_PROV[cfg.prov].name + '…'; $('#rpAi').disabled = true;
+  const rst = $('#rpAiState'); rst.dataset.busy = '1'; aiProgressSet(rst, 'Pensando sugerencias con ' + AI_PROV[cfg.prov].name + '…', cfg.prov === 'local' ? 0 : null); $('#rpAi').disabled = true;
   try{
     const { sys, user } = aiPrompt(c, cfg);
-    const items = aiParse(await aiRequest(cfg, sys, user, aiAbort.signal), cfg.n);
+    const items = aiParse(await aiRequest(cfg, sys, user, aiAbort.signal, cfg.prov === 'local' ? (x => { if(RP.c === forC) aiProgressSet(rst, `Pensando sugerencias… ${Math.round(x * 100)} %`, Math.round(x * 100)); }) : null), cfg.n);
+    rst.dataset.busy = '';
     if(RP.c !== forC) return;
     if(!items.length) throw new Error('La IA no devolvió sugerencias. Inténtalo de nuevo.');
     RP.ai = { for:c.id, items, loading:false };
@@ -5264,7 +5527,7 @@ async function aiSuggest(){
   }catch(e){
     if(e.name === 'AbortError') return;
     RP.ai = null; renderReplyOpts();
-    $('#rpAiState').textContent = '';
+    $('#rpAiState').dataset.busy = ''; $('#rpAiState').textContent = '';
     setStatus('#rpStatus', 'IA: ' + (e.message === 'Failed to fetch' ? 'no se pudo conectar con el servicio (revisa la URL, la conexión o los permisos CORS).' : e.message), true, 'ia-config');
   }finally{ if(RP.c === forC) $('#rpAi').disabled = false; }
 }
@@ -5309,7 +5572,8 @@ function aiDlRender(){
     : 'Se instala una sola vez (≈ 620 MB: modelo de lenguaje y modelo de búsqueda) y queda guardada en este navegador. Después funciona sin conexión y sin claves.';
   const bar = $('#aiDlBar'); bar.classList.toggle('hidden', !busy); bar.classList.toggle('indet', busy && !pct);
   bar.firstElementChild.style.width = pct + '%'; bar.setAttribute('aria-valuenow', String(pct));
-  $('#aiDlBtn').classList.toggle('hidden', ready); $('#aiDlBtn').disabled = busy;
+  $('#aiDlBtn').classList.toggle('hidden', ready); $('#aiDlBtn').disabled = busy; $('#aiDlFile').classList.toggle('hidden', ready); $('#aiDlFile').disabled = busy;
+  $('#aiDlExport').classList.toggle('hidden', !ready); $('#aiPackLink').href = AIPACK.url; $('#aiPackLink').parentElement.classList.toggle('hidden', ready);
   $('#aiDlBtn').innerHTML = busy ? '<span class="ms">downloading</span>Descargando…' : '<span class="ms">download</span>Descargar e instalar';
   $('#aiDlDel').classList.toggle('hidden', !ready);
 }
@@ -5338,6 +5602,10 @@ function initAi(){
     await localDelete(); $('#aiProv').value = 'local'; aiCfgSync(); setStatus('#aiStatus', 'IA desinstalada.');
   };
   $('#aiBnBtn').onclick = installAI;
+  $('#aiBnFile').onclick = aiPickPack;
+  $('#aiDlFile').onclick = aiPickPack;
+  $('#aiDlExport').onclick = aiExportUI;
+  $('#aiPackInput').onchange = async e => { const f = e.target.files[0]; if(!f) return; await installAIFromFile(f); if($('#aiDlg').open){ aiDlRender(); if(aiInstalled()){ $('#aiProv').value = AI.cfg().prov; aiCfgSync(); setStatus('#aiStatus', '✓ IA instalada desde el archivo.'); } else if(AIINST.err) setStatus('#aiStatus', AIINST.err, true, 'ia-local'); } };
   renderAiState(); localCheck();
   $('#aiSave').onclick = () => { const c = aiCfgRead();
     if(c.prov === 'local' && !aiInstalled()){ if(!AIINST.busy) aiDlStart(); else setStatus('#aiStatus', 'La instalación está en curso; al terminar quedará configurada.'); return; }
@@ -5345,7 +5613,7 @@ function initAi(){
     if($('#replyDlg').open && aiConfigured(c) && !RP.ai) aiSuggest(); };
   $('#aiTest').onclick = async () => {
     const c = aiCfgRead(); if(!aiConfigured(c)){ setStatus('#aiStatus', c.prov === 'chrome' ? 'La IA integrada no está disponible en este navegador.' : c.prov === 'local' ? 'Primero descarga la IA de la app con “Descargar e instalar”.' : 'Completa la clave y el modelo.', true, 'ia-' + c.prov); return; }
-    setStatus('#aiStatus', 'Probando…');
+    aiProgressSet('#aiStatus', 'Probando la IA…', null);
     try{ const t = await aiRequest(c, 'Responde solo con JSON: {"respuestas":["ok"]}', 'Prueba de conexión'); setStatus('#aiStatus', '✓ Conexión correcta' + (aiParse(t, 1)[0] ? '' : ' (respuesta inesperada, pero el servicio contestó)')); }
     catch(e){ setStatus('#aiStatus', e.message === 'Failed to fetch' ? 'No se pudo conectar (revisa la URL, la conexión o CORS).' : e.message, true, 'ia-' + c.prov); }
   };
@@ -5639,7 +5907,7 @@ function renderPosts(){
 }
 
 /* ---------- Extensión de Chrome ---------- */
-const EXT_LATEST = '1.3.2';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
+const EXT_LATEST = '1.3.3';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 const EXT = { version:null, waiters:new Map(), jobs:new Map() };
 // pausa entre publicaciones por defecto: 6 s (variable)
 if(PREF.get('eoGap') === null) PREF.set('eoGap', '6');
@@ -5814,7 +6082,7 @@ function renderRunDetail(){
           ${it.status === 'done' ? `<button class="btn text sm" data-iact="view"><span class="ms">forum</span>Ver comentarios</button>` : ''}
           ${!running && ['error', 'skipped', 'done'].includes(it.status) ? `<button class="icon-btn sm" data-iact="retry" aria-label="Volver a extraer" title="Volver a extraer"><span class="ms">refresh</span></button>` : ''}
           ${!running && it.status === 'pending' ? `<button class="icon-btn sm" data-iact="skip" aria-label="Omitir" title="Omitir"><span class="ms">do_not_disturb_on</span></button>` : ''}
-          ${it.status === 'error' && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
+          ${(it.status === 'error' || (it.status === 'done' && it.total && (it.count || 0) < it.total * 0.9)) && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
           ${it.status === 'running' && it.retry ? `<button class="btn tonal sm" data-iact="retrynow"><span class="ms">refresh</span>Reintentar ahora</button>` : ''}
           ${p.url ? `<a class="icon-btn sm" href="${esc(p.url)}" target="_blank" rel="noopener" aria-label="Abrir publicación" title="Abrir publicación"><span class="ms">open_in_new</span></a>` : ''}
         </div>
@@ -5950,7 +6218,7 @@ async function runTracking(tid){
       if(r.skipped){ it.status = 'skipped'; }
       else if(r.stopped || (RUN.stopReq && !r.parsed)){ it.status = 'pending'; }
       else if(RUN.stopReq && r.partial){ it.status = 'pending'; }   // detenido a mitad: se repetirá al continuar
-      else { if(r.parsed?.meta?.netTotal) it.total = r.parsed.meta.netTotal; await storeResult(t, p, r.parsed, r.method, r.partial); }
+      else { if(r.parsed?.meta?.netTotal) it.total = r.parsed.meta.netTotal; it.diag = r.parsed?.meta?.diag || null; await storeResult(t, p, r.parsed, r.method, r.partial); }
     }catch(e){
       if(e.name === 'AbortError' || (RUN.stopReq && !RUN.halt)){ it.status = 'pending'; }
       else {
@@ -6111,7 +6379,7 @@ function initTracking(){
     const pid = row.dataset.ipid, it = t.items[pid], ia = e.target.closest('[data-iact]')?.dataset.iact;
     if(ia === 'view') viewResult(t.id, pid, 'runs');
     if(ia === 'retrynow'){ RUN.retryNow = true; }
-    if(ia === 'diag') copyText(JSON.stringify({ url:(TR.posts.find(p => p.id === pid) || {}).url, error:it.error, diag:it.diag, extension:EXT.version, navegador:navigator.userAgent }, null, 2), 'Diagnóstico copiado (sin textos ni nombres de los comentarios)');
+    if(ia === 'diag') copyText(JSON.stringify({ url:(TR.posts.find(p => p.id === pid) || {}).url, error:it.error, extraidos:it.count, totalSegunLaRed:it.total, diag:it.diag, extension:EXT.version, navegador:navigator.userAgent }, null, 2), 'Diagnóstico copiado (sin textos ni nombres de los comentarios)');
     if(ia === 'retry' || ia === 'skip'){ it.status = ia === 'retry' ? 'pending' : 'skipped'; it.error = ''; if(ia === 'retry' && t.status === 'done') t.status = 'paused'; await DB.put('trackings', t); renderRuns(); }
   });
   // historial
@@ -6200,12 +6468,12 @@ function renderReportPicker(){
     <div class="hlist">${done.map(t => { const pr = trackProgress(t); return `<label class="hrow${sel.has(t.id) ? ' sel' : ''}"><input type="checkbox" class="rpsel" value="${esc(t.id)}" ${sel.has(t.id) ? 'checked' : ''}><div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div></label>`; }).join('')}</div>
     <div class="rp-cfg"><label class="field rp-focus"><span class="lbl">Enfoque del informe (obligatorio)</span><input class="input" id="repFocus" value="${esc(reportFocus())}" placeholder="Ej.: ${esc(FOCUS_DEFAULT)}" maxlength="200" required aria-describedby="repFocusHint"><span class="hint" id="repFocusHint">La IA buscará los comentarios que cumplan este criterio y el informe se centrará en ellos, además de las estadísticas generales.</span></label>
       <label class="field"><span class="lbl">Temas a vigilar (opcional)</span><input class="input" id="repTerms" value="${esc(reportTerms())}" placeholder="Ej.: Kanasta24, envío, precio" aria-describedby="repTermsHint"><span class="hint" id="repTermsHint">Separados por comas.</span></label>
-      <label class="field"><span class="lbl">Elaborado por</span><input class="input" id="repAuthor" value="${esc(PREF.get('repAuthor', ''))}" placeholder="Nombre de quien firma el informe"></label>
-      <label class="field"><span class="lbl">Cliente / marca</span><input class="input" id="repClient" value="${esc(PREF.get('repClient', ''))}" placeholder="Ej.: Kanasta24"></label>
-      <div class="rp-acts">${REP.model ? '<button class="btn text" id="repCancel">Cancelar</button>' : ''}<button class="btn filled needs-ai" id="repGo"><span class="ms">analytics</span>Generar informe</button></div></div>
+      <label class="field"><span class="lbl">Elaborado por</span><input class="input" id="repAuthor" value="${esc(repOpt('author'))}" placeholder="Nombre de quien firma el informe"></label>
+      <label class="field"><span class="lbl">Cliente / marca</span><input class="input" id="repClient" value="${esc(repOpt('client'))}" placeholder="Ej.: Kanasta24"></label>
+      <div class="rp-acts"><button class="btn text" id="repPrefsOpen" style="margin-right:auto"><span class="ms">tune</span>Valores por defecto</button>${REP.model ? '<button class="btn text" id="repCancel">Cancelar</button>' : ''}<button class="btn filled needs-ai" id="repGo"><span class="ms">analytics</span>Generar informe</button></div></div>
   </div>` : `<div class="empty-mini"><span class="ms">analytics</span>Todavía no hay seguimientos completados. Cuando termines alguno en <a href="#seguimiento">Seguimiento</a>, podrás elegirlo aquí para crear el informe.</div>`;
 }
-function openReport(tids, from){ PREF.set('repSel', JSON.stringify(tids)); REP.editing = false; REP.from = from || 'hist'; go('informes'); generateReport(tids); }
+function openReport(tids, from){ REP.opts = repDefaultsObj(); PREF.set('repSel', JSON.stringify(tids)); REP.editing = false; REP.from = from || 'hist'; go('informes'); generateReport(tids); }
 async function generateReport(tids){
   if(!tids.length){ toast('Elige al menos un seguimiento'); return; }
   if(!aiInstalled()){ aiNeedInstall(); $('#repOut').innerHTML = '<div class="empty-mini"><span class="ms">psychology</span>Los informes usan la IA para encontrar los comentarios del enfoque: instálala con el aviso de la parte superior.</div>'; return; }
@@ -6232,8 +6500,28 @@ const sentOf = list => { const s = { total:list.length, pos:0, neg:0, neu:0 }; l
 // Enfoque del informe: criterio con el que la IA selecciona los comentarios en los que se centra el análisis
 const FOCUS_DEFAULT = 'Kanasta24 y comentarios relacionados', FOCUS_TH = .825;
 // temas a vigilar: «Kanasta24» por defecto (se aplica una vez a lo guardado antes); si el usuario lo vacía, queda vacío
-function reportTerms(){ if(PREF.get('repTermsV2', '') !== '1'){ PREF.set('repTerms', 'Kanasta24'); PREF.set('repTermsV2', '1'); } return PREF.get('repTerms', 'Kanasta24'); }
-function reportFocus(){ return (PREF.get('repFocus', '') || FOCUS_DEFAULT).trim(); }
+// Valores por defecto de los informes: configurables por el usuario en ⋮ › Preferencias de informes.
+// Cada informe puede cambiarlos en su formulario sin modificar las preferencias.
+const REP_DEFAULTS = { focus:FOCUS_DEFAULT, terms:'Kanasta24', author:'Lic. Yaimara Salinas Goite', client:'Kanasta24' };
+const REP_DEF_KEY = { focus:'defFocus', terms:'defTerms', author:'defAuthor', client:'defClient' };
+function repDef(k){ return PREF.get(REP_DEF_KEY[k], REP_DEFAULTS[k]); }
+function repOpt(k){ const o = REP.opts; return o && o[k] != null ? o[k] : repDef(k); }
+function repDefaultsObj(){ return { focus:repDef('focus'), terms:repDef('terms'), author:repDef('author'), client:repDef('client') }; }
+function reportTerms(){ return repOpt('terms') || ''; }
+function reportFocus(){ return (repOpt('focus') || repDef('focus') || FOCUS_DEFAULT).trim(); }
+function openRepPrefs(){
+  for(const k of Object.keys(REP_DEFAULTS)) $('#rpf-' + k).value = repDef(k);
+  setStatus('#rpfStatus', ''); $('#repPrefsDlg').showModal(); $('#rpf-focus').focus();
+}
+function initRepPrefs(){
+  $('#rpfSave').onclick = () => {
+    const f = $('#rpf-focus').value.trim(); if(!f){ setStatus('#rpfStatus', 'El enfoque es obligatorio.', true); $('#rpf-focus').focus(); return; }
+    for(const k of Object.keys(REP_DEFAULTS)) PREF.set(REP_DEF_KEY[k], $('#rpf-' + k).value.trim());
+    $('#repPrefsDlg').close(); toast('Preferencias de informes guardadas');
+    if(!REP.model || REP.editing) renderReportPicker();   // el formulario muestra los nuevos valores
+  };
+  $('#rpfReset').onclick = () => { for(const k of Object.keys(REP_DEFAULTS)) $('#rpf-' + k).value = REP_DEFAULTS[k]; setStatus('#rpfStatus', 'Valores originales restaurados: pulsa Guardar para aplicarlos.'); };
+}
 const FOCUS_STOP = new Set('comentario comentarios relacionados relacionadas relacionado relacionada sobre hablan habla mencionan menciona refieren refiere todo todos todas cosas temas tema para como desde hacia entre esta este estos estas'.split(' '));
 // palabras clave del criterio (p. ej. «kanasta24» y «kanasta»): si un comentario las contiene, cumple el criterio
 function focusKeywords(q){
@@ -6617,8 +6905,8 @@ function reportDocument(m){
   const e = esc, n = fmtN;
   const UL = items => items.map(x => `<p class="li">•&nbsp;&nbsp;${x}</p>`).join('');
   const OL = items => items.map((x, i) => `<p class="li">${i + 1}.&nbsp;&nbsp;${x}</p>`).join('');
-  const brand = PREF.get('repClient', '') || (m.watch[0] && m.watch[0].term) || '';
-  const author = PREF.get('repAuthor', '');
+  const brand = repOpt('client') || (m.watch[0] && m.watch[0].term) || '';
+  const author = repOpt('author');
   const period = m.tracks.length === 1 ? fmtDay(m.first.date) : `del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`;
   const today = m.generatedAt.toLocaleDateString('es', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
   const quote = c => `<p class="q avoid"><b>${e(c.authorName || '(desconocido)')}</b> (${e(platName(c.platform))}${c.reactions ? ', ' + n(c.reactions) + ' reacciones' : ''}${c._date ? ', ' + e(fmtDay(c._date)) : ''}): «${e(c.text.slice(0, 300))}${c.text.length > 300 ? '…' : ''}»</p>`;
@@ -6777,8 +7065,11 @@ function initReports(){
     if(pr){ const k = pr.dataset.rpp, lim = k === 'all' || k === 'none' ? null : new Date(Date.now() - (+k) * 864e5).toISOString().slice(0, 10);
       $$('.rpsel').forEach(c => { const t = TR.tracks.find(x => x.id === c.value); c.checked = k === 'none' ? false : !lim || (t && t.date >= lim); c.closest('.hrow').classList.toggle('sel', c.checked); }); }
     if(e.target.id === 'repGo' || e.target.closest('#repGo')){ const ids = $$('.rpsel').filter(c => c.checked).map(c => c.value);
-      const fq = $('#repFocus').value.trim(); if(!fq){ toast('Escribe el enfoque del informe'); $('#repFocus').focus(); return; } PREF.set('repFocus', fq);
-      PREF.set('repSel', JSON.stringify(ids)); PREF.set('repTerms', $('#repTerms').value); PREF.set('repAuthor', $('#repAuthor').value.trim()); PREF.set('repClient', $('#repClient').value.trim()); REP.from = 'nav'; generateReport(ids); }
+      const fq = $('#repFocus').value.trim(); if(!fq){ toast('Escribe el enfoque del informe'); $('#repFocus').focus(); return; }
+      // valores de este informe (las preferencias no cambian)
+      REP.opts = { focus:fq, terms:$('#repTerms').value.trim(), author:$('#repAuthor').value.trim(), client:$('#repClient').value.trim() };
+      PREF.set('repSel', JSON.stringify(ids)); REP.from = 'nav'; generateReport(ids); }
+    if(e.target.closest('#repPrefsOpen')){ openRepPrefs(); return; }
     if(e.target.closest('#repCancel')){ REP.editing = false; renderReportPicker(); }
   });
   $('#repPicker').addEventListener('change', e => { if(e.target.classList.contains('rpsel')) e.target.closest('.hrow').classList.toggle('sel', e.target.checked); });
@@ -6796,14 +7087,21 @@ function initReports(){
    BÚSQUEDA POR SIGNIFICADO (IA gratuita en el navegador) Y CLASIFICACIÓN CON IA
    ===================================================================== */
 const SEM = { lib:'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1', model:'Xenova/multilingual-e5-small', pipe:null, loading:null, cache:new Map() };
-function semStatus(txt, busy, showLevel){
+function semStatus(txt, busy, showLevel, pct){
   $('#semBar').classList.remove('hidden'); $('#semBar').classList.toggle('busy', !!busy);
   $('#semIc').textContent = busy ? 'progress_activity' : 'psychology'; $('#semTxt').textContent = txt;
   $('#semLevel').classList.toggle('hidden', !showLevel);
+  const pb = $('#semPb'); pb.classList.toggle('hidden', !busy); pb.classList.toggle('indet', !!busy && pct == null); pb.firstElementChild.style.width = (pct || 0) + '%';
+  if(pct != null) pb.setAttribute('aria-valuenow', String(pct)); else pb.removeAttribute('aria-valuenow');
 }
 async function semLoad(){
   if(SEM.pipe) return SEM.pipe;
   SEM.loading ||= (async () => {
+    const filesW = {};
+    const wp = aiCall({ type:'load', kind:'sem', model:SEM.model, task:'feature-extraction', tries:await semTries() }, { onProgress:p => {
+      if(p.status === 'progress' && p.total){ filesW[p.file] = [p.loaded, p.total]; const a = Object.values(filesW).reduce((s, x) => [s[0] + x[0], s[1] + x[1]], [0, 0]); SEM.mb = a; if(SEM.onProgress) SEM.onProgress(a); else semStatus(`Cargando el modelo de búsqueda… ${Math.round(a[0] / a[1] * 100)} %`, true, false, Math.round(a[0] / a[1] * 100)); }
+    } });
+    if(wp){ await wp; SEM.pipe = 'worker'; PREF.set('aiSem', '1'); return SEM.pipe; }
     const T = await import(SEM.lib);
     T.env.allowLocalModels = false;
     const files = {};
@@ -6821,6 +7119,13 @@ async function semLoad(){
 async function semEmbed(texts, kind, onProg){
   const pipe = await semLoad(), out = new Array(texts.length), todo = [];
   texts.forEach((t, i) => { const k = kind + '|' + t; if(SEM.cache.has(k)) out[i] = SEM.cache.get(k); else todo.push(i); });
+  if(pipe === 'worker'){
+    if(todo.length){
+      const vs = await aiCall({ type:'embed', model:SEM.model, tries:await semTries(), texts:todo.map(j => kind + ': ' + texts[j].slice(0, 512)) }, { onStep:(a, b) => onProg && onProg(a, b) });
+      todo.forEach((j, n) => { out[j] = vs[n]; SEM.cache.set(kind + '|' + texts[j], vs[n]); });
+    }
+    return out;
+  }
   for(let i = 0; i < todo.length; i += 16){
     const batch = todo.slice(i, i + 16), r = await pipe(batch.map(j => kind + ': ' + texts[j].slice(0, 512)), { pooling:'mean', normalize:true });
     const arr = r.tolist();
@@ -6835,7 +7140,7 @@ async function runSemantic(q){
   semStatus('Preparando la búsqueda por significado…', true);
   try{
     const [qv] = await semEmbed([q], 'query');
-    const vs = await semEmbed(list.map(c => c.text), 'passage', (a, b) => semStatus(`Analizando comentarios por significado… ${Math.round(a / b * 100)} %`, true));
+    const vs = await semEmbed(list.map(c => c.text), 'passage', (a, b) => semStatus(`Analizando comentarios por significado… ${Math.round(a / b * 100)} %`, true, false, Math.round(a / b * 100)));
     const qn = normName(q).split(/\s+/).filter(w => w.length > 2);
     S.sem = { q, mode:'sem', scores:new Map() };
     list.forEach((c, i) => { let s = dot(qv, vs[i]); const t = normName(c.text); if(qn.length && qn.every(w => t.includes(w))) s = Math.max(s, .99); S.sem.scores.set(c.id, s); });
@@ -6858,7 +7163,7 @@ async function runAIClassify(q){
   const sys = 'Clasificas comentarios de redes sociales. Respondes SOLO con JSON válido.';
   try{
     for(let i = 0; i < take.length; i += 25){
-      semStatus(`Clasificando con ${AI_PROV[cfg.prov].name}… ${Math.round(i / take.length * 100)} %`, true);
+      semStatus(`Clasificando con ${AI_PROV[cfg.prov].name}… ${Math.round(i / take.length * 100)} %`, true, false, Math.round(i / take.length * 100));
       const batch = take.slice(i, i + 25);
       const user = `Criterio: "${q}"\nDevuelve {"ids":[…]} con los números de los comentarios que cumplen el criterio (incluye los relacionados de forma indirecta).\n\n` + batch.map((c, n) => `${n + 1}. ${c.text.replace(/\s+/g, ' ').slice(0, 300)}`).join('\n');
       const txt = await aiRequest(cfg, sys, user);
@@ -7014,7 +7319,7 @@ window.addEventListener('message', e => {
 /* ---------- Mensaje para WhatsApp: valoración personal breve sobre el informe ---------- */
 function whatsappMessage(m, tone = 'cercano'){
   const c = m.cur || m, terms = (m.terms || []).filter(Boolean), fq = m.focus ? m.focus.q : '';
-  const brand = PREF.get('repClient', '') || terms[0] || '';
+  const brand = repOpt('client') || terms[0] || '';
   const crit = fq || (terms.length ? terms.join(', ') : '');
   const day = d => new Date(d + 'T12:00:00').toLocaleDateString('es', { weekday:'long', day:'numeric', month:'long' });
   const people = arr => arr.length === 1 ? arr[0] : arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
@@ -7066,7 +7371,7 @@ function whatsappMessage(m, tone = 'cercano'){
 }
 function openWaDlg(){
   const m = REP.model; if(!m) return;
-  $('#waSign').value = PREF.get('waSign', '') || PREF.get('repAuthor', '');
+  $('#waSign').value = PREF.get('waSign', '') || repOpt('author');
   $('#waTone').value = PREF.get('waTone', 'cercano');
   REP.waAi = null; $('#waAiState').textContent = '';
   renderWa(); $('#waDlg').showModal();
@@ -7084,17 +7389,17 @@ function waCompose(m, tone, signature){
 async function waAi(){
   const m = REP.model, cfg = AI.cfg();
   if(!aiConfigured(cfg)){ openAiCfg(); toast('Configura primero un modelo de IA gratuito'); return; }
-  $('#waAi').disabled = true; $('#waAiState').textContent = 'Redactando con ' + AI_PROV[cfg.prov].name + '…';
+  const wst = $('#waAiState'); wst.dataset.busy = '1'; $('#waAi').disabled = true; aiProgressSet(wst, 'Redactando el mensaje con ' + AI_PROV[cfg.prov].name + '…', cfg.prov === 'local' ? 0 : null);
   try{
     const tone = { cercano:'cercano y profesional, en primera persona', formal:'formal, en primera persona', breve:'muy breve (2 o 3 frases), en primera persona' }[$('#waTone').value];
     const sys = 'Eres un especialista en comunicación y redes sociales. Escribes mensajes para WhatsApp en español, claros y humanos, para personas sin conocimientos técnicos. Nunca uses términos técnicos como "índice neto", "puntos", "KPI" o porcentajes complicados: habla de cantidades de comentarios. No inventes datos. Usa *negrita* de WhatsApp con moderación y como mucho 3 emojis. Responde solo con el mensaje.';
     const user = `Escribe un mensaje ${tone} para un canal de WhatsApp que acompañe un informe de comentarios en redes sociales. Incluye: cuántos comentarios se analizaron; cuántos hablan del criterio (${(m.terms || []).join(', ') || 'la marca'}) y cuántos de esos son positivos y negativos; quiénes son los que más critican y quiénes los embajadores que hablan bien; y mi opinión personal sobre lo que se dice del criterio (qué se valora, de qué se quejan, qué conviene hacer). Máximo 700 caracteres. Termina indicando que se adjunta el informe.${$('#waSign').value.trim() ? ' Firma: ' + $('#waSign').value.trim() + '.' : ''}\n\nMensaje base con los datos correctos (reescríbelo con naturalidad):\n${whatsappMessage(m, 'cercano')}`;
-    let txt = String(await aiRequest(cfg, sys, user) || '').replace(/^```\w*\n?|```$/g, '').trim();
+    let txt = String(await aiRequest(cfg, sys, user, null, cfg.prov === 'local' ? (x => aiProgressSet(wst, `Redactando el mensaje… ${Math.round(x * 100)} %`, Math.round(x * 100))) : null) || '').replace(/^```\w*\n?|```$/g, '').trim();
     try{ const j = JSON.parse(txt); txt = j.mensaje || j.message || Object.values(j).join('\n'); }catch(e){}
     if(!txt) throw new Error('La IA no devolvió texto.');
-    REP.waAi = txt; renderWa(); $('#waAiState').textContent = 'Redactado con ' + AI_PROV[cfg.prov].name + '. Revísalo antes de enviarlo.';
-  }catch(e){ $('#waAiState').textContent = 'IA: ' + e.message; }
-  finally{ $('#waAi').disabled = false; }
+    wst.dataset.busy = ''; REP.waAi = txt; renderWa(); $('#waAiState').textContent = 'Redactado con ' + AI_PROV[cfg.prov].name + '. Revísalo antes de enviarlo.';
+  }catch(e){ wst.dataset.busy = ''; $('#waAiState').textContent = 'IA: ' + e.message; }
+  finally{ wst.dataset.busy = ''; $('#waAi').disabled = false; }
 }
 function initWa(){
   $('#waTone').onchange = () => { PREF.set('waTone', $('#waTone').value); REP.waAi = null; renderWa(); };
@@ -7602,6 +7907,7 @@ function filterHelp(raw){
       if(a==='docs') go('ayuda');
       if(a==='shortcuts') go('ayuda','atajos');
       if(a==='ai') openAiCfg();
+      if(a==='rep-prefs') openRepPrefs();
       if(a==='theme-light') setTheme('light');
       if(a==='theme-dark') setTheme('dark');
       if(a==='theme-system') setTheme('system');
@@ -7779,7 +8085,7 @@ function filterHelp(raw){
   $$('dialog [data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
   initAssistant();
   initTracking();
-  initReports();
+  initReports(); initRepPrefs();
   initWa();
   initSemantic();
   $('#dTeam').onclick = () => { const c = detailCurrent; if(!c) return; const was = TEAM.has(c.authorName);
