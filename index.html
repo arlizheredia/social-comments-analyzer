@@ -2242,7 +2242,7 @@ Te ayuda a que **ningún comentario se quede sin respuesta de tu equipo**: ident
 
 1. **Inicia sesión con Facebook** (*Obtener › Conectar con Facebook*): es obligatorio para responder comentarios de Facebook e Instagram.
 2. Pulsa **Equipo** (en la pestaña *Comentarios*) y añade a las personas que responden en nombre de tu marca.
-3. Activa el filtro **Sin respuesta del equipo** o pulsa **Responder pendientes** para recorrerlos uno a uno.
+3. Activa el filtro **Sin respuesta del equipo** o pulsa **Responder pendientes** para recorrerlos uno a uno. Solo cuentan los comentarios **sobre el criterio del informe** (⋮ › *Preferencias de informes*, por defecto *Kanasta24 y comentarios relacionados*); el resto no se marca como pendiente.
 4. Elige una respuesta del catálogo (la app sugiere la más adecuada), edítala y pulsa **Publicar respuesta** o **Copiar y abrir**.
 
 ## Sesión de Facebook obligatoria {#as-sesion}
@@ -2302,10 +2302,10 @@ Se usan los comentarios **seleccionados** o, si no hay selección, **todos los f
 |---|---|
 | Copiar como tabla | Pegar directamente en Excel o Google Sheets |
 | Excel (.xlsx) | Hoja *Comentarios* con todos los campos y hoja *Resumen* |
-| Informe Word (.doc) | Informe sencillo en blanco y negro, Arial 12: resumen, indicadores, audiencia, comentarios destacados y próximos pasos |
+| Informe Word (.doc) | Informe sencillo en blanco y negro, Arial 12, **solo con los comentarios sobre el criterio del informe** (⋮ › *Preferencias de informes*): resumen, indicadores, quién comenta, comentarios destacados y próximos pasos |
 | CSV | UTF-8 compatible con Excel; conserva acentos y emojis |
 | JSON | Volver a importarlo en esta aplicación |
-| Informe HTML | Compartir o imprimir |
+| Informe HTML | El mismo informe que el Word, como página web para compartir o imprimir |
 
 Cada comentario incluye su **plataforma**.
 
@@ -4281,7 +4281,7 @@ function fbLogout(){
 
 /* ---------- filtrado / orden ---------- */
 function applyFilters(){
-  computeTeam(); renderAssistBar();
+  scheduleResFocus(); computeTeam(); renderAssistBar();
   // la búsqueda de texto es siempre con IA (al pulsar Intro); aquí solo se aplica el atajo autor:"Nombre"
   let q = '', authorQ = null; const qRaw = $('#q').value.trim().toLowerCase();
   const am0 = qRaw.match(/autor:("([^"]+)"|(\S+))/); if(am0) q = am0[0];
@@ -4870,20 +4870,40 @@ function computeTeam(){
     });
   });
   const all = TEAM.allReplies();
+  const about = resFocusTest();   // en Resultados, solo cuentan los comentarios sobre el criterio del informe
   S.comments.forEach(c => {
     const parent = c.parentId && byId.get(c.parentId);
     const cpa = paOf(c);
     const directed = !c.parentId || all || (parent && parent.isTeam) || [c.replyTo, ...(c.mentions||[])].some(n => n && (K.has(normName(n)) || (cpa && normName(n) === cpa)));
-    c.needsTeam = S.teamOn && !c.isTeam && !c.teamAnswered && !!directed;
+    c.needsTeam = S.teamOn && !c.isTeam && !c.teamAnswered && !!directed && (!about || about(c));
   });
   S.pending = S.comments.filter(c => c.needsTeam);
 }
+// Criterio del informe aplicado a los comentarios abiertos en Resultados: «sin responder» solo incluye los que hablan del tema.
+// Se calcula con la búsqueda por significado (como los informes); mientras tanto se usan las palabras clave del tema.
+function resFocusTest(){
+  const fr = S.focusRes;
+  if(fr && fr.list === S.comments) return c => fr.keys.has(fkey(c._ref?.postId, c));
+  if(S.focusBusy === S.comments && S.focusBusyQ){ const kws = focusKeywords(S.focusBusyQ); return c => kws.some(k => focusText(c).includes(k)); }
+  return null;
+}
+function scheduleResFocus(){
+  if(!S.comments || !S.comments.length || !aiInstalled()){ S.focusRes = null; return; }
+  const q = reportFocus(), list = S.comments;
+  if(S.focusRes && S.focusRes.list === list && S.focusRes.q === q) return;
+  if(S.focusBusy === list && S.focusBusyQ === q) return;
+  S.focusBusy = list; S.focusBusyQ = q;
+  focusMatch(list, q).then(keys => { if(S.comments === list){ S.focusRes = { q, list, keys, name:focusName(q) }; applyFilters(); } })
+    .catch(e => console.warn('No se pudo aplicar el criterio del informe a Resultados:', e.message))
+    .finally(() => { if(S.focusBusy === list){ S.focusBusy = null; if(!S.focusRes || S.focusRes.list !== list) applyFilters(); } });
+}
 function renderAssistBar(){
   const t = TEAM.list().length, cat = CATALOG.list().length, n = (S.pending||[]).length;
+  const fr = S.focusRes && S.focusRes.list === S.comments ? S.focusRes : null, ab = fr ? ' sobre ' + fr.name : '';
   $('#teamCount').textContent = t || ''; $('#catCount').textContent = cat || '';
   $('#noTeamCount').textContent = S.teamOn ? fmtN(n) : '';
   $('#abSub').textContent = !S.teamOn ? 'Define tu equipo para saber qué comentarios siguen sin respuesta.'
-    : n ? `${countTxt(n, 'comentario espera', 'comentarios esperan')} respuesta de tu equipo.` : 'Tu equipo ha respondido todos los comentarios. 🎉';
+    : n ? `${countTxt(n, 'comentario' + ab + ' espera', 'comentarios' + ab + ' esperan')} respuesta de tu equipo.` : `Tu equipo ha respondido todos los comentarios${ab}. 🎉`;
   $('#assistStart').disabled = S.teamOn && !n;
 }
 
@@ -6663,6 +6683,7 @@ function initRepPrefs(){
     const f = $('#rpf-focus').value.trim(); if(!f){ setStatus('#rpfStatus', 'El enfoque es obligatorio.', true); $('#rpf-focus').focus(); return; }
     for(const k of Object.keys(REP_DEFAULTS)) PREF.set(REP_DEF_KEY[k], $('#rpf-' + k).value.trim());
     $('#repPrefsDlg').close(); toast('Preferencias de informes guardadas');
+    if(S.comments && S.comments.length) applyFilters();   // «sin responder» de Resultados sigue el nuevo criterio
     if(!REP.model || REP.editing) renderReportPicker();   // el formulario muestra los nuevos valores
   };
   $('#rpfReset').onclick = () => { for(const k of Object.keys(REP_DEFAULTS)) $('#rpf-' + k).value = REP_DEFAULTS[k]; setStatus('#rpfStatus', 'Valores originales restaurados: pulsa Guardar para aplicarlos.'); };
@@ -7024,12 +7045,18 @@ function downloadWord(d, name){
     download(name + '.doc', new Blob(['﻿', word], { type:'application/msword' }));
 }
 // Informe del análisis abierto en Resultados (una publicación o varias)
-function resultsReportModel(list){
+// Informe de los comentarios abiertos en Resultados: como los de seguimiento, solo con los comentarios sobre el criterio del informe
+async function resultsReportModel(list){
   const items = finalize(list.map((c, i) => ({ ...c, id:c.id || ('r' + i), _post:c._post || S.meta.title || 'Publicación', _date:c._date || todayISO(), _postAuthor:c._postAuthor || S.meta.postAuthor || '' })), { platform:S.meta.platform, postAuthor:S.meta.postAuthor });
   const team = teamOn(items);
   const terms = reportTerms().split(',').map(x => x.trim()).filter(Boolean);
   const day = (S.meta.extractedAt || new Date().toISOString()).slice(0, 10);
-  return computeReportModel(items, team, [{ id:'resultados', name:S.meta.title || 'Análisis de comentarios', date:day, postIds:[] }], [], terms, []);
+  const fq = reportFocus();
+  let focus = null;
+  if(aiInstalled()){ toast(`Buscando los comentarios sobre ${focusName(fq)}…`); focus = { q:fq, name:focusName(fq), keys:await focusMatch(items, fq) }; }
+  const fl = focus ? focusFilter(items, focus) : items;
+  if(focus && !fl.some(c => !c.isTeam)) throw new Error(`Ningún comentario habla de ${focus.name}. Cambia el criterio en ⋮ › Preferencias de informes.`);
+  return computeReportModel(fl, team, [{ id:'resultados', name:S.meta.title || 'Análisis de comentarios', date:day, postIds:[] }], [], terms, [], focusCtx(focus, items));
 }
 // PDF A4 en blanco y negro con pie de página "Informe de comentarios · fecha — Página X de Y"
 async function reportPdf(m){
@@ -7575,14 +7602,6 @@ function summaryText(list){
     st.emojis.length?`Emojis: ${st.emojis.slice(0,10).map(([w,n])=>`${w}×${n}`).join(' ')}`:''
   ].filter((l,i,a)=>l!==''||a[i-1]!=='').join('\n');
 }
-function toHTMLReport(list){
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Informe de comentarios</title>
-<style>body{font:14px/1.5 Roboto,system-ui,sans-serif;max-width:1000px;margin:32px auto;padding:0 16px;color:#1f1f1f}h1{font-weight:400}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid #c4c7c5;padding:8px;text-align:left;vertical-align:top}th{color:#444746;font-weight:500}.r td:nth-child(3){padding-left:24px}pre{white-space:pre-wrap;background:#f0f4f9;padding:16px;border-radius:12px;font:13px/1.5 Roboto,system-ui}</style></head><body>
-<h1>Informe de comentarios</h1><pre>${esc(summaryText(list))}</pre>
-<table><thead><tr><th>#</th><th>Tipo</th><th>Autor</th><th>Fecha</th><th>Comentario</th><th>Reacc.</th><th>Sentimiento</th></tr></thead><tbody>
-${list.map(c=>`<tr class="${c.type==='reply'?'r':''}"><td>${c.idx}</td><td>${c.type==='reply'?'respuesta':'comentario'}</td><td>${c.authorUrl?`<a href="${esc(c.authorUrl)}">${esc(c.authorName)}</a>`:esc(c.authorName)}</td><td>${esc(c.createdAt?fmtDate(c.createdAt)+(c.dateApprox?' ≈':''):c.dateText)}</td><td style="white-space:pre-wrap">${esc(c.text)}</td><td>${c.reactions}</td><td>${c.sentiment}</td></tr>`).join('')}
-</tbody></table><p style="color:#444746;font-size:12px">Generado el ${esc(new Date().toLocaleString('es'))}</p></body></html>`;
-}
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar '+src)); document.head.appendChild(s); }); }
 async function exportXLSX(list){
   toast('Generando Excel…');
@@ -7619,8 +7638,7 @@ function doExport(kind){
       attachments:c.attachments, mentions:c.mentions, hashtags:c.hashtags, emojis:c.emojis, sentiment:c.sentiment, sentimentScore:c.sentimentScore,
       edited:c.edited, hidden:c.hidden, permalink:c.permalink, source:c.source, platform:c.platform }))},null,2), 'application/json');
   if(kind==='txt') download(`comentarios-${st}.txt`, summaryText(list)+'\n\n'+'─'.repeat(60)+'\n\n'+toText(list), 'text/plain;charset=utf-8');
-  if(kind==='html') download(`informe-comentarios-${st}.html`, toHTMLReport(list), 'text/html;charset=utf-8');
-  if(kind==='word'){ downloadWord(reportDocument(resultsReportModel(list)), `informe-comentarios-${st}`); }
+  if(kind==='html' || kind==='word') return resultsReportModel(list).then(m => { const d = reportDocument(m); if(kind==='word') downloadWord(d, `informe-comentarios-${st}`); else download(`informe-comentarios-${st}.html`, d.html, 'text/html;charset=utf-8'); }).catch(e => toast('No se pudo crear el informe: ' + e.message));
   if(kind==='xlsx') exportXLSX(list);
 }
 function doCopy(kind){

@@ -362,6 +362,15 @@ const TR = () => w.eval('TR');
     const normName = w.eval('normName');
     w.semEmbed = async (texts, kind) => texts.map(t => { const n = normName(t); let v = VOC.map(k => n.includes(k) ? 1 : 0); if(/kanasta/.test(n)) v[0] = v[1] = 1; const s = Math.hypot(...v) || 1; return v.map(x => x / s); });
     w.localStorage.setItem('fbca:aiLocal', '1'); w.localStorage.setItem('fbca:aiSem', '1'); w.renderAiState();
+    // «Sin responder» y el informe de Resultados siguen el criterio del informe (Kanasta24)
+    w.applyFilters(); await until(() => w.eval('!!(S.focusRes && S.focusRes.list === S.comments)'), 8000).catch(() => {});
+    const pendT = w.eval('S.pending.map(c => c.text)');
+    check('Resultados: «sin responder» solo incluye comentarios sobre el criterio del informe', w.eval('S.teamOn') && pendT.length > 0 && pendT.every(x => /kanasta/i.test(x)) && w.eval('S.comments.some(c => !c.isTeam && !c.parentId && !/kanasta/i.test(c.text))'), JSON.stringify({ equipo:w.eval('S.teamOn'), pendientes:pendT }));
+    check('La barra de respuestas nombra el tema', /sobre Kanasta24/.test(d.getElementById('abSub').textContent), d.getElementById('abSub').textContent);
+    { const files = []; const bk = w.download; w.download = (name, content) => files.push({ name, content });
+      await w.doExport('word'); await w.doExport('html'); w.download = bk;
+      const html = (files.find(f => /\.html$/.test(f.name)) || {}).content || '';
+      check('Resultados: el informe Word y HTML solo trata los comentarios sobre el criterio', files.some(f => /\.doc$/.test(f.name)) && /Informe de comentarios sobre Kanasta24/.test(html) && /Ana López/.test(html) && !/Precio por favor/.test(html) && !/enfoque/i.test(html), files.map(f => f.name).join(', ')); }
     check('La búsqueda es siempre con IA: no existe la opción «Términos»', ![...d.getElementById('qMode').options].some(o => o.value === 'terms') && d.getElementById('qMode').value === 'sem');
     d.getElementById('q').value = 'servicio'; w.renderTable(); await wait(50);
     check('Escribir sin pulsar Intro no filtra por palabras', w.eval('S.filtered.length') === w.eval('S.comments.length'));
