@@ -1154,6 +1154,7 @@ table.rtable td.num,table.rtable th.num{text-align:right;font-variant-numeric:ta
 .qlist{display:flex;flex-direction:column;gap:8px}
 .qitem{padding:10px 12px;border-radius:12px;background:var(--surface-container);font-size:13px;line-height:19px}
 .qitem b{font-weight:600}
+.qitem.op-negativo{box-shadow:inset 3px 0 0 var(--viz-neg)} .qitem.op-positivo{box-shadow:inset 3px 0 0 var(--viz-pos)}
 .pkpi + .pkpi{margin-top:18px;padding-top:16px;border-top:1px solid var(--outline-variant)}
 .pkpi .viz-h4{color:var(--on-surface);font-size:14px}
 .purl{display:block;font-size:12px;line-height:16px;color:var(--primary);text-decoration:none;word-break:break-all;margin-top:2px}
@@ -6878,15 +6879,23 @@ async function buildReport(tids, terms, focusQ, onProg){
   const m = computeReportModel(fl, team, tracks, byDate, terms, tids, focusCtx(focus, list));
   m.rivals = detectRivals(fl);
   // Seguimiento principal = el más reciente; se compara con el anterior
-  const snap = async t => { const gg = await gatherComments([t.id]); if(!gg.comments.length) return null; const l = finalize(gg.comments.map((c, i) => ({ ...c, id:c.id || ('s' + i) })), { platform:gg.platform }); return computeReportModel(focus ? focusFilter(l, focus) : l, teamOn(l), [t], [], terms, [t.id], focusCtx(focus, l)); };
-  m.cur = await snap(last) || m;
+  const perTrack = [];
+  for(const t of tracks){
+    const gg = await gatherComments([t.id]); if(!gg.comments.length) continue;
+    const l = finalize(gg.comments.map((c, i) => ({ ...c, id:c.id || ('s' + i) })), { platform:gg.platform });
+    perTrack.push({ t, all:l, list:focus ? focusFilter(l, focus) : l });
+  }
+  const snap = t => { const x = perTrack.find(y => y.t === t); return x ? computeReportModel(x.list, teamOn(x.all), [t], [], terms, [t.id], focusCtx(focus, x.all)) : null; };
+  m.cur = snap(last) || m;
   m.prevT = tracks.length > 1 ? tracks[tracks.length - 2] : null;
-  m.prev = m.prevT ? await snap(m.prevT) : null;
+  m.prev = m.prevT ? snap(m.prevT) : null;
+  // comparar dos seguimientos solo tiene sentido si comparten alguna publicación (si no, se mezclan publicaciones distintas)
+  if(m.prev){ const ids = new Set(m.cur.list.map(c => c._ref?.postId)); if(!m.prev.list.some(c => ids.has(c._ref?.postId))){ m.prev = null; m.prevT = null; } }
   m.curNew = byDate.length ? byDate[byDate.length - 1].nw : m.cur.list.length;
   m.prevNew = byDate.length > 1 ? byDate[byDate.length - 2].nw : null;
   m.cmp = compareRows(m);
   m.postCmp = comparePosts(m);
-  m.postKpi = postKpis(m, terms);
+  m.postKpi = postKpis(m, terms, perTrack);
   const sf = m.summary.fl || 0;
   m.summary = [...m.summary.slice(0, sf), ...compareSummary(m), ...m.summary.slice(sf)];
   return m;
@@ -6920,17 +6929,20 @@ function postUrl(id, c){
   return (tp && tp.url) || (c && c._postUrl) || (S.meta && S.meta.url) || '';
 }
 const shortUrl = u => String(u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
-// Indicadores de cada publicación del seguimiento más reciente frente a la misma publicación en el anterior
-function postKpis(m, terms){
-  const cur = m.cur || m, prev = m.prev, pid = c => c._ref?.postId || 'x';
-  const ids = [...new Set(cur.list.map(pid))];
+const trackRef = t => t ? `«${t.name}» (${fmtDay(t.date)})` : '';
+// Indicadores de cada publicación del informe: en el seguimiento más reciente en que aparece, frente al anterior en que también aparece
+function postKpis(m, terms, perTrack){
+  const pid = c => c._ref?.postId || 'x', team = (m.cur || m).team;
+  const tl = (perTrack && perTrack.length ? perTrack : [{ t:m.last, list:m.list }]).filter(x => x.list.length);
+  const ids = [...new Set(tl.flatMap(x => x.list.map(pid)))];
   return ids.map(id => {
-    const cl = cur.list.filter(c => pid(c) === id), pl = prev ? prev.list.filter(c => pid(c) === id) : [];
-    const mk = l => computeReportModel(l, cur.team, cur.tracks, [], terms || [], [], null);
-    const a = mk(cl), b = pl.length ? mk(pl) : null;
+    const occ = tl.filter(x => x.list.some(c => pid(c) === id)), A = occ[occ.length - 1], B = occ.length > 1 ? occ[occ.length - 2] : null;
+    const cl = A.list.filter(c => pid(c) === id), pl = B ? B.list.filter(c => pid(c) === id) : [];
+    const mk = (l, t) => computeReportModel(l, team, [t], [], terms || [], [], null);
+    const a = mk(cl, A.t), b = B ? mk(pl, B.t) : null;
     const pk = new Set(pl.map(c => fkey(id, c)));
-    const p0 = cur.posts.find(x => x.id === id) || {};
-    return { id, label:p0.label || cl[0]?._post || 'Publicación', url:p0.url || '', platform:p0.platform || cl[0]?.platform, hasPrev:!!b, isNew:!!prev && !b, medRT:a.medRT,
+    const p0 = m.posts.find(x => x.id === id) || {};
+    return { id, label:p0.label || cl[0]?._post || 'Publicación', url:p0.url || postUrl(id, cl[0]), platform:p0.platform || cl[0]?.platform, tA:A.t, tB:B ? B.t : null, hasPrev:!!b, medRT:a.medRT,
       rows:compareRows({ cur:a, prev:b, curNew:b ? cl.filter(c => !pk.has(fkey(id, c))).length : cl.length, prevNew:null }) };
   }).sort((x, y) => (y.rows[0].a || 0) - (x.rows[0].a || 0));
 }
@@ -6947,39 +6959,40 @@ function compareSummary(m){
   return out;
 }
 // Cálculo del informe a partir de una lista de comentarios ya finalizada (seguimientos o los datos de Resultados)
-// Frases que más se repiten: 2 a 4 palabras seguidas dentro de una misma frase, sin empezar ni terminar en palabra vacía,
-// sin nombres de personas (autor, mencionados) ni la propia marca. Si casi nada se repite, frases destacadas de los comentarios.
-function reportPhrases(list, kws, max = 8){
-  const cnt = new Map(), shown = new Map(), isBrand = w => w.length >= 4 && kws.some(k => w.includes(k) || k.includes(w));
-  const clean = c => { let raw = c.text || ''; [c.replyTo, ...(c.mentions || []), c.authorName].filter(Boolean).forEach(n => { raw = raw.split(n).join(' | '); }); return raw; };
-  list.forEach(c => {
-    const seen = new Set();
-    clean(c).split(/[.,;:!?¿¡()\n|"«»…]+/).forEach(seg => {
-      const toks = tokenize(seg), nt = toks.map(w => norm(w));
-      for(let n = 2; n <= 4; n++) for(let i = 0; i + n <= toks.length; i++){
-        const sl = nt.slice(i, i + n);
-        if(STOP.has(sl[0]) || STOP.has(sl[n - 1]) || sl[0].length < 3 || sl[n - 1].length < 3) continue;
-        if(sl.some(w => /^\d+$/.test(w) || isBrand(w))) continue;
-        const k = sl.join(' '); if(seen.has(k)) continue; seen.add(k);
-        cnt.set(k, (cnt.get(k) || 0) + 1); if(!shown.has(k)) shown.set(k, toks.slice(i, i + n).join(' '));
-      }
+// Opiniones que más se repiten, en oraciones completas: oraciones de los comentarios del público (6 a 40 palabras) que expresan
+// una opinión (tono positivo o negativo, recomendar no comprar, preferir otra opción); las parecidas y del mismo tono se agrupan.
+function reportOpinions(list, max = 6){
+  const jacc = (a, b) => { let i = 0; a.forEach(x => { if(b.has(x)) i++; }); return i / Math.max(1, a.size + b.size - i); };
+  const pick = minW => {
+    const cands = [];
+    list.forEach(c => {
+      if(c.isTeam || !c.text) return;
+      let raw = c.text; [c.replyTo, ...(c.mentions || []), c.authorName].filter(Boolean).forEach(n => { raw = raw.split(n).join(' '); });
+      raw.split(/(?<=[.!?…])\s+|\n+/).forEach(s => {
+        s = s.replace(/\s+/g, ' ').replace(/^[\s,;:·\-–—]+/, '').trim();
+        const w = s.split(' ').length; if(w < minW || w > 40) return;
+        const sc = sentiment(s).score, t = normL(s);
+        if(!(sc !== 0 || c.brandStance || AVOID_RE.test(t) || PREFER_RE.test(t))) return;   // solo opiniones
+        const toks = new Set(tokenize(s).map(norm).filter(x => x.length > 2 && !STOP.has(x)));
+        if(toks.size < 3) return;
+        const tone = c.sentimentManual || c.brandStance ? c.sentiment : sc > 0 ? 'positivo' : sc < 0 ? 'negativo' : c.sentiment;
+        cands.push({ t:s.charAt(0).toUpperCase() + s.slice(1), c, toks, s:tone });
+      });
     });
-  });
-  const out = [];
-  [...cnt.entries()].filter(([, v]) => v >= 2).sort((a, b) => b[1] - a[1] || b[0].split(' ').length - a[0].split(' ').length).forEach(([k, v]) => {
-    if(out.length >= max || out.some(o => o.k.includes(k) || k.includes(o.k))) return;   // una sola variante por frase
-    out.push({ k, v, t:shown.get(k) });
-  });
-  // pocas frases repetidas: frases destacadas (la primera frase con sentido de los comentarios con más reacciones)
-  const quotes = [];
-  if(out.length < 3){
-    [...list].filter(c => !c.isTeam && c.text).sort((a, b) => (b.reactions || 0) - (a.reactions || 0) || (b.text || '').length - (a.text || '').length).forEach(c => {
-      if(quotes.length >= 5) return;
-      const seg = clean(c).split(/[.;!?¡¿\n|]+/).map(s => s.replace(/\s+/g, ' ').trim()).find(s => { const w = s.split(' ').length; return w >= 3 && w <= 14; });
-      if(seg && !quotes.some(q => q.t === seg)) quotes.push({ t:seg, a:c.authorName || '' });
-    });
+    const groups = [];
+    cands.forEach(x => { const g = groups.find(g => g.s === x.s && jacc(g.items[0].toks, x.toks) >= .3); if(g){ g.items.push(x); g.cs.add(x.c); } else groups.push({ items:[x], cs:new Set([x.c]), s:x.s }); });
+    groups.forEach(g => { g.rep = [...g.items].sort((a, b) => (b.c.reactions || 0) - (a.c.reactions || 0) || Math.abs(a.t.split(' ').length - 16) - Math.abs(b.t.split(' ').length - 16))[0]; });
+    return groups.sort((a, b) => b.cs.size - a.cs.size || (b.rep.c.reactions || 0) - (a.rep.c.reactions || 0));
+  };
+  let groups = pick(6); if(groups.length < 3) groups = pick(4);
+  // se alternan críticas y elogios para dar una visión equilibrada
+  const neg = groups.filter(g => g.s === 'negativo'), pos = groups.filter(g => g.s === 'positivo'), neu = groups.filter(g => g.s === 'neutral'), out = [];
+  while(out.length < max && (neg.length || pos.length || neu.length)){
+    if(neg.length) out.push(neg.shift());
+    if(out.length < max && pos.length) out.push(pos.shift());
+    if(!neg.length && !pos.length && neu.length && out.length < max) out.push(neu.shift());
   }
-  return { list:out, quotes };
+  return out.map(g => ({ t:g.rep.t, n:g.cs.size, s:g.s, a:g.rep.c.authorName || '' }));
 }
 function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const first = tracks[0], last = tracks[tracks.length - 1];
@@ -6988,7 +7001,7 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const fkw = focus ? focusKeywords(focus.q) : [];
   const notTheme = ([w]) => { const n = normName(w).replace(/k/g, 'c').replace(/z/g, 's'); return !fkw.some(k => n.includes(k) || k.includes(n)); };
   if(focus) st.words = st.words.filter(notTheme);
-  const phrases = reportPhrases(list, fkw.map(k => k.replace(/k/g, 'c')).concat(fkw));
+  const opinions = reportOpinions(list);
   const nonTeam = list.filter(c => !c.isTeam);
   const answered = nonTeam.filter(c => c.teamAnswered && (!c.parentId || c.needsTeam === false)).length, pending = nonTeam.filter(c => c.needsTeam).length;
   // Tiempo de primera respuesta del equipo (solo con fechas exactas)
@@ -7023,7 +7036,7 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   const negShare = d => d.total ? Math.round(d.neg / d.total * 100) : 0;
   const m = { tids, tracks, first, last, list, st, s, nss:nssOf(s), team, answered, pending, respRate:(answered + pending) ? Math.round(answered / (answered + pending) * 100) : null, medRT, rtN:rts.length,
     byDate, posts, platRows, topAuthors, ambassadors, detractors, influencers, recurring, authorsN:authors.length, watch, topPos, topNeg, openQ, openNeg,
-    split:teamSplit(list, nonTeam), phrases, negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? { ...focus, n:list.length, pct:focus.total ? Math.round(list.length / focus.total * 100) : 0 } : null };
+    split:teamSplit(list, nonTeam), opinions, negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? { ...focus, n:list.length, pct:focus.total ? Math.round(list.length / focus.total * 100) : 0 } : null };
   // por defecto el principal es el propio conjunto (sin seguimiento anterior); buildReport lo sustituye por el más reciente
   m.cur = m; m.prev = null; m.prevT = null; m.curNew = list.length; m.prevNew = null; m.cmp = compareRows(m); m.postCmp = [];
   m.alerts = reportAlerts(m); m.recs = reportRecs(m); m.summary = reportSummary(m);
@@ -7059,8 +7072,7 @@ function reportRecs(m){
   if(fans.length) r.push(`Agradecer a quienes hablan bien${de} (${names(fans)}); sus opiniones pueden servir como testimonio.`);
   const best = [...m.posts].filter(p => p.total >= 3).sort((a, b) => b.nss - a.nss)[0];
   if(m.posts.length > 1 && best && best.nss > 20) r.push(`Repetir lo que funcionó en “${best.label}”, la publicación con mejores opiniones (${countTxt(best.s.pos, 'comentario positivo', 'comentarios positivos')} y ${countTxt(best.s.neg, 'negativo', 'negativos')}).`);
-  const topW = (m.phrases ? m.phrases.list : []).slice(0, 3).map(p => '«' + p.t + '»');
-  if(topW.length) r.push(`Tener en cuenta lo que más se repite (${topW.join(', ')}) en las próximas publicaciones y respuestas.`);
+
   if(m.medRT != null && m.medRT > 12) r.push(`Responder más rápido: ahora la primera respuesta tarda unas ${fmtDec(m.medRT)} horas; lo ideal es menos de 2 a 4 horas.`);
   return r;
 }
@@ -7074,7 +7086,7 @@ function reportSummary(m){
   else out.push(`Los escribieron ${countTxt(m.authorsN, 'persona', 'personas')} en ${countTxt(m.posts.length, 'publicación', 'publicaciones')} (${span}).`);
   out.push(`${m.nss >= 20 ? 'La mayoría opina bien' : m.nss <= -10 ? 'Predominan las críticas' : 'Las opiniones están divididas'}${f ? ' sobre ' + f.name : ''}: ${countTxt(m.s.pos, 'comentario positivo', 'comentarios positivos')}, ${countTxt(m.s.neg, 'negativo', 'negativos')} y ${countTxt(m.s.neu, 'neutral', 'neutrales')}.`);
   if(m.detractors.length || m.ambassadors.length) out.push([m.ambassadors.length ? `Quienes más hablan bien${de}: ${names(m.ambassadors)}` : '', m.detractors.length ? `quienes más lo critican: ${names(m.detractors)}` : ''].filter(Boolean).join('; ').replace(/^q/, 'Q') + '.');
-  if(f && m.phrases && m.phrases.list.length) out.push(`Al hablar de ${f.name} se repite sobre todo: ${m.phrases.list.slice(0, 4).map(p => '«' + p.t + '»').join(', ')}.`);
+  if(f && m.opinions && m.opinions.length && m.opinions[0].n > 1) out.push(`La opinión que más se repite sobre ${f.name} (${countTxt(m.opinions[0].n, 'comentario', 'comentarios')}): «${m.opinions[0].t}»`);
   if(m.byDate.length > 1){ const d = m.byDate[m.byDate.length - 1].nw; out.push(`En el último seguimiento aparecieron ${countTxt(d, 'comentario nuevo', 'comentarios nuevos')}${ab}; los negativos pasaron de ${m.negFirst} a ${m.negLast} de cada 100.`); }
   if(m.team && m.answered + m.pending) out.push(`El equipo respondió ${fmtN(m.answered)} de los ${countTxt(m.answered + m.pending, 'comentario que pedía', 'comentarios que pedían')} respuesta${m.pending ? `; quedan ${countTxt(m.pending, 'sin responder', 'sin responder')}` : ''}${m.medRT != null ? ` y suele tardar unas ${fmtDec(m.medRT)} horas en responder` : ''}.`);
   if(m.posts.length > 1) out.push(`Donde más se comenta${ab} es en “${m.posts[0].label}” (${countTxt(m.posts[0].total, 'comentario', 'comentarios')}).`);
@@ -7097,11 +7109,11 @@ function splitSection(m, ab){
         <p class="small muted" style="margin:6px 0 0">Tono de sus respuestas: ${tone(T.s)}</p></div>
     </div></section>`;
 }
-// «Qué se dice»: frases que se repiten (con barras) y, si hay pocas, frases destacadas de los comentarios
-function phrasesHtml(ph){
-  if(!ph || (!ph.list.length && !ph.quotes.length)) return '<p class="small muted">Sin frases destacadas.</p>';
-  return (ph.list.length ? `<p class="sub" style="margin:0">Frases que más se repiten en los comentarios.</p>${rankedBars(ph.list.map(p => ({ l:'«' + p.t + '»', v:p.v })), 'rphrase', { unit:'comentarios' })}` : '')
-    + (ph.quotes.length ? `<p class="sub" style="margin:${ph.list.length ? '12px' : '0'} 0 0">Frases destacadas:</p><div class="qlist">${ph.quotes.map(q => `<div class="qitem">«${esc(q.t)}»${q.a ? ` <span class="small muted">— ${esc(q.a)}</span>` : ''}</div>`).join('')}</div>` : '');
+// «Qué se dice»: opiniones en oraciones completas, con su tono, autor y cuántos comentarios dicen algo parecido
+const opMeta = o => `${cap(o.s)}${o.a ? ' · ' + o.a : ''}${o.n > 1 ? ' · ' + (o.n === 2 ? 'otro comentario dice algo parecido' : `${o.n - 1} comentarios más dicen algo parecido`) : ''}`;
+function opinionsHtml(ops){
+  if(!ops || !ops.length) return '<p class="small muted">No hay opiniones destacadas.</p>';
+  return `<div class="qlist">${ops.map(o => `<div class="qitem op-${o.s}">«${esc(o.t)}»<div class="qm">${esc(opMeta(o))}</div></div>`).join('')}</div>`;
 }
 function renderReport(){
   const m = REP.model; if(!m) return;
@@ -7127,8 +7139,9 @@ function renderReport(){
   $('#repOut').innerHTML = `<div class="report" id="reportDoc">
     <div class="rep-cover"><h2>Informe de comentarios${ab}</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · ${esc(m.generatedAt.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' }))}</p></div>
     <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
-    <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores del seguimiento más reciente, por publicación</h3><p class="sub">«${esc(m.last.name)}» (${esc(fmtDay(m.last.date))})${m.prev ? ` comparado con «${esc(m.prevT.name)}» (${esc(fmtDay(m.prevT.date))})` : ''}${f ? '. Solo comentarios' + ab : ''}.</p>
-      ${(m.postKpi || []).map(pk => `<div class="pkpi"><h4 class="viz-h4"><i class="pdot ${platDot(pk.platform)}"></i> <b>${esc(pk.label)}</b>${pk.isNew ? ' <span class="qteam">Nueva</span>' : ''}${pk.url ? `<a class="purl" href="${esc(pk.url)}" target="_blank" rel="noopener">${esc(shortUrl(pk.url))}</a>` : ''}</h4>
+    <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores por publicación</h3><p class="sub">Cada publicación en su seguimiento más reciente, comparada con el anterior en que aparece${f ? '. Solo comentarios' + ab : ''}.</p>
+      ${(m.postKpi || []).map(pk => `<div class="pkpi"><h4 class="viz-h4"><i class="pdot ${platDot(pk.platform)}"></i> <b>${esc(pk.label)}</b>${pk.url ? `<a class="purl" href="${esc(pk.url)}" target="_blank" rel="noopener">${esc(shortUrl(pk.url))}</a>` : ''}</h4>
+        <p class="small muted" style="margin:-4px 0 8px">${esc(trackRef(pk.tA))}${pk.tB ? ' comparado con ' + esc(trackRef(pk.tB)) : ' · sin un seguimiento anterior de esta publicación'}</p>
         <div class="kpis">${pk.rows.map(r => kpi(r.k, r.A, !pk.hasPrev ? '' : r.k === 'Comentarios nuevos' ? 'desde el seguimiento anterior' : r.D === '—' ? 'sin dato anterior' : r.D + ' frente al anterior', r.k === 'Comentarios nuevos' ? '' : r.tone)).join('')}${pk.medRT != null ? kpi('Tiempo de primera respuesta', fmtDec(pk.medRT) + ' h', 'valor típico') : ''}</div></div>`).join('')}
     </section>
     ${m.prev ? `<section class="card rep-sec"><h3><span class="ms">compare_arrows</span>Comparativa con el seguimiento anterior</h3>
@@ -7142,7 +7155,7 @@ function renderReport(){
     </section>
     <div class="rep-grid">
       <section class="card rep-sec viz-card"><h3><span class="ms">groups</span>Quién más comenta${ab}</h3>${rankedBars(m.topAuthors.slice(0, 8).map(a => ({ l:a.name + (a.team ? ' (equipo)' : ''), v:a.n })), 'rauthor', { unit:'comentarios' })}</section>
-      <section class="card rep-sec viz-card"><h3><span class="ms">format_quote</span>${f ? 'Qué se dice' + ab : 'Qué se dice'}</h3>${phrasesHtml(m.phrases)}</section>
+      <section class="card rep-sec viz-card"><h3><span class="ms">format_quote</span>${f ? 'Qué se dice' + ab : 'Qué se dice'}</h3>${opinionsHtml(m.opinions)}</section>
     </div>
     <div class="rep-grid">
       <section class="card rep-sec"><h3><span class="ms">favorite</span>Quiénes hablan bien${de}</h3>${people(m.ambassadors, 'pos', 'Positivos', 'Nadie destaca por hablar bien.')}</section>
@@ -7171,9 +7184,8 @@ function reportText(m){
   const L = [], H = t => { L.push('', t.toUpperCase(), '-'.repeat(Math.min(60, t.length))); };
   L.push('INFORME DE COMENTARIOS' + ab.toUpperCase(), m.tracks.length === 1 ? `${m.first.name} · ${fmtDay(m.first.date)}` : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`, m.generatedAt.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' }));
   H('Resumen'); m.summary.forEach(x => L.push('• ' + x));
-  H('Seguimiento más reciente, por publicación' + (m.prev ? ' (frente al anterior)' : ''));
-  L.push(`${m.last.name} (${fmtDay(m.last.date)})` + (m.prev ? ` comparado con ${m.prevT.name} (${fmtDay(m.prevT.date)})` : ''));
-  (m.postKpi || []).forEach(pk => { L.push('', `${pk.label} (${platName(pk.platform)})${pk.url ? ' · ' + pk.url : ''}${pk.isNew ? ' · nueva' : ''}`);
+  H('Indicadores por publicación');
+  (m.postKpi || []).forEach(pk => { L.push('', `${pk.label} (${platName(pk.platform)})${pk.url ? ' · ' + pk.url : ''}`, `${trackRef(pk.tA)}${pk.tB ? ' comparado con ' + trackRef(pk.tB) : ' · sin un seguimiento anterior de esta publicación'}`);
     pk.rows.forEach(r => L.push(`  ${r.k}: ${r.A}` + (pk.hasPrev ? ` (antes ${r.B}; ${r.D})` : ''))); });
   if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, ${countTxt(d.pos, 'positivo', 'positivos')} y ${countTxt(d.neg, 'negativo', 'negativos')}`)); }
   H('Por publicación'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)})${p.url ? ' · ' + p.url : ''}: ${fmtN(p.total)} comentarios, ${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')}${m.team ? `, ${fmtN(p.pending)} sin responder` : ''}`));
@@ -7184,9 +7196,7 @@ function reportText(m){
     L.push(`Público: ${countTxt(P.n, 'comentario', 'comentarios')} de ${countTxt(P.people, 'persona', 'personas')} (${countTxt(P.s.pos, 'positivo', 'positivos')}, ${countTxt(P.s.neu, 'neutral', 'neutrales')} y ${countTxt(P.s.neg, 'negativo', 'negativos')})`,
       `Equipo: ${countTxt(T.n, 'respuesta', 'respuestas')} de ${countTxt(T.members.length, 'persona', 'personas')}; ${fmtN(m.answered)} comentarios respondidos, ${fmtN(m.pending)} sin responder${m.respRate != null ? ', tasa de respuesta ' + m.respRate + ' %' : ''}${m.medRT != null ? ', primera respuesta en ~' + fmtDec(m.medRT) + ' h' : ''}`);
     if(T.members.length) L.push('Quién respondió: ' + T.members.slice(0, 5).map(x => `${x.name} (${x.n})`).join(', ')); }
-  if(m.phrases && (m.phrases.list.length || m.phrases.quotes.length)){ H('Qué se dice' + ab);
-    m.phrases.list.forEach(p => L.push(`• «${p.t}» (${countTxt(p.v, 'comentario', 'comentarios')})`));
-    m.phrases.quotes.forEach(q => L.push(`• «${q.t}»${q.a ? ' — ' + q.a : ''}`)); }
+  if(m.opinions && m.opinions.length){ H('Qué se dice' + ab); m.opinions.forEach(o => L.push(`• «${o.t}» (${opMeta(o)})`)); }
   if((m.rivals || []).length){ H('Posibles referencias a la competencia'); m.rivals.forEach(r => L.push(`• ${r.name}: ${countTxt(r.n, 'comentario', 'comentarios')} (${countTxt(r.neg, 'negativo', 'negativos')})${r.sample ? ' · «' + r.sample.text.slice(0, 140) + '» — ' + (r.sample.authorName || '') : ''}`)); }
   if(m.watch.length){ H('Otras marcas y temas'); m.watch.forEach(w => L.push(`${w.term}: ${fmtN(w.n)} menciones, ${countTxt(w.s.pos, 'positivo', 'positivos')} y ${countTxt(w.s.neg, 'negativo', 'negativos')}`)); }
   H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}${c.isTeam ? ' (equipo)' : ''}: ${c.text.slice(0, 240)}`));
@@ -7235,10 +7245,11 @@ function reportDocument(m){
   </div>
   <h2>Resumen</h2>
   ${m.summary.map(x => `<p>${e(x)}</p>`).join('')}
-  <h2>Indicadores del seguimiento más reciente, por publicación</h2>
-  <p><b>Seguimiento principal:</b> ${e(m.last.name)} (${e(fmtDay(m.last.date))})${m.prev ? ` · <b>comparado con:</b> ${e(m.prevT.name)} (${e(fmtDay(m.prevT.date))})` : ''}</p>
-  ${(m.postKpi || []).map(pk => `<div class="avoid"><h3>${e(pk.label)} (${e(platName(pk.platform))})${pk.isNew ? ' · nueva' : ''}</h3>${pk.url ? `<p><a class="url" href="${e(pk.url)}">${e(pk.url)}</a></p>` : ''}
-  <table><thead><tr><th>Indicador</th><th class="n">${e(fmtDay(m.last.date))}</th>${pk.hasPrev ? `<th class="n">${e(fmtDay(m.prevT.date))}</th><th class="n">Variación</th>` : ''}</tr></thead><tbody>
+  <h2>Indicadores por publicación</h2>
+  <p>Cada publicación en su seguimiento más reciente, comparada con el anterior en que aparece.</p>
+  ${(m.postKpi || []).map(pk => `<div class="avoid"><h3>${e(pk.label)} (${e(platName(pk.platform))})</h3>${pk.url ? `<p><a class="url" href="${e(pk.url)}">${e(pk.url)}</a></p>` : ''}
+  <p class="small">${e(trackRef(pk.tA))}${pk.tB ? ' comparado con ' + e(trackRef(pk.tB)) : ' · sin un seguimiento anterior de esta publicación'}</p>
+  <table><thead><tr><th>Indicador</th><th class="n">${e(fmtDay(pk.tA.date))}</th>${pk.hasPrev ? `<th class="n">${e(fmtDay(pk.tB.date))}</th><th class="n">Variación</th>` : ''}</tr></thead><tbody>
   ${pk.rows.map(r => `<tr><td>${e(r.k)}</td><td class="n"><b>${e(r.A)}</b></td>${pk.hasPrev ? `<td class="n">${e(r.B)}</td><td class="n">${e(r.D)}</td>` : ''}</tr>`).join('')}
   </tbody></table></div>`).join('')}
   `;
@@ -7251,7 +7262,7 @@ function reportDocument(m){
   <div class="avoid"><h3>Quién más comenta</h3>${OL(m.topAuthors.slice(0, 5).map(a => `${e(a.name)}${a.team ? ' (equipo)' : ''}: ${countTxt(a.n, 'comentario', 'comentarios')}`))}</div>
   ${m.ambassadors.length ? `<div class="avoid"><h3>Quiénes hablan bien${de}</h3>${UL(m.ambassadors.slice(0, 5).map(a => `${e(a.name)}${a.team ? ' (equipo)' : ''} (${countTxt(a.pos, 'positivo', 'positivos')})`))}</div>` : ''}
   ${m.detractors.length ? `<div class="avoid"><h3>Quiénes más critican</h3>${UL(m.detractors.slice(0, 5).map(a => `${e(a.name)} (${countTxt(a.neg, 'negativo', 'negativos')})`))}</div>` : ''}
-  ${m.phrases && (m.phrases.list.length || m.phrases.quotes.length) ? `<div class="avoid"><h2>Qué se dice${ab}</h2>${UL([...m.phrases.list.map(p => `«${e(p.t)}» (${countTxt(p.v, 'comentario', 'comentarios')})`), ...m.phrases.quotes.map(q => `«${e(q.t)}»${q.a ? ' — ' + e(q.a) : ''}`)])}</div>` : ''}`;
+  ${m.opinions && m.opinions.length ? `<div class="avoid"><h2>Qué se dice${ab}</h2>${UL(m.opinions.map(o => `«${e(o.t)}» (${e(opMeta(o))})`))}</div>` : ''}`;
   if(m.team && m.split){ const P = m.split.pub, T = m.split.team;
     b += `<div class="avoid"><h2>Equipo y público</h2><table><thead><tr><th></th><th class="n">Comentarios</th><th class="n">Personas</th><th class="n">Positivos</th><th class="n">Neutrales</th><th class="n">Negativos</th></tr></thead><tbody>
       <tr><td>Público</td><td class="n">${n(P.n)}</td><td class="n">${n(P.people)}</td><td class="n">${n(P.s.pos)}</td><td class="n">${n(P.s.neu)}</td><td class="n">${n(P.s.neg)}</td></tr>
@@ -7295,7 +7306,7 @@ async function resultsReportModel(list){
   if(focus && !fl.some(c => !c.isTeam)) throw new Error(`Ningún comentario habla de ${focus.name}. Cambia el criterio en ⋮ › Preferencias de informes.`);
   const m = computeReportModel(fl, team, [{ id:'resultados', name:S.meta.title || 'Análisis de comentarios', date:day, postIds:[] }], [], terms, [], focusCtx(focus, items));
   m.rivals = detectRivals(fl);
-  m.postKpi = postKpis(m, terms);
+  m.postKpi = postKpis(m, terms, [{ t:m.tracks[0], list:fl }]);
   return m;
 }
 // PDF A4 en blanco y negro con pie de página "Informe de comentarios · fecha — Página X de Y"
