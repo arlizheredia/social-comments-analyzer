@@ -373,6 +373,14 @@ const TR = () => w.eval('TR');
       const fk = w.eval('fkey'); const has = id => keys.has(fk(undefined, items.find(c => c.id === id)));
       check('Criterio con contexto: «Los mejores» (respondido por el equipo) y la respuesta de Irina en el hilo de la queja cuentan; lo ajeno no', has('x1') && has('x3') && has('x4') && !has('x5'), JSON.stringify({ x1:has('x1'), x3:has('x3'), x4:has('x4'), x5:has('x5') }));
       check('«Los mejores» es positivo', w.sentiment('Los mejores').label === 'positivo', w.sentiment('Los mejores').label); }
+    // El equipo cuenta en las estadísticas y en los destacados, pero no entre «quiénes hablan bien / critican»
+    { const L = w.finalize([
+        { id:'e1', authorName:'Sandra Parron', text:'Los mejores Kanasta24', reactions:1 },
+        { id:'e2', parentId:'e1', authorName:'Yaimara Salinas Goite', text:'Gracias por considerarnos los mejores; es un orgullo para todo el equipo de Kanasta24', reactions:5 } ], { platform:'facebook' });
+      L.find(c => c.id === 'e2').isTeam = true; L.find(c => c.id === 'e1').teamAnswered = true;
+      const mt = w.computeReportModel(L, true, [{ id:'t', name:'Prueba', date:'2026-11-18', postIds:[] }], [], [], [], { q:'Kanasta24', name:'Kanasta24', total:2 });
+      check('El equipo cuenta: aparece en los destacados y en «Quién más comenta» (marcado), y suma en el total', mt.focus.n === 2 && mt.topPos.some(c => c.id === 'e2') && mt.topAuthors.some(a => a.name === 'Yaimara Salinas Goite' && a.team), JSON.stringify({ n:mt.focus.n, destacados:mt.topPos.map(c => c.id) }));
+      check('…pero no entre «Quiénes hablan bien»', !mt.ambassadors.some(a => a.team) && mt.ambassadors.some(a => a.name === 'Sandra Parron'), JSON.stringify(mt.ambassadors.map(a => a.name))); }
     // Postura frente a la marca: elogiar a otra marca, preferir otra opción o recomendar no comprar es negativo
     { const L = w.finalize([
         { id:'b1', authorName:'Dinna Ramirez Cuevas', text:'Mi experiencia con Kanasta24 ha sido desagradable: 5 días de tardanza y carne maloliente' },
