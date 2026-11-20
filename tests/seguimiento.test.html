@@ -368,7 +368,9 @@ const TR = () => w.eval('TR');
     check('Documento del informe: sin colores y con las secciones del modelo', !(docB.body.match(/#[0-9a-f]{3,6}\b|rgb\(/gi) || []).length && /Resumen/.test(docB.body) && /Indicadores por publicación/.test(docB.body) && (docB.body.match(/<h3>[^<]+\((Facebook|TikTok|Instagram)\)/g) || []).length === 3 && /<h2>Por publicación<\/h2>/.test(docB.body) && !/Próximos pasos/.test(docB.body));
     await w.reportExport('html');
     check('HTML: se descarga un informe autónomo', files.some(f => /\.html$/.test(f.name) && /<table/.test(f.content)));
-    const pdfLoaded = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js').then(() => typeof w.html2pdf === 'function', () => false);
+    // depende de la red: se reintenta hasta 3 veces antes de dar el fallo por bueno
+    let pdfLoaded = false;
+    for(let k = 0; k < 3 && !pdfLoaded; k++){ pdfLoaded = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js' + (k ? '?r=' + k : '')).then(() => typeof w.html2pdf === 'function', () => false); if(!pdfLoaded) await wait(1500); }
     check('PDF: la librería de PDF carga desde cdnjs', pdfLoaded);
 
     w.eval('semEmbed = __semBak');
