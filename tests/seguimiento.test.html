@@ -127,8 +127,13 @@ const TR = () => w.eval('TR');
     check('El botón cambia a “Detener” mientras extrae', !!d.querySelector('[data-ract="stop"]'));
     check('Una sola tarjeta: el seguimiento abierto se despliega en su sitio (sin tarjeta compacta duplicada ni panel aparte)', d.getElementById('runList').contains(d.getElementById('runDetail')) && !d.querySelector('#runList .rcard[data-tid="' + w.eval('TR.open') + '"]') && d.querySelectorAll('#runList h2').length === 1);
 
-    // 3. Detener y continuar
-    d.querySelector('[data-ract="stop"]').click();
+    // 3. Detener y continuar: se pregunta si el seguimiento parcial va al historial
+    d.querySelector('[data-ract="stop"]').click(); await wait(100);
+    check('Al detener se pregunta si se guarda en el historial (guardar, solo detener o seguir extrayendo)', d.getElementById('confirmDlg').open && /historial/.test(d.getElementById('cfText').textContent) && d.getElementById('cfOk').textContent === 'Guardar en el historial' && d.getElementById('cfAlt').textContent === 'Solo detener' && !d.getElementById('cfAlt').hidden && d.getElementById('cfCancel').textContent === 'Seguir extrayendo');
+    d.getElementById('cfCancel').click(); await wait(300);
+    check('«Seguir extrayendo» no detiene nada', !!TR().running);
+    d.querySelector('[data-ract="stop"]').click(); await wait(100);
+    d.getElementById('cfOk').click();
     await until(() => !TR().running);
     let t1 = TR().tracks.find(t => t.name === 'Lunes');
     check('Al detener, el seguimiento queda en pausa', t1.status === 'paused', t1.status);
@@ -142,13 +147,25 @@ const TR = () => w.eval('TR');
       w.showHistoryDetail(t1); await wait(50);
       check('El detalle del historial ofrece «Continuar extracción» y ver los comentarios de lo parcial', !!d.querySelector('#histDetail [data-hd="resume"]') && !!d.querySelector('#histDetail [data-hdv]'));
       d.querySelector('#histDetail [data-hd="close"]').click(); }
+    { const tt = TR().tracks.find(x => x.name === 'Lunes'), ih = w.eval('inHistory');
+      check('«Solo detener» no lo lleva al historial (lo extraído se conserva y se puede guardar después)', ih({ ...tt, inHist:false }) === false && ih({ ...tt, inHist:true }) === true); }
     FAKE.hold = false; FAKE.stopped.clear();
     d.querySelector('[data-ract="start"]').click();
     await until(() => TR().tracks.find(t => t.name === 'Lunes').status === 'done', 30000);
     t1 = TR().tracks.find(t => t.name === 'Lunes');
     check('Al continuar, termina (lo parcial se completa) y pasa al historial', t1.status === 'done' && Object.values(t1.items).every(i => i.status === 'done' && i.count === 5 && !i.partial), JSON.stringify(Object.values(t1.items).map(i => [i.status, i.count])));
     const stored = await w.eval('DB').resultsOf(t1.id);
-    check('Los comentarios de cada publicación quedan guardados en IndexedDB', stored.length === 3 && stored.every(r => r.comments.length === 5));
+    { const src = TR().tracks.find(x => x.name === 'Lunes'), pid = src.postIds[0], pp = TR().posts.find(x => x.id === pid), DBx = w.eval('DB');
+      // copia temporal (no altera los datos del resto de pruebas): 5 comentarios guardados
+      const tt = { id:'t_tmp_merge', date:src.date, postIds:[pid], items:{ [pid]:{ status:'pending' } } };
+      const orig = await DBx.get('results', src.id + '|' + pid); await DBx.put('results', { ...orig, key:tt.id + '|' + pid, tid:tt.id });
+      // volver a extraer con menos comentarios (la red mostró menos) no borra lo ya guardado
+      await w.storeResult(tt, pp, { meta:{ platform:pp.platform }, comments:[{ id:'nuevo-1', authorName:'Nueva Persona', text:'Comentario nuevo' }] }, 'extension', false);
+      const r1 = await DBx.get('results', tt.id + '|' + pid);
+      check('Volver a extraer fusiona con lo guardado: no se pierde ningún comentario (5 anteriores + 1 nuevo)', r1.comments.length === 6 && tt.items[pid].count === 6 && tt.items[pid].saved === 6, r1.comments.length + ' guardados');
+      check('Una publicación con comentarios guardados sigue accesible aunque falle al volver a extraerla', w.eval('hasResult')({ status:'error', saved:6, count:0 }) === true);
+      await DBx.del('results', tt.id + '|' + pid).catch(() => {}); }
+    check('Los comentarios de cada publicación quedan guardados en IndexedDB', stored.length === 3 && stored.every(r => r.comments.length >= 5));
     check('La lista aprende el autor de la publicación', TR().posts.every(p => /kanasta24/i.test(p.author)), TR().posts.map(p => p.author).join(', '));
     await until(() => d.querySelectorAll('#histList .hrow').length === 1, 5000).catch(() => {});
     check('El historial muestra el seguimiento', d.querySelectorAll('#histList .hrow').length === 1 && /Lunes/.test(d.getElementById('histList').textContent));

@@ -74,6 +74,7 @@ kbd{border:1px solid var(--outline-variant);border-bottom-width:2px}
 .small{font-size:12px;line-height:16px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .hidden{display:none!important}
+[hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 /* ================== BOTONES ================== */
@@ -2732,6 +2733,7 @@ Cada comentario incluye su **plataforma**.
   </div>
   <div class="dlg-actions">
     <button class="btn text" id="cfCancel">Cancelar</button>
+    <button class="btn tonal" id="cfAlt" hidden></button>
     <button class="btn filled" id="cfOk">Eliminar</button>
   </div>
 </dialog>
@@ -6325,13 +6327,14 @@ function emptyWarn(t){
 }
 const fmtSecs = s => s >= 60 ? Math.floor(s / 60) + ' min ' + String(s % 60).padStart(2, '0') + ' s' : s + ' s';
 // Un seguimiento detenido con comentarios guardados también está en el historial (para verlos e informar) y se puede continuar
-const inHistory = t => t.status === 'done' || (t.status === 'paused' && t.postIds.some(id => hasResult(t.items[id])));
-const hasResult = it => !!it && (it.status === 'done' || (it.partial && it.count > 0));
+const inHistory = t => t.status === 'done' || (t.status === 'paused' && t.inHist === true && t.postIds.some(id => hasResult(t.items[id])));
+const hasSaved = t => t.postIds.some(id => hasResult(t.items[id]));
+const hasResult = it => !!it && (it.status === 'done' || it.saved > 0 || (it.partial && it.count > 0));
 function trackProgress(t){
   const ids = t.postIds, n = ids.length || 1;
   let done = 0, frac = 0;
   ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && it.total) frac += Math.min(.95, (it.count || 0) / it.total); else if(it.status === 'running') frac += .1; });
-  const comments = ids.reduce((s, id) => s + (t.items[id].count || 0), 0);
+  const comments = ids.reduce((s, id) => { const it = t.items[id]; return s + (it.status === 'running' ? Math.max(it.count || 0, it.saved || 0) : (it.count || it.saved || 0)); }, 0);
   return { pct:Math.min(100, Math.round((done + frac) / n * 100)), done, n:ids.length, comments, errors:ids.filter(id => t.items[id].status === 'error').length };
 }
 const ST_TXT = { draft:['edit_note', 'Borrador'], running:['progress_activity', 'En curso'], paused:['pause_circle', 'En pausa'], done:['task_alt', 'Completado'] };
@@ -6363,9 +6366,10 @@ function renderRunDetail(){
   box.innerHTML = `<div class="rdetail" aria-live="polite">
     <div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rd-meta small muted">${esc(fmtDay(t.date))} <span aria-hidden="true">·</span> <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx}</span></div></div>
       <div class="rd-acts">
-        ${running ? `<button class="btn tonal" data-ract="stop" title="Detiene la extracción y guarda lo extraído hasta ahora"><span class="ms">stop</span>Detener y guardar</button>`
+        ${running ? `<button class="btn tonal" data-ract="stop" title="Detiene la extracción; lo extraído hasta ahora se conserva"><span class="ms">stop</span>Detener</button>`
           : `<button class="btn filled" data-ract="start" ${pend || t.halt ? '' : 'disabled'}><span class="ms">play_arrow</span>${t.status === 'draft' ? 'Iniciar' : 'Continuar'}</button>`}
         ${!running && inHistory(t) ? `<button class="btn text" data-ract="view"><span class="ms">forum</span>Ver comentarios</button><button class="btn text needs-ai" data-ract="report"><span class="ms">analytics</span>Crear informe</button>` : ''}
+        ${!running && t.status === 'paused' && !inHistory(t) && hasSaved(t) ? `<button class="btn text" data-ract="tohist" title="Para verlo y crear informes con lo extraído hasta ahora"><span class="ms">history</span>Guardar en el historial</button>` : ''}
         ${!running ? `<button class="btn text" data-ract="edit"><span class="ms">edit</span>Editar</button>` : ''}
         ${!running && pr.done ? `<button class="btn text" data-ract="finish"><span class="ms">inventory</span>Finalizar y archivar</button>` : ''}
         ${!running ? `<button class="icon-btn" data-ract="del" aria-label="Eliminar seguimiento" title="Eliminar seguimiento"><span class="ms">delete</span></button>` : ''}
@@ -6381,8 +6385,8 @@ function renderRunDetail(){
         : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`)
         : it.status === 'done' && !it.count ? `<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: la extracción no encontró ninguno. Reinténtala con <span class="ms" style="font-size:15px">refresh</span>.</span>`
         : it.status === 'done' ? `${itemCountTxt(it)} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
-        : it.status === 'error' ? esc(it.error || 'Error') : it.status === 'skipped' ? 'Omitida'
-        : it.partial && it.count ? `Parcial: ${countTxt(it.count, 'comentario guardado', 'comentarios guardados')} · se completará al continuar` : 'Pendiente';
+        : it.status === 'error' ? esc(it.error || 'Error') + (it.saved ? ` · <b>se conservan ${countTxt(it.saved, 'comentario guardado', 'comentarios guardados')}</b>` : '') : it.status === 'skipped' ? 'Omitida'
+        : it.partial && (it.count || it.saved) ? `Parcial: ${countTxt(it.saved || it.count, 'comentario guardado', 'comentarios guardados')} · se completará al continuar` : it.saved ? `Pendiente · se conservan ${countTxt(it.saved, 'comentario guardado', 'comentarios guardados')}` : 'Pendiente';
       const pp = it.status === 'running' && it.total ? Math.min(100, Math.round((it.count || 0) / it.total * 100)) : 0;
       return `<div class="ritem" data-ipid="${esc(id)}">
         <span class="ms ri-ic ${it.status}">${it.status === 'running' ? SPIN : itemIcon(it)}</span>
@@ -6406,12 +6410,21 @@ function uniqueIds(parsed, postId){
   parsed.comments.forEach(c => { c.id = fix(String(c.id || '')); if(c.parentId) c.parentId = fix(String(c.parentId)); });
   return parsed;
 }
+// clave de un comentario para no duplicarlo al fusionar extracciones
+const resKey = c => c.id && !/^(x|local)-/.test(c.id) ? 'i:' + c.id : 't:' + normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160);
 async function storeResult(t, p, parsed, method, partial){
   uniqueIds(parsed, p.id);
   const meta = { ...parsed.meta, platform:parsed.meta.platform || p.platform, url:parsed.meta.url || p.url };
-  await DB.put('results', { key:t.id + '|' + p.id, tid:t.id, postId:p.id, date:t.date, meta, comments:parsed.comments, extractedAt:new Date().toISOString(), method, partial:!!partial });
+  // nunca se pierde lo ya extraído: lo nuevo se fusiona con lo guardado (comentarios que la red ya no mostró, respuestas publicadas desde la app…)
+  let comments = parsed.comments;
+  const prev = await DB.get('results', t.id + '|' + p.id).catch(() => null);
+  if(prev && prev.comments && prev.comments.length){
+    const seen = new Set(comments.map(resKey)), kept = prev.comments.filter(c => !seen.has(resKey(c)));
+    if(kept.length) comments = comments.concat(kept);
+  }
+  await DB.put('results', { key:t.id + '|' + p.id, tid:t.id, postId:p.id, date:t.date, meta, comments, extractedAt:new Date().toISOString(), method, partial:!!partial });
   const it = t.items[p.id];
-  Object.assign(it, { status:'done', count:parsed.comments.length, method, finishedAt:new Date().toISOString(), partial:!!partial, error:'' });
+  Object.assign(it, { status:'done', count:comments.length, saved:comments.length, method, finishedAt:new Date().toISOString(), partial:!!partial, error:'' });
   // la lista aprende el título y el autor de la publicación
   let ch = false;
   if(meta.title && !p.title){ p.title = String(meta.title).replace(/\s+/g, ' ').slice(0, 140); ch = true; }
@@ -6555,7 +6568,7 @@ async function runTracking(tid){
     toast(`Extracción detenida: «${RUN.halt.post}» falló ${RUN.halt.error.includes('intento') ? '' : 'de forma irrecuperable'}. Revisa la conexión o la sesión y pulsa Continuar.`, { label:'Ver', run:() => { TR.open = t.id; selectSegTab('runs'); renderRuns(); } }); }
   else if(RUN.stopReq || left){ t.status = 'paused'; delete t.halt;
     if(inHistory(t)) toast(`Seguimiento detenido: ${countTxt(pr.comments, 'comentario guardado', 'comentarios guardados')}. Ya puedes verlos y crear un informe; pulsa Continuar cuando quieras completarlo.`, { label:'Ver en el historial', run:() => { selectSegTab('hist'); renderSeg(); } });
-    else toast('Seguimiento en pausa: ' + pr.done + ' de ' + pr.n + ' publicaciones'); }
+    else toast(hasSaved(t) ? `Seguimiento detenido: ${countTxt(pr.comments, 'comentario extraído se conserva', 'comentarios extraídos se conservan')}. Pulsa Continuar cuando quieras.` : 'Seguimiento en pausa: ' + pr.done + ' de ' + pr.n + ' publicaciones'); }
   else if(pr.errors){ t.status = 'paused'; toast(countTxt(pr.errors, 'publicación no se pudo extraer', 'publicaciones no se pudieron extraer') + ': reinténtalas o finaliza el seguimiento'); }
   else if(!pr.comments){ t.status = 'done'; t.finishedAt = new Date().toISOString(); toast('⚠ El seguimiento terminó sin comentarios: revisa que la sección de comentarios se abra y reintenta las publicaciones', { label:'Ver', run:() => { TR.open = t.id; selectSegTab('hist'); showHistoryDetail(t); } }); }
   else { t.status = 'done'; t.finishedAt = new Date().toISOString(); toast((emptyPosts(t).length ? '⚠ ' + countTxt(emptyPosts(t).length, 'publicación quedó', 'publicaciones quedaron') + ' sin comentarios. ' : '✓ ') + 'Seguimiento completado: ' + countTxt(pr.comments, 'comentario', 'comentarios') + '. Ya está en el historial.', { label:'Ver historial', run:() => selectSegTab('hist') }); }
@@ -6576,6 +6589,16 @@ function scheduleRunRender(){
 }
 function renderRunCardsOnly(){
   $$('#runList .rcard').forEach(b => { const t = TR.tracks.find(x => x.id === b.dataset.tid); if(!t) return; const pr = trackProgress(t); const bar = b.querySelector('.pbar i'); if(bar) bar.style.width = pr.pct + '%'; const ch = b.querySelector('.stchip'); if(ch) ch.lastChild.textContent = ST_TXT[t.status][1] + ' · ' + pr.pct + ' %'; });
+}
+// Detener: se pregunta si el seguimiento parcial se guarda en el historial para analizarlo y hacer informes
+async function askStop(t){
+  const pr = trackProgress(t);
+  const v = await askConfirm({ title:'¿Detener el seguimiento?',
+    html:`Hasta ahora se han extraído <b>${countTxt(pr.comments, 'comentario', 'comentarios')}</b>.<br><br>¿Quieres guardar en el historial este seguimiento parcial para analizarlo y crear informes? En cualquier caso, lo extraído se conserva y podrás continuar la extracción en otro momento.`,
+    ok:'Guardar en el historial', alt:'Solo detener', cancelText:'Seguir extrayendo' });
+  if(v === false || TR.running !== t.id) return;   // sigue extrayendo
+  t.inHist = v === true;
+  stopTracking();
 }
 function stopTracking(){
   if(!TR.running) return;
@@ -6686,7 +6709,8 @@ function initTracking(){
     const ra = e.target.closest('[data-ract]')?.dataset.ract;
     if(ra === 'start'){ if(t.halt){ t.postIds.forEach(id => { const x = t.items[id]; if(x.status === 'error'){ x.status = 'pending'; x.error = ''; } }); } runTracking(t.id); }
     if(ra === 'collapse'){ TR.open = null; TR.folded = true; renderRuns(); return; }
-    if(ra === 'stop') stopTracking();
+    if(ra === 'stop') askStop(t);
+    if(ra === 'tohist'){ t.inHist = true; await DB.put('trackings', t); renderSeg(); toast('Seguimiento parcial guardado en el historial', { label:'Ver historial', run:() => { selectSegTab('hist'); renderSeg(); } }); }
     if(ra === 'view') viewTrackingsComments([t.id]);
     if(ra === 'report') openReport([t.id]);
     if(ra === 'edit') openTrackDlg(null, t.id);
@@ -7621,18 +7645,21 @@ function renderRepCrumbs(){
 
 
 /* ---------- Confirmación en pantalla (en lugar de confirm() del navegador) ---------- */
-function askConfirm({ title, text = '', html = '', ok = 'Aceptar', danger = false, cancel = true }){
+// Devuelve true (Aceptar), false (Cancelar o cerrar) o 'alt' (la opción alternativa, si se indica)
+function askConfirm({ title, text = '', html = '', ok = 'Aceptar', danger = false, cancel = true, cancelText = 'Cancelar', alt = '' }){
   const d = $('#confirmDlg');
   $('#cfTitle').textContent = title;
   if(html) $('#cfText').innerHTML = html; else $('#cfText').textContent = text;
   $('#cfText').hidden = !text && !html;
-  $('#cfCancel').hidden = !cancel;
+  $('#cfCancel').hidden = !cancel; $('#cfCancel').textContent = cancelText;
+  $('#cfAlt').hidden = !alt; $('#cfAlt').textContent = alt;
   $('#cfOk').textContent = ok;
   d.classList.toggle('danger', danger);
   return new Promise(res => {
-    const done = v => { d.removeEventListener('close', onClose); $('#cfOk').onclick = $('#cfCancel').onclick = null; if(d.open) d.close(); res(v); };
+    const done = v => { d.removeEventListener('close', onClose); $('#cfOk').onclick = $('#cfCancel').onclick = $('#cfAlt').onclick = null; if(d.open) d.close(); res(v); };
     const onClose = () => done(false);
     $('#cfOk').onclick = () => done(true);
+    $('#cfAlt').onclick = () => done('alt');
     $('#cfCancel').onclick = () => done(false);
     d.addEventListener('close', onClose);
     d.showModal(); setTimeout(() => (cancel ? $('#cfCancel') : $('#cfOk')).focus(), 0);   // el foco empieza en Cancelar: no se elimina por accidente
