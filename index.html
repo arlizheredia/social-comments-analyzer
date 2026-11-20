@@ -3035,14 +3035,16 @@ function fbExtractor(){
     artCache = new WeakMap(); igCache = new WeakMap(); igBlockCache = new WeakMap(); igRpSig = new WeakMap(); igRpMap = {};
     igCountsCache = null; bumpGen();
   }
+  // tope de comentarios nuevos o cambiados que se leen en cada llamada: el resto se lee en la siguiente (la pestaña no se bloquea)
+  var snapBudget = 300, snapPending = false;
   function extractAll(){
-    var arts = articles(); var res = [], seen = {};
+    var arts = articles(); var res = [], seen = {}, fresh = 0; snapPending = false;
     arts.forEach(function(a, i){
       try {
         var sig = (a.textContent || '').length + ':' + a.getElementsByTagName('a').length + ':' + a.getElementsByTagName('img').length;
         var hit = artCache.get(a), c;
         if (hit && hit.sig === sig) c = Object.assign({}, hit.c);
-        else { c = extractOne(a); artCache.set(a, { sig: sig, c: Object.assign({}, c) }); }
+        else { if (fresh >= snapBudget){ snapPending = true; return; } fresh++; c = extractOne(a); artCache.set(a, { sig: sig, c: Object.assign({}, c) }); }
         var key = c.id || (c.authorName + '|' + c.text);
         if (seen[key]) return; seen[key] = 1;
         c.order = i; res.push(c);
@@ -3508,13 +3510,14 @@ function fbExtractor(){
       bRestart.onclick = function(){ done('restart'); };
     });
   }
-  function finish(){
+  async function finish(){
     if (restarting){ relaunch(); return; }
     finished = true;
     status('Extrayendo datos…');
     bumpGen();
     var onOriginal = postKey() === startKey;
-    if (onOriginal && !useCollectedOnly) snapshot(true);
+    // última lectura por tandas, cediendo el control entre una y otra (antes era de golpe y congelaba la pestaña con miles de comentarios)
+    if (onOriginal && !useCollectedOnly){ for (var k = 0; k < 40; k++){ snapshot(true); if (!snapPending) break; await sleep(0); } }
     var comments = collected.map(function(c, i){ c.order = i; return c; });
     var postAuthor = meta.postAuthor || '', postCaption = meta.postCaption || '', postDate = meta.postDate || '';
     var data = { source: 'social-dom-extractor', platform: TT ? 'tiktok' : IG ? 'instagram' : 'facebook', version: 3, url: meta.url || location.href, title: meta.title || document.title, cambioDePublicacion: !onOriginal,
@@ -3530,13 +3533,13 @@ function fbExtractor(){
       var pend = sortButtons().map(function(b){ return quickText(b).replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
       Object.assign(data.diag, { totalSegunFacebook: netTot, extraidos: comments.length, sinId: comments.filter(function(c){ return !c.id; }).length,
         respuestas: comments.filter(function(c){ return c.isReply; }).length, orden: sortState || 'sin-intentar', intentosOrden: sortTries, opcionesOrden: sortMenu,
-        segundaPasada: LOOP.second, rondas: LOOP.round, botonesPulsados: pressed.slice(0, 40), botonesSinPulsarAlFinal: pend.map(function(t){ return t.replace(/\d+/g, 'N'); }).slice(0, 20),
+        segundaPasada: LOOP.second, rondas: LOOP.round, terminoSinAvanceSeg: LOOP.sinAvance || 0, botonesPulsados: pressed.slice(0, 40), botonesSinPulsarAlFinal: pend.map(function(t){ return t.replace(/\d+/g, 'N'); }).slice(0, 20),
         fuenteComentarios: document.querySelectorAll('[data-sca-art]').length ? 'estructura' : 'articulos' });
     }
     if (!TT && !IG) Object.assign(data.diag, { articulos: document.querySelectorAll('div[role="article"]').length, articulosComentario: articles().length,
       enlacesComentario: document.querySelectorAll('a[href*="comment_id="]').length, cargando: loadingVisible(), dialogos: document.querySelectorAll('div[role="dialog"]').length,
       botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || quickText(b)).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
-      etiquetasBotones: Array.prototype.slice.call(document.querySelectorAll('[role="button"][aria-label],button[aria-label]')).filter(function(b){ return b.offsetParent; }).map(function(b){ return b.getAttribute('aria-label').replace(/\d[\d.,]*/g, 'N').slice(0, 40); }).filter(function(v, i, a){ return a.indexOf(v) === i; }).slice(0, 40) });
+      etiquetasBotones: Array.prototype.slice.call(document.querySelectorAll('[role="button"][aria-label],button[aria-label]'), 0, 1500).filter(function(b){ return b.offsetParent; }).map(function(b){ return b.getAttribute('aria-label').replace(/\d[\d.,]*/g, 'N').slice(0, 40); }).filter(function(v, i, a){ return a.indexOf(v) === i; }).slice(0, 40) });
     if (data.diag) data.diag.pulsados = pressed.filter(function(v, i, a){ return a.indexOf(v) === i; });
     if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'done', data: data }); return; }
     var json = JSON.stringify(data, null, 2);
@@ -3559,6 +3562,15 @@ function fbExtractor(){
   }
   (async function(){
     var clicks = new Map(), idle = 0, round = 0, lastCollected = 0, secondPass = false;
+    // última vez que llegaron comentarios nuevos: si pasa demasiado tiempo sin ninguno, se termina aunque queden botones
+    var lastGrow = Date.now(), lastLen = 0;
+    // guardado parcial: envía a la app los comentarios nuevos desde el último envío; si la pestaña se congela o se cierra, no se pierden
+    var lastCp = Date.now(), cpSent = {};
+    function checkpoint(){
+      lastCp = Date.now();
+      var nuevos = collected.filter(function(c){ var k = keyOf(c); if (cpSent[k]) return false; cpSent[k] = 1; return true; });
+      if (nuevos.length) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: netTotal() || null, note: '\u0001sca-cp:' + JSON.stringify(nuevos) });
+    }
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
     // En cuanto aparece el botón de comentarios se abre la sección (los reels no muestran comentarios sin pulsarlo).
     // Si no hay botón, se espera a que la red pinte los comentarios (Instagram sin sesión tarda 10–15 s) o a la pantalla de acceso.
@@ -3617,6 +3629,8 @@ function fbExtractor(){
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
         if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(nowCount > ck.c)))) return false;
+        // un botón que en sus dos últimas pulsaciones no cargó nada (y no cambió de texto) no se vuelve a pulsar
+        if (ck && ck.t === t && (ck.noEff || 0) >= 2) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -3628,6 +3642,9 @@ function fbExtractor(){
           if (b && (!clicks.get(b) || clicks.get(b).n < 4) && btns.indexOf(b) < 0) btns.push(b);
         });
       }
+      // prioridad: primero los que nunca se pulsaron, después los que cargaron comentarios la última vez, al final el resto
+      var rank = function(b){ var ck = clicks.get(b); return !ck ? 0 : !ck.noEff ? 1 : 2; };
+      btns = btns.map(function(b, i){ return { b: b, r: rank(b), i: i }; }).sort(function(x, y){ return (x.r - y.r) || (x.i - y.i); }).map(function(x){ return x.b; });
       if (btns.length > 15) btns = btns.slice(0, 15);   // rondas cortas: con miles de comentarios hay cientos de botones
       if (btns.length){
         idle = 0;
@@ -3639,11 +3656,15 @@ function fbExtractor(){
           var prev = clicks.get(b), curCount = countNow();
           // si desde la última pulsación llegaron comentarios nuevos, el botón sigue cargando: se cuenta como progreso
           var grew = prev && curCount > prev.c;
-          clicks.set(b, { n: prev && !grew ? prev.n + 1 : 1, all: (prev ? prev.all : 0) + 1, t: bt, c: curCount });
+          var entry = { n: prev && !grew ? prev.n + 1 : 1, all: (prev ? prev.all : 0) + 1, t: bt, c: curCount, noEff: prev && prev.t === bt ? (prev.noEff || 0) : 0 };
+          clicks.set(b, entry);
           if (bt && pressed.length < 60) pressed.push(bt.replace(/\d+/g, 'N'));
           try { b.scrollIntoView({ block: 'center' }); b.click(); } catch(e){}
           await sleep(450 + Math.random() * 450);
           bumpGen();   // la pulsación puede haber cargado comentarios: las listas se recalculan una vez
+          // efecto propio de este botón (y no de otros de la misma ronda): ¿aparecieron comentarios o desapareció el botón?
+          var gone = !b.isConnected || !b.offsetParent || quickText(b).replace(/^[\s—–\-·•]+/, '') !== bt;
+          entry.noEff = gone || countNow() > curCount ? 0 : entry.noEff + 1;
         }
       } else {
         var before = countNow();
@@ -3668,6 +3689,12 @@ function fbExtractor(){
       }
       snapshot();   // recoger en cada ronda mientras se sigue en la publicación original
       var tot = netTotal();
+      if (collected.length > lastLen){ lastLen = collected.length; lastGrow = Date.now(); }
+      if (AUTO && Date.now() - lastCp > 30000) checkpoint();
+      // botones que ya no cargan nada (respuestas eliminadas, «Ver más» sin efecto): sin comentarios nuevos durante 45 s
+      // (90 s si aún falta más del 3 % del total) se da la extracción por terminada en lugar de seguir pulsándolos sin fin
+      var stallMs = tot && collected.length < tot * 0.97 ? 90000 : 45000;
+      if (round > 3 && Date.now() - lastGrow > stallMs){ LOOP.sinAvance = Math.round((Date.now() - lastGrow) / 1000); break; }
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
       if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });
     }
@@ -6269,7 +6296,7 @@ function renderPosts(){
 const EXT_LATEST = '1.4.0';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 // Extractor publicado en extension/extractor.js (firmado): las extensiones 1.4.0 o posteriores lo instalan solas.
 // Para corregir la extracción sin que nadie reinstale nada, basta con subir EXTRACTOR_LATEST y ejecutar tools/build_extension.py.
-const EXTRACTOR_LATEST = '1.4.4';
+const EXTRACTOR_LATEST = '1.4.5';
 const EXTRACTOR_MIN_EXT = '1.4.0';   // versión mínima de la extensión que puede usar este extractor
 const EXT_SRC = ['extension/', 'https://arlizheredia.github.io/social-comments-analyzer/extension/'];
 const EXT = { version:null, extractor:null, downloaded:null, userScripts:false, updates:false, waiters:new Map(), jobs:new Map() };
@@ -6311,6 +6338,7 @@ window.addEventListener('message', e => {
   const job = EXT.jobs.get(m.jobId); if(!job) return;
   if(m.type === 'progress') job.onProgress && job.onProgress(m);
   else if(m.type === 'result'){ EXT.jobs.delete(m.jobId); job.resolve(m); }
+  else if(m.type === 'error' && /Se cerró la (pestaña|ventana)/i.test(m.error || '')){ EXT.jobs.delete(m.jobId); job.resolve({ closed:true }); }   // el usuario cerró la ventana: se da por terminado
   else if(m.type === 'error' || m.type === 'stopped'){ EXT.jobs.delete(m.jobId); m.type === 'stopped' ? job.resolve({ stopped:true }) : job.reject(new Error(m.error || 'Error de la extensión')); }
 });
 // Estado que envía la extensión: versión, extractor activo y si puede actualizarse sola
@@ -6346,6 +6374,8 @@ function extWatchUpdate(){
   if(!need && EXT.watchT){ clearInterval(EXT.watchT); EXT.watchT = null; }
 }
 function openExtAutoDlg(){ EXT.autoAsked = true; $('#extAutoDlg').showModal(); }
+// Prefijo de los guardados parciales que el extractor envía dentro de los avisos de progreso
+const CP_TAG = '\u0001sca-cp:';
 function extExtract(url, onProgress){
   const jobId = uid('j_'), opts = extOpts();
   return { jobId, promise:new Promise((resolve, reject) => {
@@ -6360,9 +6390,25 @@ function extExtract(url, onProgress){
         // se pide a la extensión que entregue lo recogido; si no contesta en 30 s, fallo reintentable
         asked = now; extStop(jobId);
         const job = EXT.jobs.get(jobId); if(job) job.watchdog = true;
-      } else if(asked && now - asked > 30000){ finish(reject)(new Error('La extensión dejó de responder (la pestaña o Chrome pueden haberse bloqueado).')); }
+      } else if(asked && now - asked > 30000){
+        // la pestaña no contesta: si llegaron guardados parciales, se usan; si no, fallo reintentable
+        const job = EXT.jobs.get(jobId);
+        if(job && job.acc.length) finish(resolve)({ type:'result', watchdog:true, stopped:true, acc:job.acc });
+        else finish(reject)(new Error('La extensión dejó de responder (la pestaña o Chrome pueden haberse bloqueado).'));
+      }
     }, 15000);
-    EXT.jobs.set(jobId, { resolve:v => finish(resolve)(EXT.jobs.get(jobId)?.watchdog ? { ...v, watchdog:true } : v), reject:finish(reject), onProgress:m => { last = Date.now(); onProgress && onProgress(m); } });
+    const job = { acc:[], accKeys:new Set() };
+    Object.assign(job, { resolve:v => finish(resolve)({ ...v, acc:job.acc, ...(job.watchdog ? { watchdog:true } : {}) }), reject:finish(reject),
+      onProgress:m => {
+        last = Date.now();
+        // guardado parcial: se acumula aquí (no se muestra como nota)
+        if(typeof m.note === 'string' && m.note.startsWith(CP_TAG)){
+          try{ JSON.parse(m.note.slice(CP_TAG.length)).forEach(c => { const k = c.id || ((c.authorName || '') + '|' + (c.text || '')); if(!job.accKeys.has(k)){ job.accKeys.add(k); job.acc.push(c); } }); }catch(e){}
+          m = { ...m, note:'' };
+        }
+        onProgress && onProgress(m);
+      } });
+    EXT.jobs.set(jobId, job);
     window.postMessage({ source:'sca-app', type:'extract', jobId, url, options:opts }, '*');
   }) };
 }
@@ -6572,6 +6618,12 @@ async function collectPost(t, p, it, onProg){
   const job = extExtract(p.url, msg => onProg({ phase:msg.phase, count:msg.count, total:msg.total }));
   RUN.job = job.jobId;
   const r = await job.promise; RUN.job = null;
+  // la extensión no entregó el resultado final (pestaña congelada, detenido, ventana cerrada): se usa lo recibido por partes
+  if(!r.data && r.acc && r.acc.length) r.data = { source:'social-dom-extractor', platform:p.platform, version:3, url:p.url, title:p.title || '', comments:r.acc };
+  if(r.closed){
+    onProg({ note:'Se cerró la ventana de extracción: se da por terminada con lo recogido.' });
+    return { parsed:r.data ? fromExtractor(r.data) : { meta:{ platform:p.platform, url:p.url }, comments:[] }, method:'extension', partial:false, closed:true };
+  }
   if(r.watchdog && !RUN.stopReq){
     // la extensión se había quedado sin dar noticias: se guarda lo que entregó y se reintenta (lo nuevo se suma a lo guardado)
     if(r.data && (r.data.comments || []).length){ await storeResult(t, p, fromExtractor(r.data), 'extension', true); Object.assign(it, { status:'running', partial:true }); }
@@ -6686,7 +6738,8 @@ async function runTracking(tid){
   if(RUN.halt){ t.status = 'paused'; t.halt = { ...RUN.halt, at:new Date().toISOString() };
     toast(`Extracción detenida: «${RUN.halt.post}» falló ${RUN.halt.error.includes('intento') ? '' : 'de forma irrecuperable'}. Revisa la conexión o la sesión y pulsa Continuar.`, { label:'Ver', run:() => { TR.open = t.id; selectSegTab('runs'); renderRuns(); } }); }
   else if(RUN.stopReq || left){ t.status = 'paused'; delete t.halt;
-    if(inHistory(t)) toast(`Seguimiento detenido: ${countTxt(pr.comments, 'comentario guardado', 'comentarios guardados')}. Ya puedes verlos y crear un informe; pulsa Continuar cuando quieras completarlo.`, { label:'Ver en el historial', run:() => { selectSegTab('hist'); renderSeg(); } });
+    if(t.inHist && !inHistory(t)) toast('Seguimiento detenido, pero la extensión no llegó a entregar comentarios: no hay nada que guardar en el historial todavía. Pulsa Continuar para extraerlos.');
+    else if(inHistory(t)) toast(`Seguimiento detenido: ${countTxt(pr.comments, 'comentario guardado', 'comentarios guardados')}. Ya puedes verlos y crear un informe; pulsa Continuar cuando quieras completarlo.`, { label:'Ver en el historial', run:() => { selectSegTab('hist'); renderSeg(); } });
     else toast(hasSaved(t) ? `Seguimiento detenido: ${countTxt(pr.comments, 'comentario extraído se conserva', 'comentarios extraídos se conservan')}. Pulsa Continuar cuando quieras.` : 'Seguimiento en pausa: ' + pr.done + ' de ' + pr.n + ' publicaciones'); }
   else if(pr.errors){ t.status = 'paused'; toast(countTxt(pr.errors, 'publicación no se pudo extraer', 'publicaciones no se pudieron extraer') + ': reinténtalas o finaliza el seguimiento'); }
   else if(!pr.comments){ t.status = 'done'; t.finishedAt = new Date().toISOString(); toast('⚠ El seguimiento terminó sin comentarios: revisa que la sección de comentarios se abra y reintenta las publicaciones', { label:'Ver', run:() => { TR.open = t.id; selectSegTab('hist'); showHistoryDetail(t); } }); }

@@ -50,7 +50,7 @@ function extractorData(url, n, extra = []){
   return { source:'social-dom-extractor', platform:plat, version:3, url, title:'Publicación ' + plat, postAuthor:plat === 'facebook' ? 'Kanasta24' : 'kanasta24', extractedAt:new Date().toISOString(), comments:base.map((c, i) => ({ ...c, order:i })) };
 }
 // Extensión simulada: responde a {source:'sca-app'} como el puente real
-const FAKE = { delay:60, pending:new Map(), stopped:new Set(), calls:[], hold:false, perUrl:{}, fail:{}, sess:{ facebook:true, instagram:false, tiktok:true } };
+const FAKE = { delay:60, pending:new Map(), stopped:new Set(), calls:[], hold:false, perUrl:{}, fail:{}, cpClose:{}, cpFreeze:{}, sess:{ facebook:true, instagram:false, tiktok:true } };
 function installFakeExtension(){
   w.document.documentElement.dataset.scaExt = '1.0.0';
   w.addEventListener('message', async e => {
@@ -65,6 +65,14 @@ function installFakeExtension(){
     FAKE.calls.push(m);
     if(FAKE.fail[m.url] > 0){ FAKE.fail[m.url]--; await wait(20); return reply({ type:'error', jobId:m.jobId, error:'Inicia sesión en facebook.com en este navegador y vuelve a intentarlo.' }); }
     reply({ type:'progress', jobId:m.jobId, phase:'opening' });
+    // guardado parcial (como el extractor real, dentro de un aviso de progreso) y después: ventana cerrada o pestaña que no entrega nada al detener
+    if(FAKE.cpClose[m.url] || FAKE.cpFreeze[m.url]){
+      await wait(30);
+      reply({ type:'progress', jobId:m.jobId, phase:'extracting', count:2, total:5, note:'\u0001sca-cp:' + JSON.stringify(extractorData(m.url, 2).comments) });
+      if(FAKE.cpClose[m.url]){ await wait(30); return reply({ type:'error', jobId:m.jobId, error:'Se cerró la pestaña de la publicación.' }); }
+      while(!FAKE.stopped.has(m.jobId)) await wait(30);
+      return reply({ type:'stopped', jobId:m.jobId, reason:'stopped' });
+    }
     for(let r = 1; r <= 4; r++){
       await wait(FAKE.delay);
       while(r > 1 && FAKE.hold && !FAKE.stopped.has(m.jobId)) await wait(30);   // retiene tras el primer progreso
@@ -230,7 +238,25 @@ const TR = () => w.eval('TR');
     d.querySelector('#runDetail [data-ract="start"]').click();
     await until(() => TR().tracks.find(x => x.name === 'Sin sesión').status === 'done', 30000);
     check('Al pulsar Continuar se reintenta la publicación con error y termina', tS.items[igP.id].status === 'done' && tS.items[fbId].status === 'done');
-    for(const n of ['Reintentos', 'Sin sesión']){ const t = TR().tracks.find(x => x.name === n); await w.eval(`DB.delTracking('${t.id}')`); }
+    // 4c. Cerrar la ventana de extracción = terminada, con lo recibido por partes
+    FAKE.fail[igP.url] = 0; FAKE.cpClose[igP.url] = true;
+    w.openTrackDlg([igP.id]); d.getElementById('trackDate').value = '2026-11-16'; d.getElementById('trackName').value = 'Ventana cerrada';
+    d.getElementById('trackStart').click();
+    await until(() => { const t = TR().tracks.find(x => x.name === 'Ventana cerrada'); return t && t.status === 'done' && !TR().running; }, 20000).catch(() => {});
+    { const tc = TR().tracks.find(x => x.name === 'Ventana cerrada'), it = tc.items[igP.id], rs = await w.eval('DB').get('results', tc.id + '|' + igP.id);
+      check('Si el usuario cierra la ventana de extracción, se da por terminada y se guarda lo recibido por partes', tc.status === 'done' && it.status === 'done' && it.count === 2 && rs && rs.comments.length === 2, JSON.stringify({ st:tc.status, it:[it.status, it.count] })); }
+    FAKE.cpClose[igP.url] = false;
+    // 4d. Detener con la pestaña congelada (no entrega el resultado final): se guarda lo recibido por partes y va al historial
+    FAKE.cpFreeze[igP.url] = true;
+    w.openTrackDlg([igP.id]); d.getElementById('trackDate').value = '2026-11-16'; d.getElementById('trackName').value = 'Congelada';
+    d.getElementById('trackStart').click();
+    await until(() => { const t = TR().tracks.find(x => x.name === 'Congelada'); return t && t.items[igP.id].count === 2; }, 10000).catch(() => {});
+    d.querySelector('[data-ract="stop"]').click(); await wait(100); d.getElementById('cfOk').click();
+    await until(() => !TR().running, 20000).catch(() => {});
+    { const tz = TR().tracks.find(x => x.name === 'Congelada'), it = tz.items[igP.id], rs = await w.eval('DB').get('results', tz.id + '|' + igP.id);
+      check('Detener con la pestaña congelada: se guarda lo recibido por partes y «Guardar en el historial» funciona', it.partial && rs && rs.comments.length === 2 && w.eval('inHistory')(tz), JSON.stringify({ st:tz.status, it:[it.status, it.count, it.partial], hist:w.eval('inHistory')(tz) })); }
+    FAKE.cpFreeze[igP.url] = false; FAKE.stopped.clear();
+    for(const n of ['Reintentos', 'Sin sesión', 'Ventana cerrada', 'Congelada']){ const t = TR().tracks.find(x => x.name === n); if(t) await w.eval(`DB.delTracking('${t.id}')`); }
     await w.eval('loadTR()'); await wait(100);
 
     // 5. Ver comentarios de una publicación y responder (se guarda en el seguimiento)

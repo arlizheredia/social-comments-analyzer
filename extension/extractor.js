@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// sca-extractor 1.4.4 · requiere extensión 1.4.0
+// sca-extractor 1.4.5 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -289,14 +289,16 @@ function fbExtractor(){
     artCache = new WeakMap(); igCache = new WeakMap(); igBlockCache = new WeakMap(); igRpSig = new WeakMap(); igRpMap = {};
     igCountsCache = null; bumpGen();
   }
+  // tope de comentarios nuevos o cambiados que se leen en cada llamada: el resto se lee en la siguiente (la pestaña no se bloquea)
+  var snapBudget = 300, snapPending = false;
   function extractAll(){
-    var arts = articles(); var res = [], seen = {};
+    var arts = articles(); var res = [], seen = {}, fresh = 0; snapPending = false;
     arts.forEach(function(a, i){
       try {
         var sig = (a.textContent || '').length + ':' + a.getElementsByTagName('a').length + ':' + a.getElementsByTagName('img').length;
         var hit = artCache.get(a), c;
         if (hit && hit.sig === sig) c = Object.assign({}, hit.c);
-        else { c = extractOne(a); artCache.set(a, { sig: sig, c: Object.assign({}, c) }); }
+        else { if (fresh >= snapBudget){ snapPending = true; return; } fresh++; c = extractOne(a); artCache.set(a, { sig: sig, c: Object.assign({}, c) }); }
         var key = c.id || (c.authorName + '|' + c.text);
         if (seen[key]) return; seen[key] = 1;
         c.order = i; res.push(c);
@@ -762,13 +764,14 @@ function fbExtractor(){
       bRestart.onclick = function(){ done('restart'); };
     });
   }
-  function finish(){
+  async function finish(){
     if (restarting){ relaunch(); return; }
     finished = true;
     status('Extrayendo datos…');
     bumpGen();
     var onOriginal = postKey() === startKey;
-    if (onOriginal && !useCollectedOnly) snapshot(true);
+    // última lectura por tandas, cediendo el control entre una y otra (antes era de golpe y congelaba la pestaña con miles de comentarios)
+    if (onOriginal && !useCollectedOnly){ for (var k = 0; k < 40; k++){ snapshot(true); if (!snapPending) break; await sleep(0); } }
     var comments = collected.map(function(c, i){ c.order = i; return c; });
     var postAuthor = meta.postAuthor || '', postCaption = meta.postCaption || '', postDate = meta.postDate || '';
     var data = { source: 'social-dom-extractor', platform: TT ? 'tiktok' : IG ? 'instagram' : 'facebook', version: 3, url: meta.url || location.href, title: meta.title || document.title, cambioDePublicacion: !onOriginal,
@@ -784,13 +787,13 @@ function fbExtractor(){
       var pend = sortButtons().map(function(b){ return quickText(b).replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
       Object.assign(data.diag, { totalSegunFacebook: netTot, extraidos: comments.length, sinId: comments.filter(function(c){ return !c.id; }).length,
         respuestas: comments.filter(function(c){ return c.isReply; }).length, orden: sortState || 'sin-intentar', intentosOrden: sortTries, opcionesOrden: sortMenu,
-        segundaPasada: LOOP.second, rondas: LOOP.round, botonesPulsados: pressed.slice(0, 40), botonesSinPulsarAlFinal: pend.map(function(t){ return t.replace(/\d+/g, 'N'); }).slice(0, 20),
+        segundaPasada: LOOP.second, rondas: LOOP.round, terminoSinAvanceSeg: LOOP.sinAvance || 0, botonesPulsados: pressed.slice(0, 40), botonesSinPulsarAlFinal: pend.map(function(t){ return t.replace(/\d+/g, 'N'); }).slice(0, 20),
         fuenteComentarios: document.querySelectorAll('[data-sca-art]').length ? 'estructura' : 'articulos' });
     }
     if (!TT && !IG) Object.assign(data.diag, { articulos: document.querySelectorAll('div[role="article"]').length, articulosComentario: articles().length,
       enlacesComentario: document.querySelectorAll('a[href*="comment_id="]').length, cargando: loadingVisible(), dialogos: document.querySelectorAll('div[role="dialog"]').length,
       botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || quickText(b)).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
-      etiquetasBotones: Array.prototype.slice.call(document.querySelectorAll('[role="button"][aria-label],button[aria-label]')).filter(function(b){ return b.offsetParent; }).map(function(b){ return b.getAttribute('aria-label').replace(/\d[\d.,]*/g, 'N').slice(0, 40); }).filter(function(v, i, a){ return a.indexOf(v) === i; }).slice(0, 40) });
+      etiquetasBotones: Array.prototype.slice.call(document.querySelectorAll('[role="button"][aria-label],button[aria-label]'), 0, 1500).filter(function(b){ return b.offsetParent; }).map(function(b){ return b.getAttribute('aria-label').replace(/\d[\d.,]*/g, 'N').slice(0, 40); }).filter(function(v, i, a){ return a.indexOf(v) === i; }).slice(0, 40) });
     if (data.diag) data.diag.pulsados = pressed.filter(function(v, i, a){ return a.indexOf(v) === i; });
     if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'done', data: data }); return; }
     var json = JSON.stringify(data, null, 2);
@@ -813,6 +816,15 @@ function fbExtractor(){
   }
   (async function(){
     var clicks = new Map(), idle = 0, round = 0, lastCollected = 0, secondPass = false;
+    // última vez que llegaron comentarios nuevos: si pasa demasiado tiempo sin ninguno, se termina aunque queden botones
+    var lastGrow = Date.now(), lastLen = 0;
+    // guardado parcial: envía a la app los comentarios nuevos desde el último envío; si la pestaña se congela o se cierra, no se pierden
+    var lastCp = Date.now(), cpSent = {};
+    function checkpoint(){
+      lastCp = Date.now();
+      var nuevos = collected.filter(function(c){ var k = keyOf(c); if (cpSent[k]) return false; cpSent[k] = 1; return true; });
+      if (nuevos.length) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: netTotal() || null, note: '\u0001sca-cp:' + JSON.stringify(nuevos) });
+    }
     var countNow = function(){ return TT ? ttNodes().length : IG ? igTimes().length : articles().length; };
     // En cuanto aparece el botón de comentarios se abre la sección (los reels no muestran comentarios sin pulsarlo).
     // Si no hay botón, se espera a que la red pinte los comentarios (Instagram sin sesión tarda 10–15 s) o a la pantalla de acceso.
@@ -871,6 +883,8 @@ function fbExtractor(){
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
         if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(nowCount > ck.c)))) return false;
+        // un botón que en sus dos últimas pulsaciones no cargó nada (y no cambió de texto) no se vuelve a pulsar
+        if (ck && ck.t === t && (ck.noEff || 0) >= 2) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -882,6 +896,9 @@ function fbExtractor(){
           if (b && (!clicks.get(b) || clicks.get(b).n < 4) && btns.indexOf(b) < 0) btns.push(b);
         });
       }
+      // prioridad: primero los que nunca se pulsaron, después los que cargaron comentarios la última vez, al final el resto
+      var rank = function(b){ var ck = clicks.get(b); return !ck ? 0 : !ck.noEff ? 1 : 2; };
+      btns = btns.map(function(b, i){ return { b: b, r: rank(b), i: i }; }).sort(function(x, y){ return (x.r - y.r) || (x.i - y.i); }).map(function(x){ return x.b; });
       if (btns.length > 15) btns = btns.slice(0, 15);   // rondas cortas: con miles de comentarios hay cientos de botones
       if (btns.length){
         idle = 0;
@@ -893,11 +910,15 @@ function fbExtractor(){
           var prev = clicks.get(b), curCount = countNow();
           // si desde la última pulsación llegaron comentarios nuevos, el botón sigue cargando: se cuenta como progreso
           var grew = prev && curCount > prev.c;
-          clicks.set(b, { n: prev && !grew ? prev.n + 1 : 1, all: (prev ? prev.all : 0) + 1, t: bt, c: curCount });
+          var entry = { n: prev && !grew ? prev.n + 1 : 1, all: (prev ? prev.all : 0) + 1, t: bt, c: curCount, noEff: prev && prev.t === bt ? (prev.noEff || 0) : 0 };
+          clicks.set(b, entry);
           if (bt && pressed.length < 60) pressed.push(bt.replace(/\d+/g, 'N'));
           try { b.scrollIntoView({ block: 'center' }); b.click(); } catch(e){}
           await sleep(450 + Math.random() * 450);
           bumpGen();   // la pulsación puede haber cargado comentarios: las listas se recalculan una vez
+          // efecto propio de este botón (y no de otros de la misma ronda): ¿aparecieron comentarios o desapareció el botón?
+          var gone = !b.isConnected || !b.offsetParent || quickText(b).replace(/^[\s—–\-·•]+/, '') !== bt;
+          entry.noEff = gone || countNow() > curCount ? 0 : entry.noEff + 1;
         }
       } else {
         var before = countNow();
@@ -922,6 +943,12 @@ function fbExtractor(){
       }
       snapshot();   // recoger en cada ronda mientras se sigue en la publicación original
       var tot = netTotal();
+      if (collected.length > lastLen){ lastLen = collected.length; lastGrow = Date.now(); }
+      if (AUTO && Date.now() - lastCp > 30000) checkpoint();
+      // botones que ya no cargan nada (respuestas eliminadas, «Ver más» sin efecto): sin comentarios nuevos durante 45 s
+      // (90 s si aún falta más del 3 % del total) se da la extracción por terminada en lugar de seguir pulsándolos sin fin
+      var stallMs = tot && collected.length < tot * 0.97 ? 90000 : 45000;
+      if (round > 3 && Date.now() - lastGrow > stallMs){ LOOP.sinAvance = Math.round((Date.now() - lastGrow) / 1000); break; }
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
       if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });
     }
