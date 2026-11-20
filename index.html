@@ -1064,6 +1064,8 @@ body.no-ai .needs-ai{display:none!important}
 #runDetail:empty{display:none}
 .rd-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
 .rd-head h2{font-size:20px;margin:0}
+/* fecha y estado en una fila, centrados en vertical */
+.rd-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:4px;line-height:20px}
 .rd-acts{display:flex;gap:8px;flex-wrap:wrap}
 .rd-prog{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;margin:8px 0 16px}
 .rd-prog .pbar{height:10px;border-radius:5px}
@@ -6357,7 +6359,7 @@ function renderRunDetail(){
   const pr = trackProgress(t), running = TR.running === t.id, [ic, tx] = ST_TXT[t.status];
   const pend = t.postIds.filter(id => ['pending', 'error'].includes(t.items[id].status)).length;
   box.innerHTML = `<div class="rdetail" aria-live="polite">
-    <div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rs small muted">${esc(fmtDay(t.date))} · <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx}</span></div></div>
+    <div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rd-meta small muted">${esc(fmtDay(t.date))} <span aria-hidden="true">·</span> <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx}</span></div></div>
       <div class="rd-acts">
         ${running ? `<button class="btn tonal" data-ract="stop" title="Detiene la extracción y guarda lo extraído hasta ahora"><span class="ms">stop</span>Detener y guardar</button>`
           : `<button class="btn filled" data-ract="start" ${pend || t.halt ? '' : 'disabled'}><span class="ms">play_arrow</span>${t.status === 'draft' ? 'Iniciar' : 'Continuar'}</button>`}
@@ -6734,7 +6736,7 @@ function initTracking(){
 // Detalle (solo lectura) de un seguimiento del historial: lista de publicaciones con acceso a sus comentarios
 function showHistoryDetail(t){
   const pr = trackProgress(t);
-  const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="small muted">${esc(fmtDay(t.date))} · ${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : '<span class="stchip done"><span class="ms">task_alt</span>Completado</span>'} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
+  const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rd-meta small muted">${esc(fmtDay(t.date))} <span aria-hidden="true">·</span> ${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : '<span class="stchip done"><span class="ms">task_alt</span>Completado</span>'} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
     <div class="rd-acts"><button class="btn filled" data-hd="report"><span class="ms">analytics</span>Crear informe</button>${t.status === 'paused' ? '<button class="btn tonal" data-hd="resume"><span class="ms">play_arrow</span>Continuar extracción</button>' : '<button class="btn text" data-hd="reopen"><span class="ms">replay</span>Reabrir</button>'}<button class="icon-btn" data-hd="close" aria-label="Cerrar" title="Cerrar"><span class="ms">close</span></button></div></div>
     ${t.postIds.map(id => { const p = TR.posts.find(x => x.id === id) || { url:'', platform:'facebook', name:'(eliminada de la lista)' }, it = t.items[id];
       return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${it.status === 'running' ? SPIN : itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' && !it.count ? '<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: reabre el seguimiento y reintenta esta publicación</span>' : it.status === 'done' ? itemCountTxt(it) : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
