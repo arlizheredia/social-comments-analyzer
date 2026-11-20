@@ -487,7 +487,13 @@ const TR = () => w.eval('TR');
       check('«Automática» quita el cambio a mano', w.eval(`S.comments.find(c => c.id === 'facebook5').sentiment`) === 'positivo' && !/facebook5/.test(w.localStorage.getItem('fbca:sentOverrides') || ''));
       await until(() => !w.eval('REP.stale'), 15000).catch(() => {});
       w.go('resultados'); await wait(300); w.selectTab('list'); }
-    check('La búsqueda es siempre con IA: no existe la opción «Términos»', ![...d.getElementById('qMode').options].some(o => o.value === 'terms') && d.getElementById('qMode').value === 'sem');
+    { // buscar por persona: filtra al escribir, sin acentos ni mayúsculas, con sugerencias de quienes comentan
+      d.getElementById('qMode').value = 'person'; d.getElementById('qMode').dispatchEvent(new Event('change'));
+      d.getElementById('q').value = 'dinna ramirez'; d.getElementById('q').dispatchEvent(new Event('input')); await wait(300);
+      const rows = w.eval('S.filtered');
+      check('Buscar por persona: muestra solo los comentarios de esa persona (sin acentos ni mayúsculas) y sugiere nombres', rows.length > 0 && rows.every(c => c.authorName === 'Dinna Ramírez') && d.getElementById('q').getAttribute('list') === 'qPeople' && d.querySelectorAll('#qPeople option').length >= 4, rows.length + ' · sugerencias ' + d.querySelectorAll('#qPeople option').length);
+      d.getElementById('q').value = ''; d.getElementById('qMode').value = 'sem'; d.getElementById('qMode').dispatchEvent(new Event('change')); w.renderTable(); await wait(100); }
+    check('La búsqueda por texto es con IA (no existe «Términos»); además se puede buscar por persona', ![...d.getElementById('qMode').options].some(o => o.value === 'terms') && [...d.getElementById('qMode').options].some(o => o.value === 'person') && d.getElementById('qMode').value === 'sem');
     d.getElementById('q').value = 'servicio'; w.renderTable(); await wait(50);
     check('Escribir sin pulsar Intro no filtra por palabras', w.eval('S.filtered.length') === w.eval('S.comments.length'));
     d.getElementById('qMode').value = 'sem'; d.getElementById('qMode').dispatchEvent(new Event('change'));

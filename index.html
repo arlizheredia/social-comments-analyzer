@@ -1692,10 +1692,12 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
               <input type="search" id="q" placeholder="Buscar en comentarios o autores" aria-label="Buscar comentarios" autocomplete="off">
               <button class="icon-btn sm hidden" id="qClear" aria-label="Borrar búsqueda"><span class="ms">close</span></button>
             </label>
-            <select class="input qmode needs-ai" id="qMode" aria-label="Tipo de búsqueda" title="Tipo de búsqueda">
-              <option value="sem">Por significado (IA local)</option>
-              <option value="ai">Clasificar con IA</option>
+            <select class="input qmode" id="qMode" aria-label="Tipo de búsqueda" title="Tipo de búsqueda">
+              <option value="sem" class="needs-ai">Por significado (IA local)</option>
+              <option value="ai" class="needs-ai">Clasificar con IA</option>
+              <option value="person">Por persona</option>
             </select>
+            <datalist id="qPeople"></datalist>
             <button class="btn outlined ftoggle" id="fToggle" aria-expanded="false" aria-controls="fChips"><span class="ms">filter_list</span>Filtros<b class="fcount hidden" id="fActiveN"></b></button>
           </div>
           <div class="sem-bar hidden needs-ai" id="semBar" role="status" aria-live="polite">
@@ -2163,7 +2165,7 @@ La búsqueda de comentarios es **siempre con IA** (requiere [instalar la IA](#ay
 - **Por significado (IA local)**: describe el tema (por ejemplo *“se refieren a la empresa Kanasta24 o están relacionados”* o *“quejas por demoras”*) y pulsa [[Intro]]. Usa un modelo multilingüe gratuito que se ejecuta **en tu navegador** (forma parte de la instalación de la IA y funciona sin conexión). Ajusta la **precisión** (amplia, media o estricta); cada comentario muestra su relevancia.
 - **Clasificar con IA**: el modelo de IA configurado (la IA de la app u otro proveedor) decide qué comentarios cumplen el criterio. Más fino para criterios complejos; más lento.
 
-Se combina con los filtros de **polaridad** (positivos, neutrales, negativos) y con el resto de chips. Para ver los comentarios de una persona escribe `autor:"Nombre Apellido"` y pulsa [[Intro]].
+Se combina con los filtros de **polaridad** (positivos, neutrales, negativos) y con el resto de chips. Para ver los comentarios de una persona elige **Por persona** en el selector y escribe su nombre: la lista se filtra mientras escribes (sin importar acentos ni mayúsculas) y te sugiere los nombres de quienes comentan. No necesita la IA. También sirve el atajo `autor:"Nombre Apellido"` + [[Intro]].
 
 # Configurar la IA gratuita {#ia-config icon=psychology}
 
@@ -2256,7 +2258,7 @@ Se ejecuta en tu ordenador, sin clave y sin enviar datos. Requisitos: **Chrome d
 
 # Buscar y filtrar {#filtrar icon=filter_list}
 
-- Escribe en el buscador para filtrar por texto o autor; usa `autor:"Nombre Apellido"` para un autor concreto.
+- Busca por tema (por significado) o, con **Por persona** en el selector, por quien comenta.
 - Pulsa **Filtros** (junto al buscador) para mostrar u ocultar los **chips de filtro**; con el panel oculto, el botón indica cuántos filtros hay activos. Los chips se combinan entre grupos, por ejemplo *Respuestas* + *Negativos*.
 - Cambia el orden con **Ordenar**, y marca comentarios para copiar o exportar solo esos.
 
@@ -4546,6 +4548,7 @@ function applyFilters(){
   const am0 = qRaw.match(/autor:("([^"]+)"|(\S+))/); if(am0) q = am0[0];
   const am = q.match(/autor:("([^"]+)"|(\S+))/);
   if(am){ authorQ = (am[2]||am[3]).toLowerCase(); q = q.replace(am[0],'').trim(); }
+  const personQ = $('#qMode').value === 'person' && !am ? normName($('#q').value) : '';
   const F=S.f;
   S.filtered = S.comments.filter(c=>{
     if(F.post.size && !F.post.has(c._ref?.postId)) return false;
@@ -4557,6 +4560,7 @@ function applyFilters(){
     if(F.extra.has('noreply') && (c.type!=='comment' || c.repliesCount)) return false;
     if(F.extra.has('noteam') && S.teamOn && !c.needsTeam) return false;
     if(authorQ && !c.authorName.toLowerCase().includes(authorQ)) return false;
+    if(personQ && !normName(c.authorName).includes(personQ)) return false;
     if(S.sem){ const sc = S.sem.scores.get(c.id) ?? 0; return S.sem.mode === 'ai' ? sc >= 1 : sc >= (+$('#semLevel').value || .825); }
     if(q && !(c.text.toLowerCase().includes(q) || c.authorName.toLowerCase().includes(q))) return false;
     return true;
@@ -4587,6 +4591,7 @@ function renderAll(){
   const b=$('#navBadge'); b.classList.toggle('hidden',!has); b.textContent = S.comments.length>999 ? '999+' : S.comments.length;
   if(!has) return;
   renderMeta(); renderStats(); renderCharts(); renderTable();
+  if($('#qMode').value === 'person') fillPeopleList();
 }
 function renderMeta(){
   const m=S.meta;
@@ -7679,15 +7684,24 @@ async function runAIClassify(q){
     semApply();
   }catch(e){ semStatus('IA: ' + e.message, false); S.sem = null; }
 }
+// Sugerencias para buscar por persona: quienes comentan, de más a menos comentarios
+function fillPeopleList(){
+  const n = {}; S.comments.forEach(c => { if(c.authorName) n[c.authorName] = (n[c.authorName] || 0) + 1; });
+  $('#qPeople').innerHTML = Object.entries(n).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es')).slice(0, 500)
+    .map(([a, k]) => `<option value="${esc(a)}">${esc(countTxt(k, 'comentario', 'comentarios'))}</option>`).join('');
+}
 function semClear(){ S.sem = null; $('#semBar').classList.add('hidden'); S.page = 1; renderTable(); }
 function initSemantic(){
-  $('#qMode').value = PREF.get('qMode', 'sem') === 'ai' ? 'ai' : 'sem';
-  const ph = () => { const m = $('#qMode').value; $('#q').placeholder = m === 'sem' ? 'Describe el tema y pulsa Intro (p. ej.: quejas por demoras en la entrega)' : 'Criterio para la IA y pulsa Intro (p. ej.: se refieren a Kanasta24)'; };
+  const saved = PREF.get('qMode', 'sem');
+  $('#qMode').value = ['sem', 'ai', 'person'].includes(saved) && (saved === 'person' || aiInstalled()) ? saved : (aiInstalled() ? 'sem' : 'person');
+  const ph = () => { const m = $('#qMode').value;
+    $('#q').placeholder = m === 'person' ? 'Escribe el nombre de quien comenta (p. ej.: Ana López)' : m === 'sem' ? 'Describe el tema y pulsa Intro (p. ej.: quejas por demoras en la entrega)' : 'Criterio para la IA y pulsa Intro (p. ej.: se refieren a Kanasta24)';
+    if(m === 'person'){ fillPeopleList(); $('#q').setAttribute('list', 'qPeople'); } else $('#q').removeAttribute('list'); };
   ph();
   $('#qMode').onchange = () => { PREF.set('qMode', $('#qMode').value); ph(); semClear(); $('#q').focus(); };
   $('#q').addEventListener('keydown', e => {
     if(e.key !== 'Enter') return; const m = $('#qMode').value, v = $('#q').value.trim(); if(!v) return; e.preventDefault();
-    if(/^autor:/i.test(v)){ S.page = 1; renderTable(); return; }   // atajo de filtro por autor
+    if(/^autor:/i.test(v) || m === 'person'){ S.page = 1; renderTable(); return; }   // persona: filtra al escribir, sin IA
     if(!aiInstalled()){ aiNeedInstall(); return; }
     m === 'sem' ? runSemantic(v) : runAIClassify(v);
   });
