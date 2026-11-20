@@ -7213,7 +7213,6 @@ function renderReport(){
     </div>
     ${m.team && m.openQ.length ? `<section class="card rep-sec"><h3><span class="ms">help</span>Preguntas sin responder</h3><div class="qlist">${m.openQ.slice(0, 5).map(qItem).join('')}</div></section>` : ''}
     <p class="no-print" style="margin:4px 0 12px"><button class="btn tonal sm" id="repOpenList"><span class="ms">forum</span>Ver y responder estos comentarios</button></p>
-    <p class="small muted">Nota: el tono de cada comentario (positivo, neutral o negativo) es orientativo.${m.team ? ' «Sin responder» son comentarios dirigidos a la marca que aún no tienen respuesta del equipo.' : ''}</p>
   </div>`;
   if(m.byDate.length > 1){ const W = chartW('#repChartDates'); $('#repChartDates').innerHTML = columnChart(dates, { W, h:chartH(W), label:'Comentarios por seguimiento' }); }
   bindVizTips($('#repOut'));
@@ -7317,20 +7316,20 @@ function reportDocument(m){
   <h3>Negativos</h3>${m.topNeg.map(quote).join('') || '<p>Sin comentarios negativos.</p>'}
   <h3>Positivos</h3>${m.topPos.map(quote).join('') || '<p>Sin comentarios positivos.</p>'}`;
   if(m.team && m.openQ.length) b += `<h2>Preguntas sin responder</h2>${m.openQ.slice(0, 5).map(quote).join('')}`;
-  b += `<p class="small">Nota: el tono de cada comentario (positivo, neutral o negativo) es orientativo.${m.team ? ' «Sin responder» son comentarios dirigidos a la marca que aún no tienen respuesta del equipo.' : ''}</p>`;
-  const footer = 'Informe de comentarios' + (f ? ' sobre ' + f.name : '') + ' · ' + (today.charAt(0).toUpperCase() + today.slice(1));
-  return { body:`<div class="scadoc">${b}</div>`, css:DOC_CSS, footer,
-    html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Informe de comentarios</title><style>body{margin:2cm;background:#fff}${DOC_CSS}</style></head><body><div class="scadoc">${b}<p class="small" style="margin-top:18pt;border-top:0.75pt solid #000;padding-top:4pt">${e(footer)}</p></div></body></html>` };
+  const title = reportName(m.last && m.last.date);
+  return { body:`<div class="scadoc">${b}</div>`, css:DOC_CSS, title,
+    html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${e(title)}</title><style>body{margin:2cm;background:#fff}${DOC_CSS}</style></head><body><div class="scadoc">${b}</div></body></html>` };
 }
-// Word (.doc) en blanco y negro, Arial 12, con pie de página numerado
+// Nombre del informe: «Informe de análisis de comentarios - K24 - 20-11-2026» (fecha del seguimiento más reciente)
+const reportName = iso => 'Informe de análisis de comentarios - K24 - ' + String(iso || todayISO()).slice(0, 10).split('-').reverse().join('-');
+// Word (.doc) en blanco y negro, Arial 12
 function downloadWord(d, name){
-    // Word: estilos directos (Word ignora parte del CSS); Arial 12, negro sobre blanco, pie de página con número de página
+    // Word: estilos directos (Word ignora parte del CSS); Arial 12, negro sobre blanco
     const wordCss = d.css.replace(/\.scadoc,\.scadoc \*/g, 'body,body *').replace(/\.scadoc /g, '').replace(/\.scadoc\{/g, 'body{')
-      + `@page Section1{size:21cm 29.7cm;margin:2cm 2cm 2.2cm 2cm;mso-footer:f1}div.Section1{page:Section1}p.MsoFooter{font-family:Arial;font-size:9pt;margin:0}`;
-    const word = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Informe de comentarios</title>
+      + `@page Section1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.Section1{page:Section1}`;
+    const word = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(d.title || 'Informe de análisis de comentarios')}</title>
       <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>${wordCss}</style></head>
-      <body><div class="Section1">${d.body.replace(/^<div class="scadoc">|<\/div>$/g, '')}
-      <div style="mso-element:footer" id="f1"><p class="MsoFooter">${esc(d.footer)} — Página <span style="mso-field-code:' PAGE '"></span> de <span style="mso-field-code:' NUMPAGES '"></span></p></div></div></body></html>`;
+      <body><div class="Section1">${d.body.replace(/^<div class="scadoc">|<\/div>$/g, '')}</div></body></html>`;
     download(name + '.doc', new Blob(['﻿', word], { type:'application/msword' }));
 }
 // Informe del análisis abierto en Resultados (una publicación o varias)
@@ -7359,17 +7358,15 @@ async function reportPdf(m){
   box.innerHTML = `<style>${d.css}.scadoc{max-width:none}</style>${d.body}`;
   document.body.appendChild(box);
   try{
-    const pdf = await html2pdf().set({ margin:[20, 20, 22, 20], image:{ type:'jpeg', quality:.98 }, html2canvas:{ scale:2, backgroundColor:'#ffffff' },
+    const pdf = await html2pdf().set({ margin:[20, 20, 20, 20], image:{ type:'jpeg', quality:.98 }, html2canvas:{ scale:2, backgroundColor:'#ffffff' },
       jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }, pagebreak:{ mode:['css', 'legacy'], avoid:['tr', 'li', '.avoid', 'h2', 'h3'] } }).from(box.querySelector('.scadoc')).toPdf().get('pdf');
-    const total = pdf.internal.getNumberOfPages(), W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
-    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(0, 0, 0);
-    for(let i = 1; i <= total; i++){ pdf.setPage(i); pdf.text(d.footer, 20, H - 10); pdf.text(`Página ${i} de ${total}`, W - 20, H - 10, { align:'right' }); }
+    try{ pdf.setProperties({ title:d.title }); }catch(e){}
     return pdf;
   } finally { box.remove(); }
 }
 async function reportExport(kind){
   const m = REP.model; if(!m) return;
-  const name = 'informe-comentarios-' + (m.tracks.length === 1 ? m.first.date : m.first.date + '_' + m.last.date);
+  const name = reportName(m.last && m.last.date);
   if(kind === 'xlsx'){ exportXLSX(m.list.map(c => ({ ...c, text:c.text }))); return; }
   const d = reportDocument(m);
   if(kind === 'print'){
@@ -7952,7 +7949,7 @@ function doExport(kind){
       attachments:c.attachments, mentions:c.mentions, hashtags:c.hashtags, emojis:c.emojis, sentiment:c.sentiment, sentimentScore:c.sentimentScore,
       edited:c.edited, hidden:c.hidden, permalink:c.permalink, source:c.source, platform:c.platform }))},null,2), 'application/json');
   if(kind==='txt') download(`comentarios-${st}.txt`, summaryText(list)+'\n\n'+'─'.repeat(60)+'\n\n'+toText(list), 'text/plain;charset=utf-8');
-  if(kind==='html' || kind==='word') return resultsReportModel(list).then(m => { const d = reportDocument(m); if(kind==='word') downloadWord(d, `informe-comentarios-${st}`); else download(`informe-comentarios-${st}.html`, d.html, 'text/html;charset=utf-8'); }).catch(e => toast('No se pudo crear el informe: ' + e.message));
+  if(kind==='html' || kind==='word') return resultsReportModel(list).then(m => { const d = reportDocument(m); if(kind==='word') downloadWord(d, d.title); else download(d.title + '.html', d.html, 'text/html;charset=utf-8'); }).catch(e => toast('No se pudo crear el informe: ' + e.message));
   if(kind==='xlsx') exportXLSX(list);
 }
 function doCopy(kind){

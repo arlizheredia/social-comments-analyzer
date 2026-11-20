@@ -12,7 +12,7 @@ const root = resolve(new URL('..', import.meta.url).pathname);
 const files = process.argv.slice(2).length ? process.argv.slice(2).map(f => resolve(f))
   : readdirSync(join(root, 'tests')).filter(f => f.endsWith('.test.html')).map(f => join(root, 'tests', f));
 const CHROME = process.env.CHROME || 'google-chrome';
-const TIMEOUT = +(process.env.TEST_TIMEOUT || 240000);
+const TIMEOUT = +(process.env.TEST_TIMEOUT || 480000);   // la batería de seguimiento ya pasa de 4 min
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function runOne(file){
