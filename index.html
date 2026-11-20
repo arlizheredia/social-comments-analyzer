@@ -7710,8 +7710,8 @@ function whatsappMessage(m, tone = 'cercano'){
   L.push(`📊 *Informe de comentarios${brand ? ' · ' + brand : ''}*`);
   L.push(m.prev ? `Seguimiento del ${day(m.last.date)}, comparado con el del ${day(m.prevT.date)}.` : `Seguimiento del ${day(m.last.date)}.`);
   L.push('');
-  if(fq) L.push(`${formal ? 'Se revisaron' : 'Revisamos'} *${countTxt(c.focus ? c.focus.total : others.length, 'comentario', 'comentarios')}*.`);
-  else L.push(`${formal ? 'Se analizaron' : 'Analizamos'} *${countTxt(c.list.length, 'comentario', 'comentarios')}* de ${countTxt(c.authorsN, 'persona', 'personas')}${vsPrev}.`);
+  if(fq) L.push(`Se revisaron *${countTxt(c.focus ? c.focus.total : others.length, 'comentario', 'comentarios')}*.`);
+  else L.push(`Se analizaron *${countTxt(c.list.length, 'comentario', 'comentarios')}* de ${countTxt(c.authorsN, 'persona', 'personas')}${vsPrev}.`);
   const aboutTxt = crit ? `Sobre *${crit}* ${about.length === 1 ? 'hay 1 comentario' : `hay ${about.length} comentarios`}${fq ? vsPrev : ''}` : 'De ellos';
   if(about.length) L.push(`${aboutTxt}: *${pos.length} ${pos.length === 1 ? 'positivo' : 'positivos'}* 👍 y *${neg.length} ${neg.length === 1 ? 'negativo' : 'negativos'}* 👎${about.length - pos.length - neg.length ? ` (el resto, neutrales)` : ''}.`);
   else if(crit) L.push(`Nadie mencionó *${crit}* en este seguimiento.`);
