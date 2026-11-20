@@ -7728,7 +7728,7 @@ function whatsappMessage(m, tone = 'cercano'){
     if(pendQ) todo.push(countTxt(pendQ, 'pregunta sigue', 'preguntas siguen') + ' pendiente' + (pendQ === 1 ? '' : 's'));
     if(todo.length) L.push('', `⏳ ${todo.join(' y ')}.`);
   }
-  L.push('', formal ? 'Adjunto el informe completo con todo el detalle.' : tone === 'breve' ? 'Adjunto el informe completo 👇' : 'Les dejo el informe completo con el detalle 👇');
+  L.push('', formal ? 'Se adjunta el informe completo con todo el detalle.' : tone === 'breve' ? 'Se adjunta el informe completo 👇' : 'Se adjunta el informe completo con el detalle 👇');
   return L.join('\n');
 }
 function openWaDlg(){
@@ -7753,7 +7753,7 @@ async function waAi(){
   if(!aiConfigured(cfg)){ openAiCfg(); toast('Configura primero un modelo de IA gratuito'); return; }
   const wst = $('#waAiState'); wst.dataset.busy = '1'; $('#waAi').disabled = true; aiProgressSet(wst, 'Redactando el mensaje con ' + AI_PROV[cfg.prov].name + '…', cfg.prov === 'local' ? 0 : null);
   try{
-    const tone = { cercano:'cercano y profesional, en primera persona', formal:'formal, en primera persona', breve:'muy breve (2 o 3 frases), en primera persona' }[$('#waTone').value];
+    const tone = { cercano:'cercano y profesional, en forma impersonal (por ejemplo, «se revisaron»)', formal:'formal, en forma impersonal (por ejemplo, «se revisaron»)', breve:'muy breve (2 o 3 frases), en forma impersonal' }[$('#waTone').value];
     const sys = 'Eres un especialista en comunicación y redes sociales. Escribes mensajes para WhatsApp en español, claros y humanos, para personas sin conocimientos técnicos. Usa lenguaje sencillo. Nunca uses términos técnicos como "índice neto", "puntos", "KPI" o porcentajes complicados: habla de cantidades de comentarios. No menciones la inteligencia artificial. No inventes datos. Usa *negrita* de WhatsApp con moderación y como mucho 3 emojis. Responde solo con el mensaje.';
     const user = `Escribe un mensaje ${tone} para un canal de WhatsApp que acompañe un informe de comentarios en redes sociales. Incluye: cuántos comentarios se analizaron; cuántos hablan de ${m.focus ? focusSubj(m.focus.q) : ((m.terms || []).join(', ') || 'la marca')} y cuántos de esos son positivos y negativos; quiénes comentan en contra de la marca con dos o tres ejemplos breves de lo que dicen; y, de los positivos, solo quiénes son los que más comentan a favor. No des opiniones personales (qué se valora, de qué se quejan, qué conviene hacer). Máximo 700 caracteres. Termina indicando que se adjunta el informe.${$('#waSign').value.trim() ? ' Firma: ' + $('#waSign').value.trim() + '.' : ''}\n\nMensaje base con los datos correctos (reescríbelo con naturalidad):\n${whatsappMessage(m, 'cercano')}`;
     let txt = String(await aiRequest(cfg, sys, user, null, cfg.prov === 'local' ? (x => aiProgressSet(wst, `Redactando el mensaje… ${Math.round(x * 100)} %`, Math.round(x * 100))) : null) || '').replace(/^```\w*\n?|```$/g, '').trim();
