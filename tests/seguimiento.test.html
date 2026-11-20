@@ -392,7 +392,14 @@ const TR = () => w.eval('TR');
 
     w.eval('semEmbed = __semBak');
     // 8. Ver comentarios del informe y búsqueda por significado (modelo simulado: bolsa de palabras)
+    { // equipo: las personas se buscan en todos los comentarios guardados, no solo en los abiertos
+      const ig = TR().posts.find(p => p.platform === 'instagram').id; await w.viewResult(t1.id, ig); await wait(150);
+      w.openTeam(); await until(() => /Pedro Ruiz/.test(d.getElementById('teamPeople').textContent), 4000).catch(() => {});
+      d.getElementById('teamSearch').value = 'pedro'; d.getElementById('teamSearch').dispatchEvent(new Event('input')); await wait(50);
+      check('Equipo: busca personas en todos los comentarios guardados (Pedro solo comentó en otro seguimiento)', !w.eval('S.comments.some(c => /Pedro/.test(c.authorName))') && /Pedro Ruiz/.test(d.getElementById('teamPeople').textContent) && /todos los comentarios/.test(d.getElementById('teamPeopleH').textContent), d.getElementById('teamPeopleH').textContent);
+      d.getElementById('teamSearch').value = ''; d.getElementById('teamDlg').close(); }
     await w.viewTrackingsComments([t1.id, t2.id]); w.selectTab('list'); await wait(200);
+    check('Comentarios sin paginar: se muestran todos los hilos', /^\d+ hilos?$/.test(d.getElementById('pageInfo').textContent.trim()) && w.eval('S.pageSize') >= 1e9, d.getElementById('pageInfo').textContent);
     check('Ver varios seguimientos juntos en Resultados', w.eval('S.comments.length') === 16 && w.eval('S.meta.multi') === true);
     { w.selectTab('summary'); await wait(300); const card = id => d.getElementById(id).closest('section.card');
       check('Resumen: las tarjetas sin datos no se muestran (sin hashtags ni menciones) y las que tienen datos sí', card('topHashtags').classList.contains('hidden') && !card('topLiked').classList.contains('hidden') && !card('topEmojis').classList.contains('hidden') && !card('topAuthors').classList.contains('hidden'));

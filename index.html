@@ -385,7 +385,7 @@ mark{background:#fde293;color:#1f1f1f;border-radius:2px;padding:0 1px}
 .conv{--line:var(--outline-variant)}
 .conv .cmain>.bubble-wrap,.conv .cmain>.cimg{max-width:min(100%,760px)}
 .cnode{position:relative}
-.cthread{padding:4px 0 12px}
+.cthread{padding:4px 0 12px;content-visibility:auto;contain-intrinsic-size:auto 140px}
 .cthread+.cthread{border-top:1px solid var(--outline-variant);padding-top:8px}
 .crow{display:flex;gap:8px;padding-top:8px}
 .cav{position:relative;flex:none;display:flex;flex-direction:column;align-items:center}
@@ -1777,11 +1777,12 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
           </div>
           <div class="pager">
             <span class="muted small" id="countInfo" style="margin-right:auto"></span>
-            <label class="row" style="gap:8px">Filas por página
-              <select class="input" id="pageSize"><option>25</option><option selected>50</option><option>100</option><option>250</option><option value="100000">Todas</option></select>
+            <!-- sin paginación: se muestran todos los comentarios (los controles quedan ocultos por compatibilidad) -->
+            <label class="row hidden" style="gap:8px">Filas por página
+              <select class="input" id="pageSize"><option value="1000000000" selected>Todas</option></select>
             </label>
             <span id="pageInfo"></span>
-            <span>
+            <span class="hidden">
               <button class="icon-btn" id="prevPg" aria-label="Página anterior"><span class="ms">chevron_left</span></button>
               <button class="icon-btn" id="nextPg" aria-label="Página siguiente"><span class="ms">chevron_right</span></button>
             </span>
@@ -2279,7 +2280,7 @@ Antes de responder, el asistente comprueba que haya una **sesión de Facebook ac
 
 ## Equipo {#as-equipo}
 
-- Añade personas desde la lista *Personas en estos comentarios*, escribiendo su nombre, o desde el detalle de un comentario (**Añadir al equipo**).
+- Añade personas desde la lista *Personas en todos los comentarios* (busca entre los comentarios de todos tus seguimientos y los abiertos), escribiendo su nombre, o desde el detalle de un comentario (**Añadir al equipo**).
 - Los comentarios **pendientes** se distinguen por su **fondo ámbar** (con una barra a la izquierda) en la conversación.
 - Un comentario está **respondido** cuando alguien del equipo contesta en su hilo (o lo menciona en una respuesta posterior del mismo hilo). Sus mensajes llevan la insignia *Equipo*.
 - Por defecto, el **autor de la publicación** (tu página o cuenta) cuenta como equipo.
@@ -2446,7 +2447,7 @@ Cada comentario incluye su **plataforma**.
     </div>
     <label class="check"><input type="checkbox" id="teamPostAuthor"> Contar al autor de la publicación (la página o cuenta) como equipo</label>
     <label class="check"><input type="checkbox" id="teamAllReplies"> Considerar pendientes también las respuestas entre usuarios</label>
-    <h3 class="team-h">Personas en estos comentarios</h3>
+    <h3 class="team-h" id="teamPeopleH">Personas en todos los comentarios</h3>
     <label class="searchbar sm"><span class="ms">search</span><input type="search" id="teamSearch" placeholder="Buscar persona" aria-label="Buscar persona" autocomplete="off"></label>
     <div class="team-people" id="teamPeople"></div>
   </div>
@@ -3594,7 +3595,7 @@ const PREF = {
   set(k, v){ try{ localStorage.setItem('fbca:'+k, v); }catch(e){} },
   del(k){ try{ localStorage.removeItem('fbca:'+k); }catch(e){} }
 };
-const S = { meta:{}, comments:[], filtered:[], rows:[], selected:new Set(), sort:{key:'idx',dir:'asc'}, page:1, pageSize:50, threaded:true,
+const S = { meta:{}, comments:[], filtered:[], rows:[], selected:new Set(), sort:{key:'idx',dir:'asc'}, page:1, pageSize:1e9, threaded:true,
   f:{ type:new Set(), sent:new Set(), extra:new Set(), post:new Set() },
   listView:'conv', tops:[], kids:{}, expanded:new Set(), collapsed:new Set() };
 const STORE_KEY = 'data:v1';
@@ -4937,7 +4938,7 @@ function renderTable(){
         ${c.permalink?`<a class="icon-btn sm" href="${esc(c.permalink)}" target="_blank" rel="noopener" aria-label="Abrir en ${platName(c.platform)}" title="Abrir en ${platName(c.platform)}"><span class="ms">open_in_new</span></a>`:''}
       </div></td>
     </tr>`; }).join('') : `<tr><td colspan="9">${noRowsHtml()}</td></tr>`;
-  $('#pageInfo').textContent = (total ? `${fmtN(start+1)}–${fmtN(Math.min(start+S.pageSize,total))} de ${fmtN(total)}` : '0 de 0') + (conv ? ' hilos' : '');
+  $('#pageInfo').textContent = conv ? countTxt(total, 'hilo', 'hilos') : countTxt(total, 'comentario', 'comentarios');
   $('#prevPg').disabled = S.page<=1; $('#nextPg').disabled = S.page>=pages;
   $('#countInfo').textContent = filtersActive() ? `${fmtN(S.filtered.length)} de ${fmtN(S.comments.length)} coinciden con los filtros` : '';
   $('#selbar').classList.toggle('hidden', !S.selected.size);
@@ -5091,13 +5092,20 @@ function renderTeamDlg(){
   $('#teamPostAuthor').checked = TEAM.postAuthor();
   $('#teamAllReplies').checked = TEAM.allReplies();
   const q = normName($('#teamSearch').value);
-  const people = new Map();
-  S.comments.forEach(c => {
+  // todas las personas: las de los comentarios abiertos y las de todos los seguimientos guardados (sin contar dos veces un mismo comentario)
+  const people = new Map(), seen = new Set();
+  const addC = (c, postAuthor) => {
     const k = normName(c.authorName); if(!k) return;
+    const ck = (c._ref?.postId || c.postId || '') + '|' + resKey(c); if(seen.has(ck)) return; seen.add(ck);
     const p = people.get(k) || { name:c.authorName, c, n:0, rep:0, author:false };
-    p.n++; if(c.type === 'reply') p.rep++; if(c.badges.includes('Autor de la publicación') || (S.meta.postAuthor && k === normName(S.meta.postAuthor))) p.author = true;
+    if(!p.c.authorAvatar && c.authorAvatar) p.c = c;
+    p.n++; if(c.type === 'reply' || c.parentId) p.rep++;
+    if((c.badges || []).includes('Autor de la publicación') || (postAuthor && k === normName(postAuthor))) p.author = true;
     people.set(k, p);
-  });
+  };
+  S.comments.forEach(c => addC(c, c._postAuthor || S.meta.postAuthor));
+  (TEAMP.list || []).forEach(x => addC(x.c, x.pa));
+  $('#teamPeopleH').textContent = `Personas en todos los comentarios (${fmtN(people.size)})`;
   const arr = [...people.values()].filter(p => !q || normName(p.name).includes(q))
     .sort((a, b) => (b.author - a.author) || (b.rep - a.rep) || (b.n - a.n) || a.name.localeCompare(b.name, 'es'));
   $('#teamPeople').innerHTML = arr.slice(0, 200).map(p => {
@@ -5106,7 +5114,12 @@ function renderTeamDlg(){
       + (inT ? `<button class="btn text sm" data-rm="${esc(p.name)}"><span class="ms">check</span>En el equipo</button>` : `<button class="btn tonal sm" data-add="${esc(p.name)}" data-aid="${esc(p.c.authorId||'')}"><span class="ms">person_add</span>Añadir</button>`) + '</div>';
   }).join('') || '<p class="small muted" style="padding:0 8px">No hay personas que coincidan.</p>';
 }
-function openTeam(){ $('#teamSearch').value = ''; renderTeamDlg(); $('#teamDlg').showModal(); }
+// personas de todos los seguimientos guardados (se cargan al abrir el diálogo)
+const TEAMP = { list:null };
+async function loadTeamPeople(){
+  try{ const rs = await DB.all('results'); TEAMP.list = []; rs.forEach(r => (r.comments || []).forEach(c => TEAMP.list.push({ c:{ ...c, postId:r.postId }, pa:r.meta && r.meta.postAuthor }))); }catch(e){ TEAMP.list = []; }
+}
+function openTeam(){ $('#teamSearch').value = ''; renderTeamDlg(); $('#teamDlg').showModal(); loadTeamPeople().then(() => { if($('#teamDlg').open) renderTeamDlg(); }); }
 function teamChanged(){
   renderTeamDlg(); renderTable();
   if(!$('#replyDlg').open) return;
