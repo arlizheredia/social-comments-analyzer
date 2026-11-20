@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Test · Extractor con muchos comentarios</title>
+<style>
+  :root{color-scheme:light dark;font-family:system-ui,sans-serif}
+  body{margin:24px;max-width:960px}
+  h1{font-size:20px;margin:0 0 4px}
+  p.sub{margin:0 0 16px;color:#666;font-size:14px}
+  .ok{color:#137333}.ko{color:#c5221f}
+  li{margin:6px 0;font-size:14px}
+  li small{display:block;color:#666;font-size:12px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>Test del extractor: reel con 1.200 comentarios</h1>
+<p class="sub">Comprueba que el extractor termina rápido y sin bloquear la pestaña cuando la lista es grande. Antes se recorría la lista entera por cada botón y por cada ronda (O(n²)): con más de 1.500 comentarios la pestaña quedaba congelada.</p>
+<ol id="out"></ol>
+<div id="list"></div>
+<script>
+// DOM de un reel de Facebook sin role="article": el extractor usa sus pseudo-artículos.
+const N = 1200;
+const list = document.getElementById('list');
+const frag = document.createDocumentFragment();
+for(let i = 1; i <= N; i++){
+  const c = document.createElement('div');
+  c.className = 'c';
+    // como en Facebook, el enlace del autor lleva el id en base64 y el de la fecha en número: deben contar como un solo comentario
+  c.innerHTML = '<a href="/user' + i + '?comment_id=' + encodeURIComponent(btoa('comment:123456_' + (900000 + i))) + '">Usuario ' + i + '</a> ' +
+    '<a href="https://www.facebook.com/reel/123456?comment_id=' + (900000 + i) + '">2 h</a>' +
+    '<div dir="auto" style="text-align: left">Comentario número ' + i + ' con un texto de prueba para medir la extracción.</div>' +
+    '<div role="button">Responder</div>';
+  frag.appendChild(c);
+}
+list.appendChild(frag);
+
+const t0 = performance.now();
+let done = false;
+window.__scaAuto = {
+  jobId: 'test-extractor-grande',
+  stopRequested: false,
+  sleep: () => new Promise(r => setTimeout(r, 0)),   // sin esperas reales: se mide solo el trabajo del extractor
+  emit: e => {
+    if(e.type === 'error'){ document.title = 'FAIL error: ' + e.error; return; }
+    if(e.type !== 'done') return;
+    done = true;
+    const ms = Math.round(performance.now() - t0);
+    const comments = e.data.comments || [];
+    const bad = comments.filter(c => !c.id || !c.authorName || !c.text).length;
+    const ok = comments.length === N && !bad && ms < 3000;
+    const li = document.createElement('li');
+    li.className = ok ? 'ok' : 'ko';
+    li.textContent = (ok ? '✔ ' : '✘ ') + comments.length + ' comentarios, ' + bad + ' sin datos, ' + ms + ' ms';
+    document.getElementById('out').appendChild(li);
+    document.title = (ok ? 'PASS ' : 'FAIL ') + comments.length + ' comentarios, ' + bad + ' sin datos, ' + ms + ' ms';
+  }
+};
+</script>
+<script src="../extension/extractor.js"></script>
+<script>setTimeout(() => { if(!done) document.title = 'FAIL tiempo de espera agotado'; }, 30000);</script>
+</body>
+</html>

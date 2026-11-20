@@ -2757,6 +2757,13 @@ function fbExtractor(){
   var collected = [], byKey = {}, meta = {}, startKey = '', useCollectedOnly = false;
   var IG = /(^|\.)instagram\.com$/.test(location.hostname); // mismo marcador para Facebook, Instagram y TikTok
   var TT = /(^|\.)tiktok\.com$/.test(location.hostname);
+  // Con miles de comentarios, leer la misma lista cientos de veces (una por botón y por ronda) bloqueaba la pestaña.
+  // Estas cachés se vacían al empezar cada ronda y después de pulsar o desplazar: dentro de una ronda todo el trabajo
+  // reutiliza las mismas listas y los mismos comentarios ya extraídos.
+  var gen = 0, artsCache = null, artsGen = -1, timesCache = null, timesGen = -1, rootCache = null, rootGen = -1, totalCache, totalGen = -1;
+  function bumpGen(){ gen++; artsCache = null; timesCache = null; rootCache = null; totalGen = -1; }
+  // textContent no obliga al navegador a recalcular el diseño (innerText sí): con miles de botones la diferencia es enorme
+  function quickText(n){ return (n.textContent || '').replace(/\s+/g, ' ').trim(); }
 
   function el(tag, css, text){ var e = document.createElement(tag); if (css) e.style.cssText = css; if (text != null) e.textContent = text; return e; }
   var btnCss = 'background:#0b57d0;color:#fff;border:0;border-radius:18px;padding:8px 14px;font:500 13px Roboto,system-ui;cursor:pointer';
@@ -2810,25 +2817,48 @@ function fbExtractor(){
   var REPLY_BTN_RE = /^.{0,60}\b(respuestas?|replies|reply|réponses?|respostas?|respondió|replied|a répondu|respondeu)\b.{0,20}$/i;
 
   function articles(){
+    if (artsCache && artsGen === gen) return artsCache;
     var all = Array.prototype.slice.call(document.querySelectorAll('div[role="article"]'));
     var lab = all.filter(function(a){ return LABEL_RE.test(a.getAttribute('aria-label') || ''); });
-    if (lab.length) return lab;
-    var withLink = all.filter(function(a){ return a.querySelector('a[href*="comment_id="]'); });
-    if (withLink.length) return withLink;
-    return pseudoArticles();
+    var res;
+    if (lab.length) res = lab;
+    else {
+      var withLink = all.filter(function(a){ return a.querySelector('a[href*="comment_id="]'); });
+      res = withLink.length ? withLink : pseudoArticles();
+    }
+    artsCache = res; artsGen = gen; return res;
   }
   // Reels: los comentarios pueden no ser role="article". Para cada comment_id se toma el contenedor más amplio
   // que solo contiene ese comentario (enlace de autor/fecha + texto) y se marca para tratarlo como un artículo.
-  function cidOf(a){ try { var u = new URL(a.href, location.href); return u.searchParams.get('reply_comment_id') || u.searchParams.get('comment_id') || ''; } catch(e){ return ''; } }
+  // el enlace del autor lleva el id en base64 («Y29tbWVudDox…») y el de la fecha en número: se decodifica para que sean el mismo comentario
+  function cidOf(a){ try { var u = new URL(a.href, location.href); return decodeId(u.searchParams.get('reply_comment_id') || u.searchParams.get('comment_id') || ''); } catch(e){ return ''; } }
   function pseudoArticles(){
     var marked = Array.prototype.slice.call(document.querySelectorAll('[data-sca-art]'));
-    var links = Array.prototype.slice.call(document.querySelectorAll('a[href*="comment_id="]')).filter(function(a){ return !a.closest('[data-sca-art]'); });
-    links.forEach(function(a){
-      var id = cidOf(a); if (!id) return;
+    var all = Array.prototype.slice.call(document.querySelectorAll('a[href*="comment_id="]'));
+    // un contenedor marcado al que después llegaron respuestas contiene ya varios comentarios: se desmarca y se vuelve a separar
+    if (marked.length){
+      var idsIn = new Map();
+      all.forEach(function(a){ var box = a.closest('[data-sca-art]'); if (!box) return; var id = cidOf(a); if (!id) return; var s = idsIn.get(box) || new Set(); s.add(id); idsIn.set(box, s); });
+      marked = marked.filter(function(b){ var s = idsIn.get(b); if (s && s.size > 1){ b.removeAttribute('data-sca-art'); artCache.delete(b); return false; } return true; });
+    }
+    var fresh = all.filter(function(a){ return !a.closest('[data-sca-art]'); });
+    if (!fresh.length) return marked.filter(function(b){ return b.isConnected; });
+    // Antes se buscaban todos los enlaces dentro de cada ancestro de cada comentario (O(n²)): con 1.500 comentarios
+    // eso bloqueaba la pestaña. Ahora se cuentan los comentarios una sola vez subiendo por los ancestros (O(n)).
+    // Un comentario puede tener dos enlaces con el mismo comment_id (autor y fecha): se cuenta una sola vez.
+    var byCid = new Map(), freshByCid = new Map();
+    all.forEach(function(a){ var id = cidOf(a); if (id && !byCid.has(id)) byCid.set(id, a); });
+    fresh.forEach(function(a){ var id = cidOf(a); if (id && !freshByCid.has(id)) freshByCid.set(id, a); });
+    var counts = new Map();
+    byCid.forEach(function(a){
+      var p = a.parentElement;
+      while (p && p !== document.body){ counts.set(p, (counts.get(p) || 0) + 1); p = p.parentElement; }
+    });
+    freshByCid.forEach(function(a){
+      if (a.closest('[data-sca-art]')) return;
       var box = a, p = a.parentElement;
       while (p && p !== document.body){
-        var ids = {}; Array.prototype.slice.call(p.querySelectorAll('a[href*="comment_id="]')).forEach(function(x){ var k = cidOf(x); if (k) ids[k] = 1; });
-        if (Object.keys(ids).length > 1) break;
+        if ((counts.get(p) || 0) > 1) break;
         box = p; p = p.parentElement;
       }
       if (box !== a && !box.closest('[data-sca-art]') && box.querySelector('div[dir="auto"], span[dir="auto"]')){ box.setAttribute('data-sca-art', '1'); marked.push(box); }
@@ -2836,8 +2866,12 @@ function fbExtractor(){
     return marked.filter(function(b){ return b.isConnected; });
   }
   function root(){
+    if (rootCache && rootGen === gen) return rootCache;
     var dlg = Array.prototype.slice.call(document.querySelectorAll('div[role="dialog"]')).filter(function(d){ return d.querySelector('div[role="article"]'); });
-    return dlg.length ? dlg[dlg.length - 1] : document;
+    // En los reels sin role="article" los comentarios siguen estando dentro de un diálogo: usarlo acota mucho los botones
+    if (!dlg.length) dlg = Array.prototype.slice.call(document.querySelectorAll('div[role="dialog"]')).filter(function(d){ return d.querySelector('a[href*="comment_id="]'); });
+    rootCache = dlg.length ? dlg[dlg.length - 1] : document; rootGen = gen;
+    return rootCache;
   }
   function scrollNudge(){
     var arts = articles(), seen = new Set();
@@ -2995,6 +3029,10 @@ function fbExtractor(){
     };
   }
   var artCache = new WeakMap();   // artículo → { firma, comentario }: solo se vuelve a leer si cambió (p. ej. «Ver más» amplió el texto)
+  function resetCaches(){
+    artCache = new WeakMap(); igCache = new WeakMap(); igBlockCache = new WeakMap(); igRpSig = new WeakMap(); igRpMap = {};
+    igCountsCache = null; bumpGen();
+  }
   function extractAll(){
     var arts = articles(); var res = [], seen = {};
     arts.forEach(function(a, i){
@@ -3025,15 +3063,20 @@ function fbExtractor(){
     var a = t.closest('a'); return !!(a && (a.getAttribute('href') || '').indexOf('/' + code + '/') >= 0);
   }
   function igRoot(){
+    if (rootCache && rootGen === gen) return rootCache;
     var dlg = Array.prototype.slice.call(document.querySelectorAll('div[role="dialog"]')).filter(function(d){
       return Array.prototype.slice.call(d.querySelectorAll('time[datetime]')).some(igRelevant);
     });
-    if (dlg.length) return dlg[dlg.length - 1];
     // En la página propia de la publicación los comentarios pueden estar fuera de <article>: se busca en todo el documento
-    return document.body;
+    rootCache = dlg.length ? dlg[dlg.length - 1] : document.body; rootGen = gen;
+    return rootCache;
   }
   function igAllTimes(){ return Array.prototype.slice.call(igRoot().querySelectorAll('time[datetime]')); }
-  function igTimes(){ var all = igAllTimes(), rel = all.filter(igRelevant); return rel.length ? rel : all; }
+  function igTimes(){
+    if (timesCache && timesGen === gen) return timesCache;
+    var all = igAllTimes(), rel = all.filter(igRelevant);
+    timesCache = rel.length ? rel : all; timesGen = gen; return timesCache;
+  }
   var IG_BTN_EXCL = /(publicaciones|posts|seguidores|followers|seguidos|following|perfil|profile|audio|reels|historias|stories|etiquetad|tagged|sugerenc|suggest|traduc|transl)/i;
   // Estructura de un nodo sin textos ni nombres (para diagnosticar cambios en la web de Instagram)
   function igSkel(node, depth, budget){
@@ -3067,7 +3110,7 @@ function fbExtractor(){
     var pend = [];
     Array.prototype.slice.call(igRoot().querySelectorAll('button,div[role="button"],span[role="button"]')).forEach(function(b){
       if (!b.offsetParent) return;
-      var t = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
+      var t = quickText(b).replace(/^[\s—–\-·•]+/, '');
       if (t && t.length <= 80 && !EXCL.test(t) && !IG_BTN_EXCL.test(t) && EXP.some(function(re){ return re.test(t); })) pend.push(t.replace(/\d+/g, 'N'));
     });
     Array.prototype.slice.call(igRoot().querySelectorAll('svg[aria-label]')).forEach(function(s){ if (IG_LOAD_RE.test(s.getAttribute('aria-label') || '')) pend.push('[icono] ' + s.getAttribute('aria-label')); });
@@ -3077,13 +3120,28 @@ function fbExtractor(){
       structure: anc ? igSkel(anc, 0, { n: 260 }).slice(0, 6000) : '' };
   }
   // Bloque de un comentario: el ancestro más grande que contiene solo su propia fecha
+  var igCountsCache = null, igCountsGen = -1, igBlockCache = new WeakMap(), igCache = new WeakMap();
+  function igTimeCounts(){
+    if (igCountsCache && igCountsGen === gen) return igCountsCache;
+    var r = igRoot(), counts = new Map();
+    Array.prototype.slice.call(r.querySelectorAll('time[datetime]')).forEach(function(t){
+      var p = t.parentElement;
+      while (p && p !== r){ counts.set(p, (counts.get(p) || 0) + 1); p = p.parentElement; }
+    });
+    igCountsCache = counts; igCountsGen = gen; return counts;
+  }
   function igBlock(t){
-    var r = igRoot(), b = t, p = t.parentElement;
-    while (p && p !== r && p.querySelectorAll('time[datetime]').length === 1){ b = p; p = p.parentElement; }
+    var r = igRoot(), b = t, p = t.parentElement, counts = igTimeCounts();
+    while (p && p !== r && (counts.get(p) || 0) === 1){ b = p; p = p.parentElement; }
     return b;
   }
-  function igExtractOne(t){
-    var block = igBlock(t);
+  function igBlockOf(t){
+    var hit = igBlockCache.get(t), counts = igTimeCounts();
+    if (hit && hit.isConnected && (counts.get(hit) || 0) === 1 && (!hit.parentElement || hit.parentElement === igRoot() || (counts.get(hit.parentElement) || 0) !== 1)) return hit;
+    var b = igBlock(t); igBlockCache.set(t, b); return b;
+  }
+  function igExtractOne(t, block){
+    block = block || igBlock(t);
     var tLink = t.closest('a');
     var href = tLink ? (tLink.getAttribute('href') || '') : '';
     var mc = href.match(/\/c\/(\d+)(?:\/r\/(\d+))?/);   // /p/CODIGO/c/COMENTARIO/(r/RESPUESTA/)
@@ -3151,26 +3209,35 @@ function fbExtractor(){
     };
   }
   function igTimeId(t){ var a = t && t.closest('a'); var m = a && (a.getAttribute('href') || '').match(/\/c\/(\d+)(?:\/r\/(\d+))?/); return m ? (m[2] || m[1]) : ''; }
+  var igRpMap = {}, igRpSig = new WeakMap();
   function igReplyParents(){
-    var map = {}, times = igTimes();
+    var times = igTimes();
     Array.prototype.slice.call(igRoot().querySelectorAll('[role="button"],button')).forEach(function(b){
-      var t = (b.innerText || '').trim();
+      var t = quickText(b);
       if (!t || t.length > 60 || !IG_TOGGLE_RE.test(t)) return;
       var box = b.nextElementSibling;
       if (!box || box.tagName !== 'UL'){ var par = b.parentElement; box = par ? Array.prototype.slice.call(par.children).filter(function(x){ return x.tagName === 'UL'; })[0] : null; }
       if (!box) return;
+      // cada botón se procesa una vez; solo se repite si su bloque de respuestas cambió (llegaron más)
+      var sig = box.querySelectorAll('time[datetime]').length + ':' + (box.textContent || '').length;
+      if (igRpSig.get(b) === sig) return;
+      igRpSig.set(b, sig);
       var parentT = null;
       times.forEach(function(tt){ if (!box.contains(tt) && !b.contains(tt) && (b.compareDocumentPosition(tt) & Node.DOCUMENT_POSITION_PRECEDING)) parentT = tt; });
       var pid = igTimeId(parentT); if (!pid) return;
-      Array.prototype.slice.call(box.querySelectorAll('time[datetime]')).forEach(function(rt){ var rid = igTimeId(rt); if (rid && !map[rid]) map[rid] = pid; });
+      Array.prototype.slice.call(box.querySelectorAll('time[datetime]')).forEach(function(rt){ var rid = igTimeId(rt); if (rid && !igRpMap[rid]) igRpMap[rid] = pid; });
     });
-    return map;
+    return igRpMap;
   }
   function igExtractAll(){
     var res = [], seen = {}, cap = null;
     igTimes().forEach(function(t, i){
       try {
-        var c = igExtractOne(t);
+        var block = igBlockOf(t);
+        var sig = (block.textContent || '').length + ':' + block.getElementsByTagName('a').length + ':' + block.getElementsByTagName('img').length + ':' + block.getElementsByTagName('time').length;
+        var hit = igCache.get(t), c;
+        if (hit && hit.sig === sig) c = Object.assign({}, hit.c);
+        else { c = igExtractOne(t, block); igCache.set(t, { sig: sig, c: Object.assign({}, c) }); }
         if (c.isCaption){ if (!cap || (!cap.text && c.text) || (!cap.authorName && c.authorName)) cap = c; return; }   // la descripción no es un comentario
         var key = c.id || (c.authorName + '|' + c.text);
         if (seen[key]) return; seen[key] = 1;
@@ -3212,7 +3279,7 @@ function fbExtractor(){
       var m = l.match(FB_TOTAL_RE); if (m && e.offsetParent){ var n = parseCount(m[1]); if (n) cands.push({ e: e, n: n }); }
     });
     if (!cands.length) Array.prototype.slice.call(document.querySelectorAll('span,div[role="button"]')).forEach(function(e){
-      var t = (e.innerText || '').trim(); if (t.length > 30 || !e.offsetParent) return;
+      var t = quickText(e); if (t.length > 30 || !e.offsetParent) return;
       var m = t.match(/^(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?)$/i); if (m){ var n = parseCount(m[1]); if (n) cands.push({ e: e, n: n }); }
     });
     if (!cands.length) return 0;
@@ -3223,7 +3290,10 @@ function fbExtractor(){
     cands.sort(function(a, b){ return (b.d - a.d) || (b.v - a.v) || (a.i - b.i); });
     return cands[0].n;
   }
-  function netTotal(){ return TT ? ttTotal() : IG ? 0 : fbTotal(); }
+  function netTotal(){
+    if (totalGen === gen) return totalCache;
+    totalCache = TT ? ttTotal() : IG ? 0 : fbTotal(); totalGen = gen; return totalCache;
+  }
   function ttHandle(a){ var m = ((a && a.getAttribute('href')) || '').match(/^\/@([^/?#]+)/); return m ? decodeURIComponent(m[1]) : ''; }
   function ttLevel(n){ var e = n.querySelector('[data-e2e^="comment-level-"]'); var m = e ? (e.getAttribute('data-e2e') || '').match(/(\d+)$/) : null; return m ? +m[1] : 0; }
   function ttExtractOne(n){
@@ -3325,11 +3395,12 @@ function fbExtractor(){
     });
   }
   async function openComments(){
+    bumpGen();
     if (visibleCount() > 0) return;
     // En Instagram el icono de comentarios solo despliega la lista en los reels; en las publicaciones sirve para escribir (y sin sesión abre el acceso)
     if (IG && !/\/(reel|reels)\//.test(location.pathname)) return;
     // Si la sección ya se está abriendo (marcadores de carga), primero se espera a que termine (máx. ~10 s)
-    for (var w0 = 0; w0 < 40 && loadingVisible() && !stop; w0++){ if (w0 === 0) status('Esperando a que carguen los comentarios…', true); await sleep(250); if (visibleCount() > 0){ await sleep(600); return; } }
+    for (var w0 = 0; w0 < 40 && loadingVisible() && !stop; w0++){ if (w0 === 0) status('Esperando a que carguen los comentarios…', true); await sleep(250); bumpGen(); if (visibleCount() > 0){ await sleep(600); return; } }
     if (visibleCount() > 0) return;
     // un botón ya activo (sección abierta) no se pulsa: lo cerraría
     var btns = commentButtons().filter(function(b){ return b.getAttribute('aria-pressed') !== 'true' && b.getAttribute('aria-expanded') !== 'true'; });
@@ -3339,7 +3410,7 @@ function fbExtractor(){
     for (var i = 0; i < Math.min(btns.length, 3) && !stop; i++){
       try { btns[i].scrollIntoView({ block: 'center' }); btns[i].click(); } catch(e){}
       // esperar a que aparezcan los comentarios y desaparezcan los marcadores de carga (máx. ~12 s)
-      for (var t = 0; t < 60 && !stop; t++){ await sleep(200); var n = visibleCount(); if (n > 0 && (!loadingVisible() || t > 15)) { await sleep(250); return; } }
+      for (var t = 0; t < 60 && !stop; t++){ await sleep(200); bumpGen(); var n = visibleCount(); if (n > 0 && (!loadingVisible() || t > 15)) { await sleep(250); return; } }
     }
   }
   // ---- Facebook: cambiar "Más relevantes" por "Todos los comentarios" para no perder ninguno ----
@@ -3358,7 +3429,8 @@ function fbExtractor(){
     try { el.dispatchEvent(new MouseEvent('mouseup', o)); } catch(e){}
     try { el.click(); } catch(e){}
   }
-  var sortText = function(b){ return (b.innerText || '').trim().split('\n')[0].trim(); };
+  // textContent evita recalcular el diseño de cada botón (innerText lo hace y con miles de botones congela la pestaña)
+  var sortText = function(b){ return (b.textContent || '').trim().split('\n')[0].replace(/\s+/g, ' ').trim(); };
   async function fbAllComments(){
     if (sortState === 'cambiado' || sortState === 'ya') return sortState;
     sortTries++;
@@ -3371,12 +3443,13 @@ function fbExtractor(){
     for (var t = 0; t < 20; t++){
       await sleep(150);
       var items = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return m.offsetParent; });
-      if (items.length && !sortMenu.length) sortMenu = items.map(function(m){ return ((m.innerText || '').trim().split('\n')[0] || '').slice(0, 40); }).slice(0, 6);
-      var item = items.filter(function(m){ return ALL_RE.test((m.innerText || '').trim()); })[0];
+      if (items.length && !sortMenu.length) sortMenu = items.map(function(m){ return (quickText(m).split('\n')[0] || '').slice(0, 40); }).slice(0, 6);
+      var item = items.filter(function(m){ return ALL_RE.test(quickText(m)); })[0];
       if (item){
         press(item); status('Mostrando todos los comentarios…', true);
         for (var t2 = 0; t2 < 16; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; }
         // comprobar que el orden cambió (el botón muestra ahora «Todos los comentarios»); si no, se reintenta en otra ronda
+        bumpGen();
         var now = sortButtons().some(function(b){ return ALL_RE.test(sortText(b)); });
         return (sortState = now ? 'cambiado' : 'sin-confirmar');
       }
@@ -3437,6 +3510,7 @@ function fbExtractor(){
     if (restarting){ relaunch(); return; }
     finished = true;
     status('Extrayendo datos…');
+    bumpGen();
     var onOriginal = postKey() === startKey;
     if (onOriginal && !useCollectedOnly) snapshot(true);
     var comments = collected.map(function(c, i){ c.order = i; return c; });
@@ -3451,7 +3525,7 @@ function fbExtractor(){
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
     var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
     if (!TT && !IG && onOriginal){
-      var pend = sortButtons().map(function(b){ return (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
+      var pend = sortButtons().map(function(b){ return quickText(b).replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
       Object.assign(data.diag, { totalSegunFacebook: netTot, extraidos: comments.length, sinId: comments.filter(function(c){ return !c.id; }).length,
         respuestas: comments.filter(function(c){ return c.isReply; }).length, orden: sortState || 'sin-intentar', intentosOrden: sortTries, opcionesOrden: sortMenu,
         segundaPasada: LOOP.second, rondas: LOOP.round, botonesPulsados: pressed.slice(0, 40), botonesSinPulsarAlFinal: pend.map(function(t){ return t.replace(/\d+/g, 'N'); }).slice(0, 20),
@@ -3459,7 +3533,7 @@ function fbExtractor(){
     }
     if (!TT && !IG) Object.assign(data.diag, { articulos: document.querySelectorAll('div[role="article"]').length, articulosComentario: articles().length,
       enlacesComentario: document.querySelectorAll('a[href*="comment_id="]').length, cargando: loadingVisible(), dialogos: document.querySelectorAll('div[role="dialog"]').length,
-      botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || (b.innerText || '').trim()).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
+      botonesComentar: commentButtons().map(function(b){ return (b.getAttribute('aria-label') || quickText(b)).slice(0, 40) + (b.getAttribute('aria-pressed') ? ' [pressed=' + b.getAttribute('aria-pressed') + ']' : ''); }).slice(0, 6),
       etiquetasBotones: Array.prototype.slice.call(document.querySelectorAll('[role="button"][aria-label],button[aria-label]')).filter(function(b){ return b.offsetParent; }).map(function(b){ return b.getAttribute('aria-label').replace(/\d[\d.,]*/g, 'N').slice(0, 40); }).filter(function(v, i, a){ return a.indexOf(v) === i; }).slice(0, 40) });
     if (data.diag) data.diag.pulsados = pressed.filter(function(v, i, a){ return a.indexOf(v) === i; });
     if (AUTO){ window.__fbcx = false; AUTO.emit({ type: 'done', data: data }); return; }
@@ -3490,7 +3564,7 @@ function fbExtractor(){
     for (var w1 = 0; w1 < 80 && visibleCount() === 0 && !stop; w1++){
       if (w1 === 0) status('Buscando la sección de comentarios…', true);
       if (canOpen && w1 >= 2 && commentButtons().some(function(b){ return b.getAttribute('aria-pressed') !== 'true' && b.getAttribute('aria-expanded') !== 'true'; })) break;
-      await sleep(250);
+      await sleep(250); bumpGen();
     }
     // Sin sesión, Instagram y Facebook pueden mostrar una pantalla de acceso en lugar de la publicación
     var loginWall = function(){
@@ -3512,17 +3586,19 @@ function fbExtractor(){
     }
     await openComments();
     if (!TT && !IG) await fbAllComments();
+    bumpGen();
     startKey = postKey(); snapshot();
     if (AUTO) AUTO.emit({ type: 'progress', round: 0, count: collected.length, visible: countNow(), note: collected.length ? 'comentarios abiertos' : '' });
     while (!stop && round < 600){
       round++; LOOP.round = round;
+      bumpGen();
       if (AUTO && AUTO.stopRequested){ stop = true; break; }
       if (!TT && !IG && round <= 6 && sortState !== 'cambiado' && sortState !== 'ya' && round % 2 === 0) await fbAllComments();
       if (postKey() !== startKey){
         if (AUTO){ useCollectedOnly = true; break; }   // sin usuario delante: se conserva solo lo de la publicación original
         var dec = await waitDecision();
         if (dec === 'use'){ useCollectedOnly = true; break; }
-        if (dec === 'restart'){ collected = []; byKey = {}; meta = {}; startKey = postKey(); clicks = new Map(); idle = 0; round = 0; pressed = []; snapshot(); }
+        if (dec === 'restart'){ collected = []; byKey = {}; meta = {}; startKey = postKey(); clicks = new Map(); idle = 0; round = 0; pressed = []; resetCaches(); snapshot(); }
         continue;
       }
       var r = TT ? ttRoot() : IG ? igRoot() : root();
@@ -3530,13 +3606,15 @@ function fbExtractor(){
         : IG ? 'button,div[role="button"],span[role="button"]' : 'div[role="button"],span[role="button"]';
       var cand = Array.prototype.slice.call(r.querySelectorAll(btnSel));
       // Facebook: algunos «Ver N respuestas» son elementos con tabindex sin role="button"
-      if (!TT && !IG) Array.prototype.slice.call(r.querySelectorAll('[tabindex="0"]:not([role]):not(a)')).forEach(function(b){ if (REPLY_BTN_RE.test((b.innerText || '').trim()) && cand.indexOf(b) < 0) cand.push(b); });
+      if (!TT && !IG) Array.prototype.slice.call(r.querySelectorAll('[tabindex="0"]:not([role]):not(a)')).forEach(function(b){ if (REPLY_BTN_RE.test(quickText(b)) && cand.indexOf(b) < 0) cand.push(b); });
+      // el recuento se calcula una vez por ronda: antes se pedía por cada botón candidato (miles de veces)
+      var nowCount = countNow();
       var btns = cand.filter(function(b){
         if (!b.offsetParent) return false;
-        var t = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
+        var t = quickText(b).replace(/^[\s—–\-·•]+/, '');
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
-        if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(countNow() > ck.c)))) return false;
+        if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(nowCount > ck.c)))) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -3555,20 +3633,22 @@ function fbExtractor(){
         for (var i = 0; i < btns.length && !stop && postKey() === startKey; i++){
           // la app sabe que la extensión sigue trabajando aunque la ronda sea larga
           if (AUTO && Date.now() - beat > 5000){ beat = Date.now(); AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: netTotal() || null }); }
-          var b = btns[i], bt = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
-          var prev = clicks.get(b);
+          var b = btns[i], bt = quickText(b).replace(/^[\s—–\-·•]+/, '');
+          var prev = clicks.get(b), curCount = countNow();
           // si desde la última pulsación llegaron comentarios nuevos, el botón sigue cargando: se cuenta como progreso
-          var grew = prev && countNow() > prev.c;
-          clicks.set(b, { n: prev && !grew ? prev.n + 1 : 1, all: (prev ? prev.all : 0) + 1, t: bt, c: countNow() });
+          var grew = prev && curCount > prev.c;
+          clicks.set(b, { n: prev && !grew ? prev.n + 1 : 1, all: (prev ? prev.all : 0) + 1, t: bt, c: curCount });
           if (bt && pressed.length < 60) pressed.push(bt.replace(/\d+/g, 'N'));
           try { b.scrollIntoView({ block: 'center' }); b.click(); } catch(e){}
           await sleep(450 + Math.random() * 450);
+          bumpGen();   // la pulsación puede haber cargado comentarios: las listas se recalculan una vez
         }
       } else {
         var before = countNow();
         idle++;
         if (!TT && !IG && idle % 3 === 0) scrollNudge();     // subir y volver a bajar: algunas listas solo cargan al detectar desplazamiento
         scrollAll(); await sleep(TT ? 1800 : 1300);
+        bumpGen();
         var after = countNow(), total = netTotal();
         if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
         lastCollected = collected.length;
@@ -6184,7 +6264,7 @@ function renderPosts(){
 const EXT_LATEST = '1.4.0';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 // Extractor publicado en extension/extractor.js (firmado): las extensiones 1.4.0 o posteriores lo instalan solas.
 // Para corregir la extracción sin que nadie reinstale nada, basta con subir EXTRACTOR_LATEST y ejecutar tools/build_extension.py.
-const EXTRACTOR_LATEST = '1.4.3';
+const EXTRACTOR_LATEST = '1.4.4';
 const EXTRACTOR_MIN_EXT = '1.4.0';   // versión mínima de la extensión que puede usar este extractor
 const EXT_SRC = ['extension/', 'https://arlizheredia.github.io/social-comments-analyzer/extension/'];
 const EXT = { version:null, extractor:null, downloaded:null, userScripts:false, updates:false, waiters:new Map(), jobs:new Map() };
@@ -6361,7 +6441,7 @@ const hasResult = it => !!it && (it.status === 'done' || it.saved > 0 || (it.par
 function trackProgress(t){
   const ids = t.postIds, n = ids.length || 1;
   let done = 0, frac = 0;
-  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && it.total) frac += Math.min(.95, (it.count || 0) / it.total); else if(it.status === 'running') frac += .1; });
+  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && it.total) frac += Math.min(.99, (it.count || 0) / it.total); else if(it.status === 'running') frac += .1; });
   const comments = ids.reduce((s, id) => { const it = t.items[id]; return s + (it.status === 'running' ? Math.max(it.count || 0, it.saved || 0) : (it.count || it.saved || 0)); }, 0);
   return { pct:Math.min(100, Math.round((done + frac) / n * 100)), done, n:ids.length, comments, errors:ids.filter(id => t.items[id].status === 'error').length };
 }
@@ -6409,8 +6489,9 @@ function renderRunDetail(){
     ${t.postIds.map(id => {
       const p = TR.posts.find(x => x.id === id) || { id, url:'', platform:'facebook', name:'(publicación eliminada de la lista)' }, it = t.items[id];
       const m = it.method || methodFor(p);
-      const sub = it.status === 'running' && it.retry ? `<span class="warn-txt"><span class="ms">autorenew</span>${it.retry.offline ? 'Sin conexión: esperando a que vuelva para el ' : 'Reintento '}${it.retry.attempt} de ${it.retry.max}${it.retry.offline ? '' : ' en ' + fmtSecs(it.retry.left)}</span> · último error: ${esc(it.retry.error.slice(0, 140))}`
-        : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`)
+      const waiting = it.status === 'running' && it.retry && it.phase === 'retry';   // esperando para reintentar (no extrayendo)
+      const sub = waiting ? `<span class="warn-txt"><span class="ms">autorenew</span>${it.retry.offline ? 'Sin conexión: esperando a que vuelva para el ' : 'Reintento '}${it.retry.attempt} de ${it.retry.max}${it.retry.offline ? '' : ' en ' + fmtSecs(it.retry.left)}</span> · último error: ${esc(it.retry.error.slice(0, 140))}`
+        : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`) + (it.attempts > 1 && it.retry ? ` · intento ${it.attempts} de ${it.retry.max}` : '')
         : it.status === 'done' && !it.count ? `<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: la extracción no encontró ninguno. Reinténtala con <span class="ms" style="font-size:15px">refresh</span>.</span>`
         : it.status === 'done' ? `${itemCountTxt(it)} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
         : it.status === 'error' ? esc(it.error || 'Error') + (it.saved ? ` · <b>se conservan ${countTxt(it.saved, 'comentario guardado', 'comentarios guardados')}</b>` : '') : it.status === 'skipped' ? 'Omitida'
@@ -6424,7 +6505,7 @@ function renderRunDetail(){
           ${!running && ['error', 'skipped', 'done'].includes(it.status) ? `<button class="icon-btn sm" data-iact="retry" aria-label="Volver a extraer" title="Volver a extraer"><span class="ms">refresh</span></button>` : ''}
           ${!running && it.status === 'pending' ? `<button class="icon-btn sm" data-iact="skip" aria-label="Omitir" title="Omitir"><span class="ms">do_not_disturb_on</span></button>` : ''}
           ${(it.status === 'error' || (it.status === 'done' && it.total && (it.count || 0) < it.total * 0.9) || (it.status === 'done' && it.diag && (it.diag.botonesSinPulsarAlFinal || []).length)) && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
-          ${it.status === 'running' && it.retry ? `<button class="btn tonal sm" data-iact="retrynow"><span class="ms">refresh</span>Reintentar ahora</button>` : ''}
+          ${waiting ? `<button class="btn tonal sm" data-iact="retrynow"><span class="ms">refresh</span>Reintentar ahora</button>` : ''}
           ${p.url ? `<a class="icon-btn sm" href="${esc(p.url)}" target="_blank" rel="noopener" aria-label="Abrir publicación" title="Abrir publicación"><span class="ms">open_in_new</span></a>` : ''}
         </div>
         ${it.status === 'running' && !it.retry ? `<span class="pbar${it.total ? '' : ' indet'}"><i style="width:${pp}%"></i></span>` : ''}
