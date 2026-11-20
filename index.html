@@ -1223,8 +1223,10 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
 /* Aviso: seguimientos o publicaciones sin comentarios */
 .warn-chip{display:inline-flex;align-items:center;gap:3px;height:18px;padding:0 7px 0 4px;margin:-2px 0;border-radius:9px;font-size:11px;font-weight:600;line-height:18px;background:var(--pend-bg);color:var(--pend-fg);vertical-align:middle;white-space:nowrap}
 .warn-chip .ms{font-size:13px;line-height:1}
-.warn-txt{display:inline-flex;align-items:center;gap:4px;color:var(--pend-fg);font-weight:500}
-.warn-txt .ms{font-size:16px}
+/* aviso dentro de una línea de texto: comparte la línea base con el texto que sigue (también si la línea se parte) */
+.warn-txt{display:inline;color:var(--pend-fg);font-weight:500}
+.warn-txt .ms{font-size:16px;vertical-align:-3px;margin-right:3px}
+.ritem .ri-s{line-height:18px}
 
 /* Sesiones en la barra superior */
 .sess{display:flex;align-items:center;gap:4px;margin-right:8px}
