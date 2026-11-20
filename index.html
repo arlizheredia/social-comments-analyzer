@@ -1060,6 +1060,8 @@ body.no-ai .needs-ai{display:none!important}
 @keyframes indet{0%{left:-30%}100%{left:100%}}
 @media (prefers-reduced-motion:reduce){.pbar.indet>i{animation:none;width:100%!important;opacity:.5}}
 .rdetail{margin-top:16px;padding:20px;border-radius:20px;border:1px solid var(--outline-variant);background:var(--surface)}
+#runDetail .rdetail{margin-top:0;border-radius:16px;border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+#runDetail:empty{display:none}
 .rd-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
 .rd-head h2{font-size:20px;margin:0}
 .rd-acts{display:flex;gap:8px;flex-wrap:wrap}
@@ -6329,17 +6331,22 @@ function trackProgress(t){
   return { pct:Math.min(100, Math.round((done + frac) / n * 100)), done, n:ids.length, comments, errors:ids.filter(id => t.items[id].status === 'error').length };
 }
 const ST_TXT = { draft:['edit_note', 'Borrador'], running:['progress_activity', 'En curso'], paused:['pause_circle', 'En pausa'], done:['task_alt', 'Completado'] };
+// El detalle no es un panel aparte: es la propia tarjeta del seguimiento abierto, desplegada en su sitio de la lista
+const RUN_DET = document.getElementById('runDetail');
 function renderRuns(){
   const list = TR.tracks.filter(t => t.status !== 'done');
   if(TR.open && !TR.tracks.some(t => t.id === TR.open)) TR.open = null;
-  if(!TR.open && list.length) TR.open = list[0].id;
+  if(!TR.open && !TR.folded && list.length) TR.open = list[0].id;   // al entrar, el primero desplegado; si el usuario lo pliega, queda plegado
+  RUN_DET.remove();
   $('#runList').innerHTML = list.length ? list.map(t => {
+    if(TR.open === t.id) return '<div id="runDetailSlot"></div>';
     const pr = trackProgress(t), [ic, tx] = ST_TXT[t.status];
-    return `<button class="rcard${TR.open === t.id ? ' open' : ''}" data-tid="${esc(t.id)}" aria-expanded="${TR.open === t.id}">
+    return `<button class="rcard" data-tid="${esc(t.id)}" aria-expanded="false">
       <span><span class="rt">${esc(t.name)}</span><br><span class="rs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</span></span>
       <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx} · ${pr.pct} %</span>
       <span class="pbar"><i style="width:${pr.pct}%"></i></span></button>`;
   }).join('') : `<div class="empty-mini"><span class="ms">add_task</span>No hay seguimientos activos. En <b>Publicaciones</b>, selecciona las que quieras revisar hoy y pulsa <b>Crear seguimiento</b>.</div>`;
+  const slot = $('#runDetailSlot'); if(slot) slot.replaceWith(RUN_DET); else $('#runList').after(RUN_DET);
   renderRunDetail();
 }
 function itemIcon(it){ if(it.status === 'pending' && it.partial && it.count) return 'radio_button_partial'; return { pending:'radio_button_unchecked', running:'progress_activity', done:'check_circle', error:'error', skipped:'do_not_disturb_on' }[it.status] || 'radio_button_unchecked'; }
@@ -6358,6 +6365,7 @@ function renderRunDetail(){
         ${!running ? `<button class="btn text" data-ract="edit"><span class="ms">edit</span>Editar</button>` : ''}
         ${!running && pr.done ? `<button class="btn text" data-ract="finish"><span class="ms">inventory</span>Finalizar y archivar</button>` : ''}
         ${!running ? `<button class="icon-btn" data-ract="del" aria-label="Eliminar seguimiento" title="Eliminar seguimiento"><span class="ms">delete</span></button>` : ''}
+        <button class="icon-btn" data-ract="collapse" aria-label="Plegar" title="Plegar"><span class="ms">expand_less</span></button>
       </div></div>
     ${t.halt && !running ? `<div class="rep-alert high" role="alert"><span class="ms">error</span><span><b>La extracción se detuvo</b> porque «${esc(t.halt.post)}» falló: ${esc(t.halt.error)}. Comprueba la conexión y la sesión de la red social en este navegador y pulsa <b>Continuar</b>.</span></div>` : ''}
     <div class="rd-prog"><span class="pbar${running && !pr.pct ? ' indet' : ''}"><i style="width:${pr.pct}%"></i></span><span class="pct">${pr.pct} %</span>
@@ -6668,11 +6676,12 @@ function initTracking(){
   $('#trackSave').onclick = () => saveTrack(false);
   $('#trackStart').onclick = () => saveTrack(true);
   // seguimientos
-  $('#runList').addEventListener('click', e => { const c = e.target.closest('[data-tid]'); if(!c) return; TR.open = c.dataset.tid; renderRuns(); });
+  $('#runList').addEventListener('click', e => { const c = e.target.closest('.rcard[data-tid]'); if(!c) return; TR.open = c.dataset.tid; TR.folded = false; renderRuns(); });
   $('#runDetail').addEventListener('click', async e => {
     const t = TR.tracks.find(x => x.id === TR.open); if(!t) return;
     const ra = e.target.closest('[data-ract]')?.dataset.ract;
     if(ra === 'start'){ if(t.halt){ t.postIds.forEach(id => { const x = t.items[id]; if(x.status === 'error'){ x.status = 'pending'; x.error = ''; } }); } runTracking(t.id); }
+    if(ra === 'collapse'){ TR.open = null; TR.folded = true; renderRuns(); return; }
     if(ra === 'stop') stopTracking();
     if(ra === 'view') viewTrackingsComments([t.id]);
     if(ra === 'report') openReport([t.id]);

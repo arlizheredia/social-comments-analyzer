@@ -125,6 +125,7 @@ const TR = () => w.eval('TR');
     const pctTxt = d.querySelector('#runDetail .pct').textContent;
     check('Durante la extracción se ve el progreso en porcentaje', /\d+ %/.test(pctTxt) && !!d.querySelector('#runDetail .ritem .pbar'), pctTxt + ' · ' + d.querySelector('#runDetail .ritem .ri-s').textContent);
     check('El botón cambia a “Detener” mientras extrae', !!d.querySelector('[data-ract="stop"]'));
+    check('Una sola tarjeta: el seguimiento abierto se despliega en su sitio (sin tarjeta compacta duplicada ni panel aparte)', d.getElementById('runList').contains(d.getElementById('runDetail')) && !d.querySelector('#runList .rcard[data-tid="' + w.eval('TR.open') + '"]') && d.querySelectorAll('#runList h2').length === 1);
 
     // 3. Detener y continuar
     d.querySelector('[data-ract="stop"]').click();
