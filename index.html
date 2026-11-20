@@ -2011,7 +2011,7 @@ Da seguimiento diario a varias publicaciones de Facebook, Instagram y TikTok: gu
 1. **Publicaciones**: pega el enlace de cada publicación (o varias con *Añadir varias*) y dale un **nombre** para reconocerla en la lista. La red se detecta sola y no se duplican.
 2. **Crear seguimiento**: marca las publicaciones que quieras revisar hoy, pulsa **Crear seguimiento**, ponle nombre y fecha.
 3. **Iniciar**: la app extrae los comentarios de cada publicación y muestra el progreso por publicación y el **porcentaje total**.
-4. **Detener y continuar**: puedes detenerlo en cualquier momento; lo ya extraído se guarda y **Continuar** sigue con las pendientes, incluso otro día.
+4. **Detener y guardar**: si ya tienes suficientes comentarios, detenlo en cualquier momento. Se guarda todo lo extraído, también lo que llevaba la publicación en curso (marcada como *parcial*). El seguimiento pasa al **Historial** como *Detenido · parcial*: ya puedes **ver sus comentarios** y **crear un informe** (también desde *Informes*). Cuando quieras, pulsa **Continuar** (o **Continuar extracción** en el historial) y seguirá con lo pendiente, completando la publicación parcial, incluso otro día.
 5. Al terminar, el seguimiento pasa al **Historial**. Si alguna publicación (o todo el seguimiento) quedó **sin comentarios**, verás un aviso ámbar {ms:warning}: reintenta esa publicación con {ms:refresh}.
 6. Desde el historial creas **informes** o vuelves a ver sus comentarios.
 
@@ -6115,7 +6115,7 @@ function renderSegCounts(){
   $('#postsCount').textContent = TR.posts.length;
   const active = TR.tracks.filter(t => t.status !== 'done');
   $('#runsCount').textContent = active.length;
-  $('#histCount').textContent = TR.tracks.filter(t => t.status === 'done').length;
+  $('#histCount').textContent = TR.tracks.filter(inHistory).length;
   const b = $('#navTrackBadge'), run = TR.tracks.some(t => t.status === 'running');
   b.classList.toggle('hidden', !active.length); b.textContent = run ? '●' : active.length;
 }
@@ -6318,6 +6318,9 @@ function emptyWarn(t){
   return e ? ` · <span class="warn-chip" title="Algunas publicaciones no tienen comentarios: reintenta su extracción"><span class="ms">warning</span>${countTxt(e, 'publicación sin comentarios', 'publicaciones sin comentarios')}</span>` : '';
 }
 const fmtSecs = s => s >= 60 ? Math.floor(s / 60) + ' min ' + String(s % 60).padStart(2, '0') + ' s' : s + ' s';
+// Un seguimiento detenido con comentarios guardados también está en el historial (para verlos e informar) y se puede continuar
+const inHistory = t => t.status === 'done' || (t.status === 'paused' && t.postIds.some(id => hasResult(t.items[id])));
+const hasResult = it => !!it && (it.status === 'done' || (it.partial && it.count > 0));
 function trackProgress(t){
   const ids = t.postIds, n = ids.length || 1;
   let done = 0, frac = 0;
@@ -6339,7 +6342,7 @@ function renderRuns(){
   }).join('') : `<div class="empty-mini"><span class="ms">add_task</span>No hay seguimientos activos. En <b>Publicaciones</b>, selecciona las que quieras revisar hoy y pulsa <b>Crear seguimiento</b>.</div>`;
   renderRunDetail();
 }
-function itemIcon(it){ return { pending:'radio_button_unchecked', running:'progress_activity', done:'check_circle', error:'error', skipped:'do_not_disturb_on' }[it.status] || 'radio_button_unchecked'; }
+function itemIcon(it){ if(it.status === 'pending' && it.partial && it.count) return 'radio_button_partial'; return { pending:'radio_button_unchecked', running:'progress_activity', done:'check_circle', error:'error', skipped:'do_not_disturb_on' }[it.status] || 'radio_button_unchecked'; }
 function renderRunDetail(){
   const t = TR.tracks.find(x => x.id === TR.open && x.status !== 'done');
   const box = $('#runDetail');
@@ -6349,8 +6352,9 @@ function renderRunDetail(){
   box.innerHTML = `<div class="rdetail" aria-live="polite">
     <div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rs small muted">${esc(fmtDay(t.date))} · <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx}</span></div></div>
       <div class="rd-acts">
-        ${running ? `<button class="btn tonal" data-ract="stop"><span class="ms">stop</span>Detener</button>`
+        ${running ? `<button class="btn tonal" data-ract="stop" title="Detiene la extracción y guarda lo extraído hasta ahora"><span class="ms">stop</span>Detener y guardar</button>`
           : `<button class="btn filled" data-ract="start" ${pend || t.halt ? '' : 'disabled'}><span class="ms">play_arrow</span>${t.status === 'draft' ? 'Iniciar' : 'Continuar'}</button>`}
+        ${!running && inHistory(t) ? `<button class="btn text" data-ract="view"><span class="ms">forum</span>Ver comentarios</button><button class="btn text needs-ai" data-ract="report"><span class="ms">analytics</span>Crear informe</button>` : ''}
         ${!running ? `<button class="btn text" data-ract="edit"><span class="ms">edit</span>Editar</button>` : ''}
         ${!running && pr.done ? `<button class="btn text" data-ract="finish"><span class="ms">inventory</span>Finalizar y archivar</button>` : ''}
         ${!running ? `<button class="icon-btn" data-ract="del" aria-label="Eliminar seguimiento" title="Eliminar seguimiento"><span class="ms">delete</span></button>` : ''}
@@ -6365,13 +6369,14 @@ function renderRunDetail(){
         : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`)
         : it.status === 'done' && !it.count ? `<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: la extracción no encontró ninguno. Reinténtala con <span class="ms" style="font-size:15px">refresh</span>.</span>`
         : it.status === 'done' ? `${itemCountTxt(it)} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
-        : it.status === 'error' ? esc(it.error || 'Error') : it.status === 'skipped' ? 'Omitida' : 'Pendiente';
+        : it.status === 'error' ? esc(it.error || 'Error') : it.status === 'skipped' ? 'Omitida'
+        : it.partial && it.count ? `Parcial: ${countTxt(it.count, 'comentario guardado', 'comentarios guardados')} · se completará al continuar` : 'Pendiente';
       const pp = it.status === 'running' && it.total ? Math.min(100, Math.round((it.count || 0) / it.total * 100)) : 0;
       return `<div class="ritem" data-ipid="${esc(id)}">
         <span class="ms ri-ic ${it.status}">${it.status === 'running' ? SPIN : itemIcon(it)}</span>
         <div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span><span class="mchip ${m}">${METHOD_TXT[m]}</span></div><div class="ri-s${it.status === 'error' ? ' err' : ''}">${sub}</div></div>
         <div class="ri-acts">
-          ${it.status === 'done' ? `<button class="btn text sm" data-iact="view"><span class="ms">forum</span>Ver comentarios</button>` : ''}
+          ${hasResult(it) && !(running && it.status === 'running') ? `<button class="btn text sm" data-iact="view"><span class="ms">forum</span>Ver comentarios</button>` : ''}
           ${!running && ['error', 'skipped', 'done'].includes(it.status) ? `<button class="icon-btn sm" data-iact="retry" aria-label="Volver a extraer" title="Volver a extraer"><span class="ms">refresh</span></button>` : ''}
           ${!running && it.status === 'pending' ? `<button class="icon-btn sm" data-iact="skip" aria-label="Omitir" title="Omitir"><span class="ms">do_not_disturb_on</span></button>` : ''}
           ${(it.status === 'error' || (it.status === 'done' && it.total && (it.count || 0) < it.total * 0.9) || (it.status === 'done' && it.diag && (it.diag.botonesSinPulsarAlFinal || []).length)) && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
@@ -6508,8 +6513,11 @@ async function runTracking(tid){
         }
       }
       if(r.skipped){ it.status = 'skipped'; }
+      else if((r.stopped || (RUN.stopReq && r.partial)) && r.parsed && r.parsed.comments.length){
+        // detenido a mitad: se guarda lo extraído (parcial) y la publicación queda pendiente para completarla al continuar
+        await storeResult(t, p, r.parsed, r.method, true); it.status = 'pending'; it.partial = true;
+      }
       else if(r.stopped || (RUN.stopReq && !r.parsed)){ it.status = 'pending'; }
-      else if(RUN.stopReq && r.partial){ it.status = 'pending'; }   // detenido a mitad: se repetirá al continuar
       else { if(r.parsed?.meta?.netTotal) it.total = r.parsed.meta.netTotal; it.diag = r.parsed?.meta?.diag || null; await storeResult(t, p, r.parsed, r.method, r.partial); }
     }catch(e){
       if(e.name === 'AbortError' || (RUN.stopReq && !RUN.halt)){ it.status = 'pending'; }
@@ -6527,13 +6535,15 @@ async function runTracking(tid){
       // pausa variable (±50 %) y, en modo prudente, una pausa larga (30–60 s) cada 5 publicaciones extraídas por la extensión
       let wait = gap ? gap * (0.5 + Math.random()) : 0;
       if(extOpts().careful && it.method === 'extension' && (++RUN.extCount % 5 === 0)) wait += 30000 + Math.random() * 30000;
-      if(wait){ it.phase = ''; await bgSleep(wait); }
+      if(wait){ it.phase = ''; const end = Date.now() + wait; while(!RUN.stopReq && Date.now() < end) await bgSleep(Math.min(500, end - Date.now())); }   // «Detener» no espera a que acabe la pausa
     }
   }
   const pr = trackProgress(t), left = t.postIds.some(id => t.items[id].status === 'pending');
   if(RUN.halt){ t.status = 'paused'; t.halt = { ...RUN.halt, at:new Date().toISOString() };
     toast(`Extracción detenida: «${RUN.halt.post}» falló ${RUN.halt.error.includes('intento') ? '' : 'de forma irrecuperable'}. Revisa la conexión o la sesión y pulsa Continuar.`, { label:'Ver', run:() => { TR.open = t.id; selectSegTab('runs'); renderRuns(); } }); }
-  else if(RUN.stopReq || left){ t.status = 'paused'; delete t.halt; toast('Seguimiento en pausa: ' + pr.done + ' de ' + pr.n + ' publicaciones'); }
+  else if(RUN.stopReq || left){ t.status = 'paused'; delete t.halt;
+    if(inHistory(t)) toast(`Seguimiento detenido: ${countTxt(pr.comments, 'comentario guardado', 'comentarios guardados')}. Ya puedes verlos y crear un informe; pulsa Continuar cuando quieras completarlo.`, { label:'Ver en el historial', run:() => { selectSegTab('hist'); renderSeg(); } });
+    else toast('Seguimiento en pausa: ' + pr.done + ' de ' + pr.n + ' publicaciones'); }
   else if(pr.errors){ t.status = 'paused'; toast(countTxt(pr.errors, 'publicación no se pudo extraer', 'publicaciones no se pudieron extraer') + ': reinténtalas o finaliza el seguimiento'); }
   else if(!pr.comments){ t.status = 'done'; t.finishedAt = new Date().toISOString(); toast('⚠ El seguimiento terminó sin comentarios: revisa que la sección de comentarios se abra y reintenta las publicaciones', { label:'Ver', run:() => { TR.open = t.id; selectSegTab('hist'); showHistoryDetail(t); } }); }
   else { t.status = 'done'; t.finishedAt = new Date().toISOString(); toast((emptyPosts(t).length ? '⚠ ' + countTxt(emptyPosts(t).length, 'publicación quedó', 'publicaciones quedaron') + ' sin comentarios. ' : '✓ ') + 'Seguimiento completado: ' + countTxt(pr.comments, 'comentario', 'comentarios') + '. Ya está en el historial.', { label:'Ver historial', run:() => selectSegTab('hist') }); }
@@ -6560,7 +6570,7 @@ function stopTracking(){
   RUN.stopReq = true;
   if(RUN.job) extStop(RUN.job);
   if(RUN.abort) RUN.abort.abort();
-  toast('Deteniendo… se guardará lo ya extraído');
+  toast('Deteniendo… se guardará lo ya extraído, también lo que lleva la publicación en curso');
 }
 async function viewResult(tid, postId, tab){
   const r = await DB.get('results', tid + '|' + postId);
@@ -6583,20 +6593,20 @@ async function trackStats(t){
 }
 function renderHistory(){
   const from = $('#histFrom').value, to = $('#histTo').value;
-  const list = TR.tracks.filter(t => t.status === 'done' && (!from || t.date >= from) && (!to || t.date <= to));
-  [...TR.hsel].forEach(id => { if(!TR.tracks.some(t => t.id === id && t.status === 'done')) TR.hsel.delete(id); });
+  const list = TR.tracks.filter(t => inHistory(t) && TR.running !== t.id && (!from || t.date >= from) && (!to || t.date <= to));
+  [...TR.hsel].forEach(id => { if(!TR.tracks.some(t => t.id === id && inHistory(t))) TR.hsel.delete(id); });
   $('#histList').innerHTML = list.length ? list.map(t => {
     const pr = trackProgress(t), sel = TR.hsel.has(t.id);
     return `<div class="hrow${sel ? ' sel' : ''}" data-hid="${esc(t.id)}">
       <input type="checkbox" class="hsel" ${sel ? 'checked' : ''} aria-label="Seleccionar ${esc(t.name)}">
-      <div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
+      <div style="min-width:0"><div class="ht">${esc(t.name)}${t.status === 'paused' ? ' <span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : ''}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
       <div class="hsent" data-hsent="${esc(t.id)}"></div>
       <div class="pacts"><button class="icon-btn sm" data-hact="view" aria-label="Ver comentarios por publicación" title="Ver comentarios por publicación"><span class="ms">forum</span></button>
         <button class="icon-btn sm needs-ai" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
         <button class="icon-btn sm" data-hact="open" aria-label="Ver publicaciones" title="Ver publicaciones"><span class="ms">list</span></button>
         <button class="icon-btn sm" data-hact="del" aria-label="Eliminar del historial" title="Eliminar del historial"><span class="ms">delete</span></button></div>
     </div>`;
-  }).join('') : `<div class="empty-mini"><span class="ms">history</span>${TR.tracks.some(t => t.status === 'done') ? 'No hay seguimientos en esas fechas.' : 'Aquí aparecerán los seguimientos completados. Elige varios para crear un informe.'}</div>`;
+  }).join('') : `<div class="empty-mini"><span class="ms">history</span>${TR.tracks.some(inHistory) ? 'No hay seguimientos en esas fechas.' : 'Aquí aparecerán los seguimientos completados o detenidos. Elige varios para crear un informe.'}</div>`;
   $('#histSelbar').classList.toggle('hidden', !TR.hsel.size);
   $('#histSelCount').textContent = TR.hsel.size ? countTxt(TR.hsel.size, 'seguimiento seleccionado', 'seguimientos seleccionados') : '';
   // mini barra de sentimiento (asíncrona)
@@ -6664,6 +6674,8 @@ function initTracking(){
     const ra = e.target.closest('[data-ract]')?.dataset.ract;
     if(ra === 'start'){ if(t.halt){ t.postIds.forEach(id => { const x = t.items[id]; if(x.status === 'error'){ x.status = 'pending'; x.error = ''; } }); } runTracking(t.id); }
     if(ra === 'stop') stopTracking();
+    if(ra === 'view') viewTrackingsComments([t.id]);
+    if(ra === 'report') openReport([t.id]);
     if(ra === 'edit') openTrackDlg(null, t.id);
     if(ra === 'finish'){ t.status = 'done'; t.finishedAt = new Date().toISOString(); await DB.put('trackings', t); renderSeg(); toast('Seguimiento archivado en el historial', { label:'Ver historial', run:() => selectSegTab('hist') }); }
     if(ra === 'del'){ if(!await askConfirm({ title:'¿Eliminar este seguimiento?', text:`Se eliminarán «${t.name}» y ${countTxt(trackProgress(t).comments, 'comentario extraído', 'comentarios extraídos')}. No se puede deshacer.`, ok:'Eliminar', danger:true })) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.open = null; renderSeg(); toast('Seguimiento eliminado'); }
@@ -6682,7 +6694,7 @@ function initTracking(){
     const t = TR.tracks.find(x => x.id === row.dataset.hid), a = e.target.closest('[data-hact]')?.dataset.hact;
     if(a === 'report') openReport([t.id]);
     if(a === 'view') viewTrackingsComments([t.id]);
-    if(a === 'open'){ t.status = 'done'; TR.open = t.id; showHistoryDetail(t); }
+    if(a === 'open'){ TR.open = t.id; showHistoryDetail(t); }
     if(a === 'del'){ if(!await askConfirm({ title:'¿Eliminar del historial?', text:`Se eliminarán «${t.name}» (${fmtDay(t.date)}) y ${countTxt(trackProgress(t).comments, 'comentario', 'comentarios')}. No se puede deshacer.`, ok:'Eliminar', danger:true })) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.hsel.delete(t.id); renderSeg(); }
     if(!a && !e.target.closest('a,button,input')){ TR.hsel.has(t.id) ? TR.hsel.delete(t.id) : TR.hsel.add(t.id); renderHistory(); }
   });
@@ -6713,11 +6725,11 @@ function initTracking(){
 // Detalle (solo lectura) de un seguimiento del historial: lista de publicaciones con acceso a sus comentarios
 function showHistoryDetail(t){
   const pr = trackProgress(t);
-  const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="small muted">${esc(fmtDay(t.date))} · <span class="stchip done"><span class="ms">task_alt</span>Completado</span> · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
-    <div class="rd-acts"><button class="btn filled" data-hd="report"><span class="ms">analytics</span>Crear informe</button><button class="btn text" data-hd="reopen"><span class="ms">replay</span>Reabrir</button><button class="icon-btn" data-hd="close" aria-label="Cerrar" title="Cerrar"><span class="ms">close</span></button></div></div>
+  const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="small muted">${esc(fmtDay(t.date))} · ${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : '<span class="stchip done"><span class="ms">task_alt</span>Completado</span>'} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
+    <div class="rd-acts"><button class="btn filled" data-hd="report"><span class="ms">analytics</span>Crear informe</button>${t.status === 'paused' ? '<button class="btn tonal" data-hd="resume"><span class="ms">play_arrow</span>Continuar extracción</button>' : '<button class="btn text" data-hd="reopen"><span class="ms">replay</span>Reabrir</button>'}<button class="icon-btn" data-hd="close" aria-label="Cerrar" title="Cerrar"><span class="ms">close</span></button></div></div>
     ${t.postIds.map(id => { const p = TR.posts.find(x => x.id === id) || { url:'', platform:'facebook', name:'(eliminada de la lista)' }, it = t.items[id];
       return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${it.status === 'running' ? SPIN : itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' && !it.count ? '<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: reabre el seguimiento y reintenta esta publicación</span>' : it.status === 'done' ? itemCountTxt(it) : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
-        <div class="ri-acts">${it.status === 'done' ? `<button class="btn text sm" data-hdv="${esc(id)}"><span class="ms">forum</span>Ver comentarios</button>` : ''}</div></div>`; }).join('')}</div>`;
+        <div class="ri-acts">${it.partial && it.status !== 'done' && it.count ? `<span class="small muted">Parcial · ${countTxt(it.count, 'comentario', 'comentarios')}</span>` : ''}${hasResult(it) ? `<button class="btn text sm" data-hdv="${esc(id)}"><span class="ms">forum</span>Ver comentarios</button>` : ''}</div></div>`; }).join('')}</div>`;
   let box = $('#histDetail'); if(!box){ box = document.createElement('div'); box.id = 'histDetail'; $('#sp-hist').appendChild(box); }
   box.innerHTML = html; box.scrollIntoView({ behavior:'smooth', block:'start' });
   box.onclick = async e => {
@@ -6726,6 +6738,7 @@ function showHistoryDetail(t){
     if(a === 'close') box.innerHTML = '';
     if(a === 'report') openReport([t.id]);
     if(a === 'reopen'){ t.status = 'paused'; await DB.put('trackings', t); box.innerHTML = ''; TR.open = t.id; selectSegTab('runs'); renderSeg(); }
+    if(a === 'resume'){ box.innerHTML = ''; TR.open = t.id; selectSegTab('runs'); renderSeg(); runTracking(t.id); }
   };
 }
 // Ver juntos los comentarios de varios seguimientos (sin duplicar los de una misma publicación)
@@ -6759,7 +6772,7 @@ async function viewTrackingsComments(tids, from, postId){
    ===================================================================== */
 const REP = { model:null };
 function renderReportPicker(){
-  const done = TR.tracks.filter(t => t.status === 'done');
+  const done = TR.tracks.filter(t => inHistory(t) && TR.running !== t.id);
   const sel = new Set(jsonPref('repSel', []).filter(id => done.some(t => t.id === id)));
   if(REP.model && !REP.editing){ $('#repPicker').innerHTML = ''; return; }
   $('#repActs').innerHTML = '';
@@ -6893,7 +6906,7 @@ async function buildReport(tids, terms, focusQ, onProg){
   for(const t of tracks){
     const rs = await DB.resultsOf(t.id); let total = 0, nw = 0; const day = [];
     rs.forEach(r => r.comments.forEach(c => { if(focus && !focus.keys.has(fkey(r.postId, c))) return; total++; const k = r.postId + '|' + (c.id && !/^(x|local)-/.test(c.id) ? c.id : normName((c.authorName || '') + ' ' + (c.text || '')).slice(0, 160)); if(!seen.has(k)){ seen.add(k); nw++; } day.push(sentiment(c.text || '').label); }));
-    byDate.push({ t, total, nw, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => t.items[id].status === 'done').length });
+    byDate.push({ t, total, nw, pos:day.filter(x => x === 'positivo').length, neg:day.filter(x => x === 'negativo').length, neu:day.filter(x => x === 'neutral').length, posts:t.postIds.filter(id => hasResult(t.items[id])).length });
   }
   const m = computeReportModel(fl, team, tracks, byDate, terms, tids, focusCtx(focus, list));
   m.rivals = detectRivals(fl);
