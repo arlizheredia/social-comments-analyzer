@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// sca-extractor 1.4.2 · requiere extensión 1.4.0
+// sca-extractor 1.4.3 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -250,11 +250,15 @@ function fbExtractor(){
       indent: Math.round(art.getBoundingClientRect().left)
     };
   }
+  var artCache = new WeakMap();   // artículo → { firma, comentario }: solo se vuelve a leer si cambió (p. ej. «Ver más» amplió el texto)
   function extractAll(){
     var arts = articles(); var res = [], seen = {};
     arts.forEach(function(a, i){
       try {
-        var c = extractOne(a);
+        var sig = (a.textContent || '').length + ':' + a.getElementsByTagName('a').length + ':' + a.getElementsByTagName('img').length;
+        var hit = artCache.get(a), c;
+        if (hit && hit.sig === sig) c = Object.assign({}, hit.c);
+        else { c = extractOne(a); artCache.set(a, { sig: sig, c: Object.assign({}, c) }); }
         var key = c.id || (c.authorName + '|' + c.text);
         if (seen[key]) return; seen[key] = 1;
         c.order = i; res.push(c);
@@ -652,7 +656,7 @@ function fbExtractor(){
       byKey[k] = c;
       if (TT) collected.push(c);
       else if (!prev) collected.unshift(c);
-      else collected.splice(collected.indexOf(prev) + 1, 0, c);
+      else { var pi = collected[collected.length - 1] === prev ? collected.length - 1 : collected.lastIndexOf(prev); collected.splice(pi + 1, 0, c); }
       prev = c;
     });
   }
@@ -788,7 +792,7 @@ function fbExtractor(){
         var t = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
-        if (ck && (ck.all >= 80 || (ck.n >= (ck.t === t ? 4 : 60) && !(countNow() > ck.c)))) return false;
+        if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(countNow() > ck.c)))) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -800,9 +804,13 @@ function fbExtractor(){
           if (b && (!clicks.get(b) || clicks.get(b).n < 4) && btns.indexOf(b) < 0) btns.push(b);
         });
       }
+      if (btns.length > 15) btns = btns.slice(0, 15);   // rondas cortas: con miles de comentarios hay cientos de botones
       if (btns.length){
         idle = 0;
+        var beat = Date.now();
         for (var i = 0; i < btns.length && !stop && postKey() === startKey; i++){
+          // la app sabe que la extensión sigue trabajando aunque la ronda sea larga
+          if (AUTO && Date.now() - beat > 5000){ beat = Date.now(); AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: netTotal() || null }); }
           var b = btns[i], bt = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
           var prev = clicks.get(b);
           // si desde la última pulsación llegaron comentarios nuevos, el botón sigue cargando: se cuenta como progreso

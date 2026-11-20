@@ -164,6 +164,14 @@ const TR = () => w.eval('TR');
       const r1 = await DBx.get('results', tt.id + '|' + pid);
       check('Volver a extraer fusiona con lo guardado: no se pierde ningún comentario (5 anteriores + 1 nuevo)', r1.comments.length === 6 && tt.items[pid].count === 6 && tt.items[pid].saved === 6, r1.comments.length + ' guardados');
       check('Una publicación con comentarios guardados sigue accesible aunque falle al volver a extraerla', w.eval('hasResult')({ status:'error', saved:6, count:0 }) === true);
+      // la extensión deja de dar noticias: lo que entrega al pedírselo se guarda (fusionado) antes de reintentar
+      const bk = w.extExtract;
+      w.eval('window.__wdData = null'); w.__wdData = extractorData(pp.url, 3);
+      w.eval(`extExtract = (url) => ({ jobId:'jw', promise:Promise.resolve({ type:'result', watchdog:true, stopped:true, data:window.__wdData }) })`);
+      let wdErr = ''; try{ await w.collectPost(tt, pp, tt.items[pid], () => {}); }catch(e){ wdErr = e.message; }
+      w.extExtract = bk;
+      const r2 = await DBx.get('results', tt.id + '|' + pid);
+      check('Si la extensión deja de dar noticias, se guarda lo que entregó y se reintenta (sin perder nada)', /se guardó lo recogido y se reintenta/.test(wdErr) && r2.comments.length === 6 && tt.items[pid].partial === true, wdErr + ' · ' + r2.comments.length);
       await DBx.del('results', tt.id + '|' + pid).catch(() => {}); }
     check('Los comentarios de cada publicación quedan guardados en IndexedDB', stored.length === 3 && stored.every(r => r.comments.length >= 5));
     check('La lista aprende el autor de la publicación', TR().posts.every(p => /kanasta24/i.test(p.author)), TR().posts.map(p => p.author).join(', '));

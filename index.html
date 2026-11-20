@@ -2665,7 +2665,7 @@ Cada comentario incluye su **plataforma**.
       <span class="hint">Puedes seguir usando el ordenador mientras extrae. La ventana de trabajo siempre tiene tamaño de escritorio: en ventanas estrechas las redes muestran su versión móvil, sin comentarios.</span></label>
     <label class="check"><input type="checkbox" id="eoCareful"> Ritmo prudente para proteger tu cuenta (pausas variables y una pausa larga cada 5 publicaciones)</label>
     <label class="check"><input type="checkbox" id="eoKeep"> Dejar abiertas las pestañas al terminar</label>
-    <label class="field"><span class="lbl">Tiempo máximo por publicación (minutos)</span><input class="input" type="number" id="eoMax" min="2" max="90"></label>
+    <label class="field"><span class="lbl">Tiempo máximo por publicación (minutos)</span><input class="input" type="number" id="eoMax" min="2" max="180"></label>
     <label class="field"><span class="lbl">Pausa entre publicaciones (segundos)</span><input class="input" type="number" id="eoGap" min="0" max="120"></label>
     <label class="field"><span class="lbl">Reintentos automáticos ante fallos (máximo 10)</span><input class="input" type="number" id="eoRetries" min="1" max="10">
       <span class="hint">Si la extracción falla por la conexión, la sesión de la red social o la carga de la página, se reintenta con esperas crecientes. Agotados los intentos, el seguimiento se detiene.</span></label>
@@ -2994,11 +2994,15 @@ function fbExtractor(){
       indent: Math.round(art.getBoundingClientRect().left)
     };
   }
+  var artCache = new WeakMap();   // artículo → { firma, comentario }: solo se vuelve a leer si cambió (p. ej. «Ver más» amplió el texto)
   function extractAll(){
     var arts = articles(); var res = [], seen = {};
     arts.forEach(function(a, i){
       try {
-        var c = extractOne(a);
+        var sig = (a.textContent || '').length + ':' + a.getElementsByTagName('a').length + ':' + a.getElementsByTagName('img').length;
+        var hit = artCache.get(a), c;
+        if (hit && hit.sig === sig) c = Object.assign({}, hit.c);
+        else { c = extractOne(a); artCache.set(a, { sig: sig, c: Object.assign({}, c) }); }
         var key = c.id || (c.authorName + '|' + c.text);
         if (seen[key]) return; seen[key] = 1;
         c.order = i; res.push(c);
@@ -3396,7 +3400,7 @@ function fbExtractor(){
       byKey[k] = c;
       if (TT) collected.push(c);
       else if (!prev) collected.unshift(c);
-      else collected.splice(collected.indexOf(prev) + 1, 0, c);
+      else { var pi = collected[collected.length - 1] === prev ? collected.length - 1 : collected.lastIndexOf(prev); collected.splice(pi + 1, 0, c); }
       prev = c;
     });
   }
@@ -3532,7 +3536,7 @@ function fbExtractor(){
         var t = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
-        if (ck && (ck.all >= 80 || (ck.n >= (ck.t === t ? 4 : 60) && !(countNow() > ck.c)))) return false;
+        if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(countNow() > ck.c)))) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -3544,9 +3548,13 @@ function fbExtractor(){
           if (b && (!clicks.get(b) || clicks.get(b).n < 4) && btns.indexOf(b) < 0) btns.push(b);
         });
       }
+      if (btns.length > 15) btns = btns.slice(0, 15);   // rondas cortas: con miles de comentarios hay cientos de botones
       if (btns.length){
         idle = 0;
+        var beat = Date.now();
         for (var i = 0; i < btns.length && !stop && postKey() === startKey; i++){
+          // la app sabe que la extensión sigue trabajando aunque la ronda sea larga
+          if (AUTO && Date.now() - beat > 5000){ beat = Date.now(); AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: netTotal() || null }); }
           var b = btns[i], bt = (b.innerText || '').trim().replace(/^[\s—–\-·•]+/, '');
           var prev = clicks.get(b);
           // si desde la última pulsación llegaron comentarios nuevos, el botón sigue cargando: se cuenta como progreso
@@ -6176,14 +6184,16 @@ function renderPosts(){
 const EXT_LATEST = '1.4.0';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 // Extractor publicado en extension/extractor.js (firmado): las extensiones 1.4.0 o posteriores lo instalan solas.
 // Para corregir la extracción sin que nadie reinstale nada, basta con subir EXTRACTOR_LATEST y ejecutar tools/build_extension.py.
-const EXTRACTOR_LATEST = '1.4.2';
+const EXTRACTOR_LATEST = '1.4.3';
 const EXTRACTOR_MIN_EXT = '1.4.0';   // versión mínima de la extensión que puede usar este extractor
 const EXT_SRC = ['extension/', 'https://arlizheredia.github.io/social-comments-analyzer/extension/'];
 const EXT = { version:null, extractor:null, downloaded:null, userScripts:false, updates:false, waiters:new Map(), jobs:new Map() };
 // pausa entre publicaciones por defecto: 6 s (variable)
 if(PREF.get('eoGap') === null) PREF.set('eoGap', '6');
+// el antiguo máximo de 20 min por publicación cortaba las publicaciones grandes (más de ~1000 comentarios): pasa a 60
+if(PREF.get('eoMax') === '20' && PREF.get('eoMaxMig') !== '1'){ PREF.set('eoMax', '60'); PREF.set('eoMaxMig', '1'); }
 const verLt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for(let i = 0; i < 3; i++){ if((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
-function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', maxMinutes:+PREF.get('eoMax', '20') || 20, gap:+PREF.get('eoGap', '4') || 0,
+function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', maxMinutes:+PREF.get('eoMax', '60') || 60, gap:+PREF.get('eoGap', '4') || 0,
   retries:Math.min(10, Math.max(1, Math.round(+PREF.get('eoRetries', '10')) || 10)), retryBase:Math.max(0.01, +PREF.get('eoRetryBase', '15') || 15), careful:PREF.get('eoCareful', '1') === '1' }; }
 function renderExt(){
   const on = !!EXT.version, old = on && verLt(EXT.version, EXT_LATEST);
@@ -6256,13 +6266,18 @@ function extExtract(url, onProgress){
   return { jobId, promise:new Promise((resolve, reject) => {
     // sin noticias de la extensión durante 3 min (o más del tiempo máximo por publicación) → fallo reintentable
     let last = Date.now();
-    const idleMax = 3 * 60000, hardMax = (opts.maxMinutes + 3) * 60000, started = Date.now();
+    const idleMax = 5 * 60000, hardMax = (opts.maxMinutes + 3) * 60000, started = Date.now();
     const finish = fn => v => { clearInterval(wd); EXT.jobs.delete(jobId); fn(v); };
+    let asked = 0;
     const wd = setInterval(() => {
       const now = Date.now();
-      if(now - last > idleMax || now - started > hardMax){ extStop(jobId); finish(reject)(new Error('La extensión dejó de responder (la pestaña o Chrome pueden haberse bloqueado).')); }
+      if(!asked && (now - last > idleMax || now - started > hardMax)){
+        // se pide a la extensión que entregue lo recogido; si no contesta en 30 s, fallo reintentable
+        asked = now; extStop(jobId);
+        const job = EXT.jobs.get(jobId); if(job) job.watchdog = true;
+      } else if(asked && now - asked > 30000){ finish(reject)(new Error('La extensión dejó de responder (la pestaña o Chrome pueden haberse bloqueado).')); }
     }, 15000);
-    EXT.jobs.set(jobId, { resolve:finish(resolve), reject:finish(reject), onProgress:m => { last = Date.now(); onProgress && onProgress(m); } });
+    EXT.jobs.set(jobId, { resolve:v => finish(resolve)(EXT.jobs.get(jobId)?.watchdog ? { ...v, watchdog:true } : v), reject:finish(reject), onProgress:m => { last = Date.now(); onProgress && onProgress(m); } });
     window.postMessage({ source:'sca-app', type:'extract', jobId, url, options:opts }, '*');
   }) };
 }
@@ -6471,6 +6486,11 @@ async function collectPost(t, p, it, onProg){
   const job = extExtract(p.url, msg => onProg({ phase:msg.phase, count:msg.count, total:msg.total }));
   RUN.job = job.jobId;
   const r = await job.promise; RUN.job = null;
+  if(r.watchdog && !RUN.stopReq){
+    // la extensión se había quedado sin dar noticias: se guarda lo que entregó y se reintenta (lo nuevo se suma a lo guardado)
+    if(r.data && (r.data.comments || []).length){ await storeResult(t, p, fromExtractor(r.data), 'extension', true); Object.assign(it, { status:'running', partial:true }); }
+    throw new Error('La extensión dejó de dar noticias durante varios minutos; se guardó lo recogido y se reintenta.');
+  }
   if(r.stopped && !r.data) return { stopped:true };
   if(!r.data) throw new Error('La extensión no devolvió datos.');
   if(r.data.cambioDePublicacion) onProg({ note:'La página cambió de publicación durante la extracción; se guardó solo lo de la original.' });
@@ -6765,7 +6785,7 @@ function initTracking(){
   // al volver de los ajustes de Chrome se comprueba si ya se dio el permiso
   document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && EXT.version) window.postMessage({ source:'sca-app', type:'ping' }, '*'); });
   $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
-  $('#eoSave').onclick = () => { PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(90, Math.max(2, +$('#eoMax').value || 20)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
+  $('#eoSave').onclick = () => { PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(180, Math.max(2, +$('#eoMax').value || 60)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
   addEventListener('beforeunload', e => { if(TR.running){ e.preventDefault(); e.returnValue = ''; } });
   extDetect(); setTimeout(extDetect, 800);
   setTimeout(requestSessions, 900); setInterval(requestSessions, 60000);
