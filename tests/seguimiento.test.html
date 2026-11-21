@@ -265,6 +265,16 @@ const TR = () => w.eval('TR');
     { const tz = TR().tracks.find(x => x.name === 'Congelada'), it = tz.items[igP.id], rs = await w.eval('DB').getResult(tz.id + '|' + igP.id);
       check('Detener con la pestaña congelada: se guarda lo recibido por partes y «Guardar en el historial» funciona', it.partial && rs && rs.comments.length === 2 && w.eval('inHistory')(tz), JSON.stringify({ st:tz.status, it:[it.status, it.count, it.partial], hist:w.eval('inHistory')(tz) })); }
     FAKE.cpFreeze[igP.url] = false; FAKE.stopped.clear();
+    { // eliminar varios seguimientos del historial a la vez: pide confirmación
+      const ids = ['Ventana cerrada', 'Congelada'].map(n => (TR().tracks.find(x => x.name === n) || {}).id).filter(Boolean);
+      ids.forEach(id => TR().hsel.add(id)); w.renderHistory(); await wait(50);
+      d.getElementById('histDelSel').click(); await wait(100);
+      const asked = d.getElementById('confirmDlg').open && /¿Eliminar 2 seguimientos\?/.test(d.getElementById('cfTitle').textContent) && /No se puede deshacer/.test(d.getElementById('cfText').textContent);
+      d.getElementById('cfCancel').click(); await wait(100);
+      const kept = ids.every(id => TR().tracks.some(x => x.id === id));
+      d.getElementById('histDelSel').click(); await wait(100); d.getElementById('cfOk').click();
+      await until(() => !ids.some(id => TR().tracks.some(x => x.id === id)), 5000).catch(() => {});
+      check('Eliminar varios seguimientos seleccionados: pide confirmación (Cancelar no borra) y luego los elimina', asked && kept && !ids.some(id => TR().tracks.some(x => x.id === id)), JSON.stringify({ asked, kept })); }
     for(const n of ['Reintentos', 'Sin sesión', 'Ventana cerrada', 'Congelada']){ const t = TR().tracks.find(x => x.name === n); if(t) await w.eval(`DB.delTracking('${t.id}')`); }
     await w.eval('loadTR()'); await wait(100);
 

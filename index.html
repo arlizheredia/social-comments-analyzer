@@ -1381,6 +1381,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
         <div class="selbar hidden" id="histSelbar">
           <button class="icon-btn sm" id="histSelNone" aria-label="Quitar selección"><span class="ms">close</span></button>
           <b id="histSelCount"></b><span class="spacer"></span>
+          <button class="btn text sm" id="histDelSel"><span class="ms">delete</span><span class="lbl">Eliminar</span></button>
           <button class="btn text sm" id="histViewSel"><span class="ms">forum</span><span class="lbl">Ver comentarios</span></button>
           <button class="btn filled sm" id="histReport"><span class="ms">analytics</span>Crear informe</button>
         </div>
@@ -7037,6 +7038,17 @@ function initTracking(){
   $('#histSelNone').onclick = () => { TR.hsel.clear(); renderHistory(); };
   $('#histReport').onclick = () => openReport([...TR.hsel]);
   $('#histViewSel').onclick = () => viewTrackingsComments([...TR.hsel]);
+  // eliminar varios seguimientos a la vez, siempre con confirmación
+  $('#histDelSel').onclick = async () => {
+    const ts = [...TR.hsel].map(id => TR.tracks.find(t => t.id === id)).filter(t => t && TR.running !== t.id); if(!ts.length) return;
+    const nCom = ts.reduce((s, t) => s + trackProgress(t).comments, 0);
+    const names = ts.slice(0, 5).map(t => `«${t.name}» (${trackWhen(t)})`).join(', ') + (ts.length > 5 ? ` y ${ts.length - 5} más` : '');
+    if(!await askConfirm({ title:`¿Eliminar ${countTxt(ts.length, 'seguimiento', 'seguimientos')}?`, danger:true, ok:'Eliminar',
+      text:`Se eliminarán ${names}, con ${countTxt(nCom, 'comentario extraído', 'comentarios extraídos')}. Los comentarios de una publicación solo se borran si ningún otro seguimiento los usa. No se puede deshacer.` })) return;
+    for(const t of ts){ await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.hsel.delete(t.id); }
+    $('#histDetail') && ($('#histDetail').innerHTML = '');
+    renderSeg(); toast(`${countTxt(ts.length, 'seguimiento eliminado', 'seguimientos eliminados')}`);
+  };
   // copia de seguridad y opciones
   $('#dbExport').onclick = () => { closeMenus(); dbExport(); };
   $('#dbImport').onchange = e => { const f = e.target.files[0]; e.target.value = ''; closeMenus(); if(f) dbImport(f); };
