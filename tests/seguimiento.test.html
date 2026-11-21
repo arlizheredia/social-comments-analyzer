@@ -190,6 +190,7 @@ const TR = () => w.eval('TR');
     check('La lista aprende el autor de la publicación', TR().posts.every(p => /kanasta24/i.test(p.author)), TR().posts.map(p => p.author).join(', '));
     await until(() => d.querySelectorAll('#histList .hrow').length === 1, 5000).catch(() => {});
     check('El historial muestra el seguimiento', d.querySelectorAll('#histList .hrow').length === 1 && /Lunes/.test(d.getElementById('histList').textContent));
+    check('El historial muestra también la hora del seguimiento', /\d{1,2}:\d{2}/.test(d.querySelector('#histList .hrow .hs').textContent), d.querySelector('#histList .hrow .hs').textContent);
 
     // 4. Sin extensión no se puede iniciar un seguimiento automático (el marcador no se usa en los seguimientos)
     const fbId = TR().posts.find(p => p.platform === 'facebook').id, ttId = TR().posts.find(p => p.platform === 'tiktok').id;

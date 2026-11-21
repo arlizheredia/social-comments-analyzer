@@ -6568,6 +6568,12 @@ const fmtSecs = s => s >= 60 ? Math.floor(s / 60) + ' min ' + String(s % 60).pad
 const inHistory = t => t.status === 'done' || (t.status === 'paused' && t.inHist === true && t.postIds.some(id => hasResult(t.items[id])));
 const hasSaved = t => t.postIds.some(id => hasResult(t.items[id]));
 const hasResult = it => !!it && (it.status === 'done' || it.saved > 0 || (it.partial && it.count > 0));
+// Fecha del seguimiento con la hora en que se hizo (para distinguir varios del mismo día): «sáb, 21 nov 2026 · 10:42»
+function trackWhen(t){
+  const ts = t.finishedAt || t.startedAt || t.createdAt;
+  const hm = ts && !isNaN(Date.parse(ts)) ? new Date(ts).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : '';
+  return fmtDay(t.date) + (hm ? ' · ' + hm : '');
+}
 function trackProgress(t){
   const ids = t.postIds, n = ids.length || 1;
   let done = 0, frac = 0;
@@ -6587,7 +6593,7 @@ function renderRuns(){
     if(TR.open === t.id) return '<div id="runDetailSlot"></div>';
     const pr = trackProgress(t), [ic, tx] = ST_TXT[t.status];
     return `<button class="rcard" data-tid="${esc(t.id)}" aria-expanded="false">
-      <span><span class="rt">${esc(t.name)}</span><br><span class="rs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</span></span>
+      <span><span class="rt">${esc(t.name)}</span><br><span class="rs">${esc(trackWhen(t))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</span></span>
       <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx} · ${pr.pct} %</span>
       <span class="pbar"><i style="width:${pr.pct}%"></i></span></button>`;
   }).join('') : `<div class="empty-mini"><span class="ms">add_task</span>No hay seguimientos activos. En <b>Publicaciones</b>, selecciona las que quieras revisar hoy y pulsa <b>Crear seguimiento</b>.</div>`;
@@ -6603,7 +6609,7 @@ function renderRunDetail(){
   const pr = trackProgress(t), running = TR.running === t.id, [ic, tx] = ST_TXT[t.status];
   const pend = t.postIds.filter(id => ['pending', 'error'].includes(t.items[id].status)).length;
   box.innerHTML = `<div class="rdetail" aria-live="polite">
-    <div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rd-meta small muted">${esc(fmtDay(t.date))} <span aria-hidden="true">·</span> <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx}</span></div></div>
+    <div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rd-meta small muted">${esc(trackWhen(t))} <span aria-hidden="true">·</span> <span class="stchip ${t.status}"><span class="ms">${ic}</span>${tx}</span></div></div>
       <div class="rd-acts">
         ${running ? `<button class="btn tonal" data-ract="stop" title="Detiene la extracción; lo extraído hasta ahora se conserva"><span class="ms">stop</span>Detener</button>`
           : `<button class="btn filled" data-ract="start" ${pend || t.halt ? '' : 'disabled'}><span class="ms">play_arrow</span>${t.status === 'draft' ? 'Iniciar' : 'Continuar'}</button>`}
@@ -6887,7 +6893,7 @@ function renderHistory(){
     const pr = trackProgress(t), sel = TR.hsel.has(t.id);
     return `<div class="hrow${sel ? ' sel' : ''}" data-hid="${esc(t.id)}">
       <input type="checkbox" class="hsel" ${sel ? 'checked' : ''} aria-label="Seleccionar ${esc(t.name)}">
-      <div style="min-width:0"><div class="ht"><span class="ht-name">${esc(t.name)}</span>${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : t.postIds.some(id => t.items[id] && t.items[id].partial) ? '<span class="stchip paused"><span class="ms">incomplete_circle</span>Completado · parcial</span>' : ''}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
+      <div style="min-width:0"><div class="ht"><span class="ht-name">${esc(t.name)}</span>${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : t.postIds.some(id => t.items[id] && t.items[id].partial) ? '<span class="stchip paused"><span class="ms">incomplete_circle</span>Completado · parcial</span>' : ''}</div><div class="hs">${esc(trackWhen(t))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
       <div class="hsent" data-hsent="${esc(t.id)}"></div>
       <div class="pacts"><button class="icon-btn sm" data-hact="view" aria-label="Ver comentarios por publicación" title="Ver comentarios por publicación"><span class="ms">forum</span></button>
         <button class="icon-btn sm needs-ai" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
@@ -6992,7 +6998,7 @@ function initTracking(){
     if(a === 'report') openReport([t.id]);
     if(a === 'view') viewTrackingsComments([t.id]);
     if(a === 'open'){ TR.open = t.id; showHistoryDetail(t); }
-    if(a === 'del'){ if(!await askConfirm({ title:'¿Eliminar del historial?', text:`Se eliminarán «${t.name}» (${fmtDay(t.date)}) y ${countTxt(trackProgress(t).comments, 'comentario', 'comentarios')}. No se puede deshacer.`, ok:'Eliminar', danger:true })) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.hsel.delete(t.id); renderSeg(); }
+    if(a === 'del'){ if(!await askConfirm({ title:'¿Eliminar del historial?', text:`Se eliminarán «${t.name}» (${trackWhen(t)}) y ${countTxt(trackProgress(t).comments, 'comentario', 'comentarios')}. No se puede deshacer.`, ok:'Eliminar', danger:true })) return; await DB.delTracking(t.id); TR.tracks = TR.tracks.filter(x => x !== t); TR.hsel.delete(t.id); renderSeg(); }
     if(!a && !e.target.closest('a,button,input')){ TR.hsel.has(t.id) ? TR.hsel.delete(t.id) : TR.hsel.add(t.id); renderHistory(); }
   });
   $('#histSelNone').onclick = () => { TR.hsel.clear(); renderHistory(); };
@@ -7022,7 +7028,7 @@ function initTracking(){
 // Detalle (solo lectura) de un seguimiento del historial: lista de publicaciones con acceso a sus comentarios
 function showHistoryDetail(t){
   const pr = trackProgress(t);
-  const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rd-meta small muted">${esc(fmtDay(t.date))} <span aria-hidden="true">·</span> ${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : '<span class="stchip done"><span class="ms">task_alt</span>Completado</span>'} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
+  const html = `<div class="rdetail"><div class="rd-head"><div><h2>${esc(t.name)}</h2><div class="rd-meta small muted">${esc(trackWhen(t))} <span aria-hidden="true">·</span> ${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : '<span class="stchip done"><span class="ms">task_alt</span>Completado</span>'} · ${countTxt(pr.comments, 'comentario', 'comentarios')}</div></div>
     <div class="rd-acts"><button class="btn filled" data-hd="report"><span class="ms">analytics</span>Crear informe</button>${t.status === 'paused' ? '<button class="btn tonal" data-hd="resume"><span class="ms">play_arrow</span>Continuar extracción</button>' : '<button class="btn text" data-hd="reopen"><span class="ms">replay</span>Reabrir</button>'}<button class="icon-btn" data-hd="close" aria-label="Cerrar" title="Cerrar"><span class="ms">close</span></button></div></div>
     ${t.postIds.map(id => { const p = TR.posts.find(x => x.id === id) || { url:'', platform:'facebook', name:'(eliminada de la lista)' }, it = t.items[id];
       return `<div class="ritem" data-ipid="${esc(id)}"><span class="ms ri-ic ${it.status}">${it.status === 'running' ? SPIN : itemIcon(it)}</span><div style="min-width:0"><div class="ri-t"><i class="pdot ${platDot(p.platform)}"></i><span style="overflow:hidden;text-overflow:ellipsis">${esc(postLabel(p))}</span></div><div class="ri-s">${it.status === 'done' && !it.count ? '<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: reabre el seguimiento y reintenta esta publicación</span>' : it.status === 'done' ? itemCountTxt(it) : it.status === 'skipped' ? 'Omitida' : esc(it.error || '')}</div></div>
@@ -7076,7 +7082,7 @@ function renderReportPicker(){
   $('#repPicker').innerHTML = done.length ? `<div class="card rp-pick">
     <h3>Elige los seguimientos del informe</h3><p class="small muted" style="margin:0">El informe combina sus comentarios sin duplicar los de una misma publicación y compara la evolución entre fechas.</p>
     <div class="rp-presets" style="margin-top:12px"><button class="fchip" data-rpp="7">Últimos 7 días</button><button class="fchip" data-rpp="30">Últimos 30 días</button><button class="fchip" data-rpp="all">Todos</button><button class="fchip" data-rpp="none">Ninguno</button></div>
-    <div class="hlist">${done.map(t => { const pr = trackProgress(t); return `<label class="hrow${sel.has(t.id) ? ' sel' : ''}"><input type="checkbox" class="rpsel" value="${esc(t.id)}" ${sel.has(t.id) ? 'checked' : ''}><div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div></label>`; }).join('')}</div>
+    <div class="hlist">${done.map(t => { const pr = trackProgress(t); return `<label class="hrow${sel.has(t.id) ? ' sel' : ''}"><input type="checkbox" class="rpsel" value="${esc(t.id)}" ${sel.has(t.id) ? 'checked' : ''}><div style="min-width:0"><div class="ht">${esc(t.name)}</div><div class="hs">${esc(trackWhen(t))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div></label>`; }).join('')}</div>
     <div class="rp-cfg"><label class="field rp-focus"><span class="lbl">Enfoque del informe (obligatorio)</span><input class="input" id="repFocus" value="${esc(reportFocus())}" placeholder="Ej.: ${esc(FOCUS_DEFAULT)}" maxlength="200" required aria-describedby="repFocusHint"><span class="hint" id="repFocusHint">La IA buscará los comentarios que cumplan este criterio y el informe se centrará en ellos, además de las estadísticas generales.</span></label>
       <label class="field"><span class="lbl">Temas a vigilar (opcional)</span><input class="input" id="repTerms" value="${esc(reportTerms())}" placeholder="Ej.: Kanasta24, envío, precio" aria-describedby="repTermsHint"><span class="hint" id="repTermsHint">Separados por comas.</span></label>
       <label class="field"><span class="lbl">Elaborado por</span><input class="input" id="repAuthor" value="${esc(repOpt('author'))}" placeholder="Nombre de quien firma el informe"></label>
