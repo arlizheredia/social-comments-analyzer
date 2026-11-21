@@ -2089,9 +2089,11 @@ Si una versión nueva cambia la propia extensión, *Seguimiento* mostrará **Act
 
 En ⋮ › **Opciones de extracción** › *Comentarios a revisar (Facebook)* eliges entre:
 
-- **Más pertinentes** (por defecto): los que Facebook muestra primero (de amigos y con más interacciones). Es lo más rápido y suele bastar para un informe.
+- **Más pertinentes**: los que Facebook muestra primero (de amigos y con más interacciones). Es lo más rápido y suele bastar para un informe.
 - **Más recientes**: los últimos comentarios primero.
-- **Todos los comentarios**: incluye el posible spam; en publicaciones con miles de comentarios puede tardar mucho.
+- **Todos los comentarios** (por defecto): incluye el posible spam.
+
+**Máximo de comentarios por publicación** (por defecto, 1500; o *Sin límite*): al llegar a ese número termina la extracción de esa publicación, sea cual sea el tipo elegido. Los informes indican cuándo se alcanzó.
 
 Los comentarios de cada publicación se guardan **una sola vez** y en cada extracción solo se añaden los nuevos, aunque la publicación esté en varios seguimientos. Los **informes** y el **mensaje de WhatsApp** indican siempre qué comentarios se revisaron (*más pertinentes*, *más recientes* o *todos*) y si alguna extracción fue parcial.
 
@@ -2682,8 +2684,12 @@ Cada comentario incluye su **plataforma**.
     <label class="check"><input type="checkbox" id="eoCareful"> Ritmo prudente para proteger tu cuenta (pausas variables y una pausa larga cada 5 publicaciones)</label>
     <label class="check"><input type="checkbox" id="eoKeep"> Dejar abiertas las pestañas al terminar</label>
     <label class="field"><span class="lbl">Comentarios a revisar (Facebook)</span>
-      <select class="input" id="eoOrder"><option value="pert">Más pertinentes (recomendado)</option><option value="rec">Más recientes</option><option value="all">Todos los comentarios (puede tardar mucho)</option></select>
-      <span class="hint">Facebook ordena los comentarios de tres maneras. «Más pertinentes» es lo que Facebook muestra por defecto y es lo más rápido; «Todos» incluye el posible spam y en publicaciones con miles de comentarios puede tardar mucho. Los informes indican qué comentarios se revisaron.</span></label>
+      <select class="input" id="eoOrder"><option value="all">Todos los comentarios</option><option value="pert">Más pertinentes</option><option value="rec">Más recientes</option></select>
+      <span class="hint">Facebook ordena los comentarios de tres maneras. «Todos» incluye el posible spam; «Más pertinentes» es lo que Facebook muestra por defecto y es lo más rápido. Los informes indican qué comentarios se revisaron.</span></label>
+    <div class="field"><label class="lbl" for="eoLimit">Máximo de comentarios por publicación</label>
+      <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><input class="input" type="number" id="eoLimit" min="50" step="50" style="max-width:160px">
+        <label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="eoNoLimit"> Sin límite</label></div>
+      <span class="hint">Al llegar a este número, la extracción de esa publicación termina. Vale para los tres tipos. Por defecto, 1500.</span></div>
     <label class="field"><span class="lbl">Tiempo máximo por publicación (minutos)</span><input class="input" type="number" id="eoMax" min="2" max="180"></label>
     <label class="field"><span class="lbl">Pausa entre publicaciones (segundos)</span><input class="input" type="number" id="eoGap" min="0" max="120"></label>
     <label class="field"><span class="lbl">Reintentos automáticos ante fallos (máximo 10)</span><input class="input" type="number" id="eoRetries" min="1" max="10">
@@ -3443,6 +3449,8 @@ function fbExtractor(){
   // comentarios a revisar: «pert» (más pertinentes), «rec» (más recientes) o «all» (todos); lo elige el usuario en la app
   var ORDER = (AUTO && (String(AUTO.jobId || '').match(/~o=(pert|rec|all)/) || [])[1]) || 'all';
   var ORDER_RE = { pert: PERT_RE, rec: REC_RE, all: ALL_RE }[ORDER];
+  // máximo de comentarios por publicación (0 = sin límite); también llega en el identificador del trabajo
+  var LIMIT = +((String(AUTO && AUTO.jobId || '').match(/~l=(\d+)/) || [])[1] || 0);
   var ORDER_TXT = { pert: 'Mostrando los comentarios más pertinentes…', rec: 'Mostrando los comentarios más recientes…', all: 'Mostrando todos los comentarios…' }[ORDER];
   // Estado del orden: 'cambiado' | 'ya' (ya mostraba todos) | 'sin-selector' | 'sin-opcion'
   var sortState = '', sortTries = 0, sortMenu = [], LOOP = { round: 0, second: false };   // LOOP: datos del bucle para el diagnóstico final
@@ -3542,6 +3550,7 @@ function fbExtractor(){
     // última lectura por tandas, cediendo el control entre una y otra (antes era de golpe y congelaba la pestaña con miles de comentarios)
     if (onOriginal && !useCollectedOnly){ for (var k = 0; k < 40; k++){ snapshot(true); if (!snapPending) break; await sleep(0); } }
     var comments = collected.map(function(c, i){ c.order = i; return c; });
+    if (LIMIT && comments.length > LIMIT){ comments = comments.slice(0, LIMIT); LOOP.limite = true; }   // exactamente el máximo pedido
     var postAuthor = meta.postAuthor || '', postCaption = meta.postCaption || '', postDate = meta.postDate || '';
     var data = { source: 'social-dom-extractor', platform: TT ? 'tiktok' : IG ? 'instagram' : 'facebook', version: 3, url: meta.url || location.href, title: meta.title || document.title, cambioDePublicacion: !onOriginal,
       postAuthor: postAuthor, postCaption: postCaption, postDate: postDate, extractedAt: new Date().toISOString(), userAgentLang: navigator.language, count: comments.length, comments: comments };
@@ -3553,6 +3562,7 @@ function fbExtractor(){
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
     // qué comentarios se revisaron: el orden pedido y si se pudo aplicar (Instagram y TikTok muestran su propio orden)
     data.order = TT || IG ? { pedido: ORDER, aplicado: 'red' } : { pedido: ORDER, aplicado: sortState === 'ya' || sortState === 'cambiado' ? ORDER : null };
+    data.order.limite = LIMIT; data.order.alcanzado = !!LOOP.limite;
     var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
     if (!TT && !IG && onOriginal){
       var pend = sortButtons().map(function(b){ return quickText(b).replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
@@ -3701,7 +3711,7 @@ function fbExtractor(){
         if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
         lastCollected = collected.length;
         // el total de la red incluye respuestas y a veces comentarios ocultos o eliminados: se acepta un 3 % de diferencia
-        var goal = ORDER === 'all' ? total : 0;   // solo con «todos» se intenta llegar al total de la red
+        var goal = ORDER === 'all' ? (LIMIT && total ? Math.min(total, LIMIT) : total) : 0;   // solo con «todos» se intenta llegar al total (o al límite)
         if (idle >= (goal && collected.length < goal * 0.97 ? (TT ? 8 : 10) : 4)){
           if (!TT && !IG && !secondPass && goal && collected.length < goal * 0.97){
             // segunda pasada: volver a intentar «Todos los comentarios», reiniciar los botones y recorrer el panel de nuevo
@@ -3719,7 +3729,9 @@ function fbExtractor(){
       if (AUTO && Date.now() - lastCp > 30000) checkpoint();
       // botones que ya no cargan nada (respuestas eliminadas, «Ver más» sin efecto): sin comentarios nuevos durante 45 s
       // (90 s si aún falta más del 3 % del total) se da la extracción por terminada en lugar de seguir pulsándolos sin fin
-      var stallMs = ORDER === 'all' && tot && collected.length < tot * 0.97 ? 90000 : 45000;
+      var stallMs = ORDER === 'all' && tot && collected.length < (LIMIT ? Math.min(tot, LIMIT) : tot) * 0.97 ? 90000 : 45000;
+      // máximo alcanzado: se termina
+      if (LIMIT && collected.length >= LIMIT){ LOOP.limite = true; break; }
       if (round > 3 && Date.now() - lastGrow > stallMs){ LOOP.sinAvance = Math.round((Date.now() - lastGrow) / 1000); break; }
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
       if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });
@@ -6373,7 +6385,7 @@ function renderPosts(){
 const EXT_LATEST = '1.4.0';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 // Extractor publicado en extension/extractor.js (firmado): las extensiones 1.4.0 o posteriores lo instalan solas.
 // Para corregir la extracción sin que nadie reinstale nada, basta con subir EXTRACTOR_LATEST y ejecutar tools/build_extension.py.
-const EXTRACTOR_LATEST = '1.4.6';
+const EXTRACTOR_LATEST = '1.4.7';
 const EXTRACTOR_MIN_EXT = '1.4.0';   // versión mínima de la extensión que puede usar este extractor
 const EXT_SRC = ['extension/', 'https://arlizheredia.github.io/social-comments-analyzer/extension/'];
 const EXT = { version:null, extractor:null, downloaded:null, userScripts:false, updates:false, waiters:new Map(), jobs:new Map() };
@@ -6382,7 +6394,8 @@ if(PREF.get('eoGap') === null) PREF.set('eoGap', '6');
 // el antiguo máximo de 20 min por publicación cortaba las publicaciones grandes (más de ~1000 comentarios): pasa a 60
 if(PREF.get('eoMax') === '20' && PREF.get('eoMaxMig') !== '1'){ PREF.set('eoMax', '60'); PREF.set('eoMaxMig', '1'); }
 const verLt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for(let i = 0; i < 3; i++){ if((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
-function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', order:['pert', 'rec', 'all'].includes(PREF.get('eoOrder')) ? PREF.get('eoOrder') : 'pert', maxMinutes:+PREF.get('eoMax', '60') || 60, gap:+PREF.get('eoGap', '4') || 0,
+function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', order:['pert', 'rec', 'all'].includes(PREF.get('eoOrder')) ? PREF.get('eoOrder') : 'all',
+  limit:PREF.get('eoNoLimit', '0') === '1' ? 0 : Math.max(50, Math.round(+PREF.get('eoLimit', '1500')) || 1500), maxMinutes:+PREF.get('eoMax', '60') || 60, gap:+PREF.get('eoGap', '4') || 0,
   retries:Math.min(10, Math.max(1, Math.round(+PREF.get('eoRetries', '10')) || 10)), retryBase:Math.max(0.01, +PREF.get('eoRetryBase', '15') || 15), careful:PREF.get('eoCareful', '1') === '1' }; }
 function renderExt(){
   const on = !!EXT.version, old = on && verLt(EXT.version, EXT_LATEST);
@@ -6454,7 +6467,7 @@ function openExtAutoDlg(){ EXT.autoAsked = true; $('#extAutoDlg').showModal(); }
 // Prefijo de los guardados parciales que el extractor envía dentro de los avisos de progreso
 const CP_TAG = '\u0001sca-cp:';
 function extExtract(url, onProgress){
-  const opts = extOpts(), jobId = uid('j_') + '~o=' + opts.order;   // el orden pedido viaja en el identificador (lo lee el extractor)
+  const opts = extOpts(), jobId = uid('j_') + '~o=' + opts.order + '~l=' + opts.limit;   // el orden pedido viaja en el identificador (lo lee el extractor)
   return { jobId, promise:new Promise((resolve, reject) => {
     // sin noticias de la extensión durante 3 min (o más del tiempo máximo por publicación) → fallo reintentable
     let last = Date.now();
@@ -6547,6 +6560,7 @@ const emptyPosts = t => t.postIds.filter(id => t.items[id] && t.items[id].status
 // Comentarios extraídos de una publicación; si la red indica bastantes más, se avisa (su total incluye respuestas y a veces comentarios ocultos)
 function itemCountTxt(it){
   const n = it.count || 0, tot = it.total || 0;
+  if(it.limitReached) return `${countTxt(n, 'comentario', 'comentarios')} · límite alcanzado`;
   // con «más pertinentes» o «más recientes» no se espera llegar al total de la red: no es una extracción incompleta
   if(it.order && it.order !== 'all') return `${countTxt(n, 'comentario', 'comentarios')} · ${ORDER_NAME[it.order].replace(/^comentarios /, '')}`;
   if(tot && n < tot * 0.9 && tot - n >= 3) return `${fmtN(n)} de ${fmtN(tot)} comentarios <span class="warn-chip" title="La red indica ${fmtN(tot)} comentarios (incluye respuestas y a veces comentarios ocultos o eliminados). Reintenta la publicación para completar la extracción."><span class="ms">warning</span>Incompleta</span>`;
@@ -6577,7 +6591,7 @@ function trackWhen(t){
 function trackProgress(t){
   const ids = t.postIds, n = ids.length || 1;
   let done = 0, frac = 0;
-  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && it.total && (it.order || 'all') === 'all') frac += Math.min(.99, (it.count || 0) / it.total); else if(it.status === 'running' && it.count) frac += .5; else if(it.status === 'running') frac += .1; });
+  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && (it.limit || (it.total && (it.order || 'all') === 'all'))){ const goal = (it.order || 'all') === 'all' && it.total ? (it.limit ? Math.min(it.total, it.limit) : it.total) : it.limit; frac += Math.min(.99, (it.count || 0) / goal); } else if(it.status === 'running' && it.count) frac += .5; else if(it.status === 'running') frac += .1; });
   const comments = ids.reduce((s, id) => { const it = t.items[id]; return s + (it.status === 'running' ? Math.max(it.count || 0, it.saved || 0) : (it.count || it.saved || 0)); }, 0);
   return { pct:Math.min(100, Math.round((done + frac) / n * 100)), done, n:ids.length, comments, errors:ids.filter(id => t.items[id].status === 'error').length };
 }
@@ -6628,7 +6642,7 @@ function renderRunDetail(){
       const m = it.method || methodFor(p);
       const waiting = it.status === 'running' && it.retry && it.phase === 'retry';   // esperando para reintentar (no extrayendo)
       const sub = waiting ? `<span class="warn-txt"><span class="ms">autorenew</span>${it.retry.offline ? 'Sin conexión: esperando a que vuelva para el ' : 'Reintento '}${it.retry.attempt} de ${it.retry.max}${it.retry.offline ? '' : ' en ' + fmtSecs(it.retry.left)}</span> · último error: ${esc(it.retry.error.slice(0, 140))}`
-        : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : (it.order || 'all') === 'all' ? `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios` : `Extrayendo los ${ORDER_NAME[it.order]}… ${fmtN(it.count || 0)}${it.total ? ' (la publicación tiene ' + fmtN(it.total) + ' en total)' : ''}`) + (it.attempts > 1 && it.retry ? ` · intento ${it.attempts} de ${it.retry.max}` : '')
+        : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : (it.order || 'all') === 'all' ? (it.limit && (!it.total || it.total > it.limit) ? `Extrayendo… ${fmtN(it.count || 0)} de ${fmtN(it.limit)} comentarios (límite)` : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`) : `Extrayendo los ${ORDER_NAME[it.order]}… ${fmtN(it.count || 0)}${it.limit ? ' de ' + fmtN(it.limit) + ' (límite)' : it.total ? ' (la publicación tiene ' + fmtN(it.total) + ' en total)' : ''}`) + (it.attempts > 1 && it.retry ? ` · intento ${it.attempts} de ${it.retry.max}` : '')
         : it.status === 'done' && !it.count ? `<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: la extracción no encontró ninguno. Reinténtala con <span class="ms" style="font-size:15px">refresh</span>.</span>`
         : it.status === 'done' ? `${itemCountTxt(it)} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
         : it.status === 'error' ? esc(it.error || 'Error') + (it.saved ? ` · <b>se conservan ${countTxt(it.saved, 'comentario guardado', 'comentarios guardados')}</b>` : '') : it.status === 'skipped' ? 'Omitida'
@@ -6641,7 +6655,7 @@ function renderRunDetail(){
           ${hasResult(it) && !(running && it.status === 'running') ? `<button class="btn text sm" data-iact="view"><span class="ms">forum</span>Ver comentarios</button>` : ''}
           ${!running && ['error', 'skipped', 'done'].includes(it.status) ? `<button class="icon-btn sm" data-iact="retry" aria-label="Volver a extraer" title="Volver a extraer"><span class="ms">refresh</span></button>` : ''}
           ${!running && it.status === 'pending' ? `<button class="icon-btn sm" data-iact="skip" aria-label="Omitir" title="Omitir"><span class="ms">do_not_disturb_on</span></button>` : ''}
-          ${(it.status === 'error' || (it.status === 'done' && (it.order || 'all') === 'all' && it.total && (it.count || 0) < it.total * 0.9) || (it.status === 'done' && it.diag && (it.diag.botonesSinPulsarAlFinal || []).length)) && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
+          ${(it.status === 'error' || (it.status === 'done' && (it.order || 'all') === 'all' && !it.limitReached && it.total && (it.count || 0) < it.total * 0.9) || (it.status === 'done' && it.diag && (it.diag.botonesSinPulsarAlFinal || []).length)) && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
           ${waiting ? `<button class="btn tonal sm" data-iact="retrynow"><span class="ms">refresh</span>Reintentar ahora</button>` : ''}
           ${p.url ? `<a class="icon-btn sm" href="${esc(p.url)}" target="_blank" rel="noopener" aria-label="Abrir publicación" title="Abrir publicación"><span class="ms">open_in_new</span></a>` : ''}
         </div>
@@ -6701,7 +6715,7 @@ async function collectPost(t, p, it, onProg){
     }finally{ gAbort = null; }
   }
   if(!EXT.version) throw new Error('La extensión de Chrome no está instalada o no responde. Instálala (Seguimiento › Descargar extensión) y recarga la página.');
-  it.order = extOpts().order;
+  it.order = extOpts().order; it.limit = extOpts().limit;
   const job = extExtract(p.url, msg => onProg({ phase:msg.phase, count:msg.count, total:msg.total }));
   RUN.job = job.jobId;
   const r = await job.promise; RUN.job = null;
@@ -6801,7 +6815,7 @@ async function runTracking(tid){
         await storeResult(t, p, r.parsed, r.method, true); it.status = 'pending'; it.partial = true;
       }
       else if(r.stopped || (RUN.stopReq && !r.parsed)){ it.status = 'pending'; }
-      else { if(r.parsed?.meta?.netTotal) it.total = r.parsed.meta.netTotal; it.diag = r.parsed?.meta?.diag || null; await storeResult(t, p, r.parsed, r.method, r.partial); }
+      else { if(r.parsed?.meta?.netTotal) it.total = r.parsed.meta.netTotal; it.limitReached = !!(r.parsed?.meta?.order && r.parsed.meta.order.alcanzado); it.diag = r.parsed?.meta?.diag || null; await storeResult(t, p, r.parsed, r.method, r.partial); }
     }catch(e){
       if(e.name === 'AbortError' || (RUN.stopReq && !RUN.halt)){ it.status = 'pending'; }
       else {
@@ -7017,8 +7031,9 @@ function initTracking(){
   $('#extAutoOpen').onclick = () => { window.postMessage({ source:'sca-app', type:'open-settings' }, '*'); $('#extAutoDlg').close(); };
   // al volver de los ajustes de Chrome se comprueba si ya se dio el permiso
   document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && EXT.version) window.postMessage({ source:'sca-app', type:'ping' }, '*'); });
-  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoOrder').value = o.order; $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
-  $('#eoSave').onclick = () => { PREF.set('eoOrder', $('#eoOrder').value); PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(180, Math.max(2, +$('#eoMax').value || 60)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
+  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoOrder').value = o.order; $('#eoNoLimit').checked = !o.limit; $('#eoLimit').value = PREF.get('eoLimit', '1500'); $('#eoLimit').disabled = !o.limit; $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
+  $('#eoNoLimit').onchange = () => { $('#eoLimit').disabled = $('#eoNoLimit').checked; };
+  $('#eoSave').onclick = () => { PREF.set('eoOrder', $('#eoOrder').value); PREF.set('eoNoLimit', $('#eoNoLimit').checked ? '1' : '0'); PREF.set('eoLimit', String(Math.max(50, Math.round(+$('#eoLimit').value) || 1500))); PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(180, Math.max(2, +$('#eoMax').value || 60)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
   addEventListener('beforeunload', e => { if(TR.running){ e.preventDefault(); e.returnValue = ''; } });
   extDetect(); setTimeout(extDetect, 800);
   setTimeout(requestSessions, 900); setInterval(requestSessions, 60000);
@@ -7241,13 +7256,14 @@ async function reviewedInfo(tids){
   const ts = tids.map(id => TR.tracks.find(t => t.id === id)).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date)), last = new Map();
   for(const t of ts) for(const r of await DB.resultsOfRaw(t.id)){
     const it = t.items[r.postId] || {}, o = r.meta && r.meta.order;
-    last.set(r.postId, { order:o ? (o.aplicado === 'red' ? 'red' : o.aplicado || o.pedido) : null, partial:!!(r.partial || it.partial || (t.status === 'paused' && it.status !== 'done')) });
+    last.set(r.postId, { order:o ? (o.aplicado === 'red' ? 'red' : o.aplicado || o.pedido) : null, partial:!!(r.partial || it.partial || (t.status === 'paused' && it.status !== 'done')), limit:o && o.alcanzado ? o.limite : 0 });
   }
   return summarizeReviewed([...last.values()]);
 }
 function summarizeReviewed(list){
   const by = {}; list.forEach(x => { if(x.order) by[x.order] = (by[x.order] || 0) + 1; });
-  return { by, n:list.length, partial:list.filter(x => x.partial).length };
+  const lim = list.filter(x => x.limit);
+  return { by, n:list.length, partial:list.filter(x => x.partial).length, limited:lim.length, limit:lim.length ? Math.max(...lim.map(x => x.limit)) : 0 };
 }
 const REV_LABEL = { pert:'más pertinentes', rec:'más recientes', all:'todos los comentarios', red:'los que muestra la red' };
 // Frases para el informe: qué se revisó y, si hace falta, que la extracción fue parcial
@@ -7256,15 +7272,16 @@ function reviewedLines(rv){
   const out = [], ks = Object.keys(rv.by);
   if(ks.length === 1){
     const k = ks[0];
-    out.push(k === 'all' ? 'Se revisaron todos los comentarios de cada publicación.'
+    out.push(k === 'all' ? (rv.limited ? `Se revisaron todos los comentarios de cada publicación, con un máximo de ${fmtN(rv.limit)} por publicación.` : 'Se revisaron todos los comentarios de cada publicación.')
       : k === 'pert' ? 'Se revisaron los comentarios más pertinentes de cada publicación (los que Facebook muestra primero), por lo que puede que no estén todos.'
       : k === 'rec' ? 'Se revisaron los comentarios más recientes de cada publicación, por lo que puede que no estén todos.'
       : 'Se revisaron los comentarios en el orden que muestra cada red social.');
   } else if(ks.length > 1) out.push('Comentarios revisados: ' + ks.map(k => `${REV_LABEL[k]} en ${countTxt(rv.by[k], 'publicación', 'publicaciones')}`).join(', ').replace(/, ([^,]*)$/, ' y $1') + '.');
+  if(rv.limited) out.push(`En ${countTxt(rv.limited, 'publicación', 'publicaciones')} se alcanzó el máximo de ${fmtN(rv.limit)} comentarios configurado: no se revisaron todos.`);
   if(rv.partial) out.push(`La extracción fue parcial en ${countTxt(rv.partial, 'publicación', 'publicaciones')}: se usan los comentarios extraídos hasta que se detuvo.`);
   return out;
 }
-const reviewedLabel = rv => { const ks = rv ? Object.keys(rv.by) : []; return !ks.length ? '' : ks.length === 1 ? (ks[0] === 'all' ? 'Todos los comentarios' : ks[0] === 'pert' ? 'Más pertinentes (los que Facebook muestra primero)' : ks[0] === 'rec' ? 'Más recientes' : 'Los que muestra cada red') + (rv.partial ? ' · extracción parcial' : '') : 'Mixto: ' + ks.map(k => REV_LABEL[k]).join(', ') + (rv.partial ? ' · extracción parcial' : ''); };
+const reviewedLabel = rv => { const ks = rv ? Object.keys(rv.by) : []; return !ks.length ? '' : ks.length === 1 ? (ks[0] === 'all' ? 'Todos los comentarios' : ks[0] === 'pert' ? 'Más pertinentes (los que Facebook muestra primero)' : ks[0] === 'rec' ? 'Más recientes' : 'Los que muestra cada red') + (rv.limited ? ` · hasta ${fmtN(rv.limit)} por publicación` : '') + (rv.partial ? ' · extracción parcial' : '') : 'Mixto: ' + ks.map(k => REV_LABEL[k]).join(', ') + (rv.partial ? ' · extracción parcial' : ''); };
 // Filas de la comparativa: seguimiento más reciente frente al anterior
 function compareRows(m){
   const c = m.cur, p = m.prev;

@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// sca-extractor 1.4.6 · requiere extensión 1.4.0
+// sca-extractor 1.4.7 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -680,6 +680,8 @@ function fbExtractor(){
   // comentarios a revisar: «pert» (más pertinentes), «rec» (más recientes) o «all» (todos); lo elige el usuario en la app
   var ORDER = (AUTO && (String(AUTO.jobId || '').match(/~o=(pert|rec|all)/) || [])[1]) || 'all';
   var ORDER_RE = { pert: PERT_RE, rec: REC_RE, all: ALL_RE }[ORDER];
+  // máximo de comentarios por publicación (0 = sin límite); también llega en el identificador del trabajo
+  var LIMIT = +((String(AUTO && AUTO.jobId || '').match(/~l=(\d+)/) || [])[1] || 0);
   var ORDER_TXT = { pert: 'Mostrando los comentarios más pertinentes…', rec: 'Mostrando los comentarios más recientes…', all: 'Mostrando todos los comentarios…' }[ORDER];
   // Estado del orden: 'cambiado' | 'ya' (ya mostraba todos) | 'sin-selector' | 'sin-opcion'
   var sortState = '', sortTries = 0, sortMenu = [], LOOP = { round: 0, second: false };   // LOOP: datos del bucle para el diagnóstico final
@@ -779,6 +781,7 @@ function fbExtractor(){
     // última lectura por tandas, cediendo el control entre una y otra (antes era de golpe y congelaba la pestaña con miles de comentarios)
     if (onOriginal && !useCollectedOnly){ for (var k = 0; k < 40; k++){ snapshot(true); if (!snapPending) break; await sleep(0); } }
     var comments = collected.map(function(c, i){ c.order = i; return c; });
+    if (LIMIT && comments.length > LIMIT){ comments = comments.slice(0, LIMIT); LOOP.limite = true; }   // exactamente el máximo pedido
     var postAuthor = meta.postAuthor || '', postCaption = meta.postCaption || '', postDate = meta.postDate || '';
     var data = { source: 'social-dom-extractor', platform: TT ? 'tiktok' : IG ? 'instagram' : 'facebook', version: 3, url: meta.url || location.href, title: meta.title || document.title, cambioDePublicacion: !onOriginal,
       postAuthor: postAuthor, postCaption: postCaption, postDate: postDate, extractedAt: new Date().toISOString(), userAgentLang: navigator.language, count: comments.length, comments: comments };
@@ -790,6 +793,7 @@ function fbExtractor(){
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
     // qué comentarios se revisaron: el orden pedido y si se pudo aplicar (Instagram y TikTok muestran su propio orden)
     data.order = TT || IG ? { pedido: ORDER, aplicado: 'red' } : { pedido: ORDER, aplicado: sortState === 'ya' || sortState === 'cambiado' ? ORDER : null };
+    data.order.limite = LIMIT; data.order.alcanzado = !!LOOP.limite;
     var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
     if (!TT && !IG && onOriginal){
       var pend = sortButtons().map(function(b){ return quickText(b).replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
@@ -938,7 +942,7 @@ function fbExtractor(){
         if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
         lastCollected = collected.length;
         // el total de la red incluye respuestas y a veces comentarios ocultos o eliminados: se acepta un 3 % de diferencia
-        var goal = ORDER === 'all' ? total : 0;   // solo con «todos» se intenta llegar al total de la red
+        var goal = ORDER === 'all' ? (LIMIT && total ? Math.min(total, LIMIT) : total) : 0;   // solo con «todos» se intenta llegar al total (o al límite)
         if (idle >= (goal && collected.length < goal * 0.97 ? (TT ? 8 : 10) : 4)){
           if (!TT && !IG && !secondPass && goal && collected.length < goal * 0.97){
             // segunda pasada: volver a intentar «Todos los comentarios», reiniciar los botones y recorrer el panel de nuevo
@@ -956,7 +960,9 @@ function fbExtractor(){
       if (AUTO && Date.now() - lastCp > 30000) checkpoint();
       // botones que ya no cargan nada (respuestas eliminadas, «Ver más» sin efecto): sin comentarios nuevos durante 45 s
       // (90 s si aún falta más del 3 % del total) se da la extracción por terminada en lugar de seguir pulsándolos sin fin
-      var stallMs = ORDER === 'all' && tot && collected.length < tot * 0.97 ? 90000 : 45000;
+      var stallMs = ORDER === 'all' && tot && collected.length < (LIMIT ? Math.min(tot, LIMIT) : tot) * 0.97 ? 90000 : 45000;
+      // máximo alcanzado: se termina
+      if (LIMIT && collected.length >= LIMIT){ LOOP.limite = true; break; }
       if (round > 3 && Date.now() - lastGrow > stallMs){ LOOP.sinAvance = Math.round((Date.now() - lastGrow) / 1000); break; }
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
       if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });

@@ -159,6 +159,8 @@ const TR = () => w.eval('TR');
       check('Un seguimiento detenido va al historial (si no se marcó, se puede guardar después)', ih({ ...tt, inHist:false }) === false && ih({ ...tt, inHist:true }) === true); }
     { // qué comentarios se revisaron: frases del informe
       const rl = w.reviewedLines, sr = w.summarizeReviewed;
+      check('Informe: avisa cuando se alcanzó el máximo de comentarios configurado', /con un máximo de 1\.?500 por publicación/.test(rl(sr([{ order:'all', limit:1500 }, { order:'all' }])).join(' ')) && /se alcanzó el máximo de 1\.?500 comentarios/.test(rl(sr([{ order:'all', limit:1500 }, { order:'all' }])).join(' ')), rl(sr([{ order:'all', limit:1500 }])).join(' | '));
+      check('Opciones: por defecto «Todos los comentarios» y máximo de 1500 por publicación', w.extOpts().order === 'all' && w.extOpts().limit === 1500, JSON.stringify({ o:w.extOpts().order, l:w.extOpts().limit }));
       check('Informe: indica qué comentarios se revisaron y si fue parcial', /más pertinentes de cada publicación/.test(rl(sr([{ order:'pert' }, { order:'pert' }])).join(' ')) && /todos los comentarios de cada publicación/.test(rl(sr([{ order:'all' }])).join(' ')) && /más pertinentes en 2 publicaciones y todos los comentarios en 1/.test(rl(sr([{ order:'pert' }, { order:'pert' }, { order:'all' }])).join(' ')) && /parcial en 1 publicación/.test(rl(sr([{ order:'all', partial:true }])).join(' ')), rl(sr([{ order:'pert' }, { order:'pert' }, { order:'all', partial:true }])).join(' | ')); }
     FAKE.hold = false; FAKE.stopped.clear();
     d.querySelector('[data-ract="start"]').click();
