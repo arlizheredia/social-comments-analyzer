@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// sca-extractor 1.4.7 · requiere extensión 1.4.0
+// sca-extractor 1.4.8 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -70,6 +70,8 @@ function fbExtractor(){
     /(respondió|replied|a répondu|respondeu)/i
   ];
   var EXCL = /(ocultar|hide|menos|less|traduc|transl|masquer|esconder|calificar|rate this)/i;
+  // botones que cargan más comentarios de la lista (no se abren ni desaparecen: se pulsan mientras haya avance)
+  var LOAD_MORE_RE = /(ver|view|see|mostrar|show|cargar|load)\b.{0,25}\b(más|more|anteriores|previous|otros)\b.{0,15}\b(comentarios|comments)\b|\b(más|more) (comentarios|comments)\b/i;
   var REPLY_BTN_RE = /^.{0,60}\b(respuestas?|replies|reply|réponses?|respostas?|respondió|replied|a répondu|respondeu)\b.{0,20}$/i;
 
   function articles(){
@@ -895,8 +897,9 @@ function fbExtractor(){
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
         if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(nowCount > ck.c)))) return false;
-        // un botón que en sus dos últimas pulsaciones no cargó nada (y no cambió de texto) no se vuelve a pulsar
-        if (ck && ck.t === t && (ck.noEff || 0) >= 2) return false;
+        // un botón que en sus dos últimas pulsaciones no hizo nada (sigue igual) no se vuelve a pulsar;
+        // los de «Ver más comentarios» nunca se descartan así: Facebook tarda en cargar y no desaparecen al pulsarlos
+        if (ck && ck.t === t && (ck.noEff || 0) >= 2 && !LOAD_MORE_RE.test(t)) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -928,9 +931,10 @@ function fbExtractor(){
           try { b.scrollIntoView({ block: 'center' }); b.click(); } catch(e){}
           await sleep(450 + Math.random() * 450);
           bumpGen();   // la pulsación puede haber cargado comentarios: las listas se recalculan una vez
-          // efecto propio de este botón (y no de otros de la misma ronda): ¿aparecieron comentarios o desapareció el botón?
+          // efecto propio de este botón: los de respuestas desaparecen o cambian al abrirse; si sigue igual, no hizo nada
+          // (no se mira el recuento: la carga de Facebook puede tardar más que la pausa y un botón útil parecería muerto)
           var gone = !b.isConnected || !b.offsetParent || quickText(b).replace(/^[\s—–\-·•]+/, '') !== bt;
-          entry.noEff = gone || countNow() > curCount ? 0 : entry.noEff + 1;
+          entry.noEff = gone || loadingVisible() ? 0 : entry.noEff + 1;
         }
       } else {
         var before = countNow();

@@ -501,6 +501,7 @@ const TR = () => w.eval('TR');
     check('La barra de respuestas nombra el tema', /sobre Kanasta24/.test(d.getElementById('abSub').textContent), d.getElementById('abSub').textContent);
     { const files = []; const bk = w.download; w.download = (name, content) => files.push({ name, content });
       await w.doExport('word'); await w.doExport('html'); w.download = bk;
+      check('Resultados: el menú Exportar incluye «Informe PDF»', !!d.querySelector('[data-exp="pdf"]'));
       const html = (files.find(f => /\.html$/.test(f.name)) || {}).content || '';
       check('Resultados: el informe Word y HTML solo trata los comentarios sobre el criterio', files.some(f => /\.doc$/.test(f.name)) && /Informe de comentarios sobre Kanasta24/.test(html) && /Ana López/.test(html) && !/Precio por favor/.test(html) && !/enfoque/i.test(html), files.map(f => f.name).join(', ')); }
     // Cambiar a mano la polaridad de un comentario: manda sobre la automática y el informe se vuelve a generar

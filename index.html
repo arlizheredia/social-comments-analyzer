@@ -1620,6 +1620,7 @@ textarea.input.wa-text{min-height:220px;font-family:var(--font);font-size:14px;l
                 <button role="menuitem" data-exp="json"><span class="ms">data_object</span>JSON (.json)</button>
                 <button role="menuitem" data-exp="txt"><span class="ms">description</span>Texto (.txt)</button>
                 <button role="menuitem" data-exp="word"><span class="ms">description</span>Informe Word (.doc)</button>
+                <button role="menuitem" data-exp="pdf"><span class="ms">picture_as_pdf</span>Informe PDF</button>
                 <button role="menuitem" data-exp="html"><span class="ms">web</span>Informe HTML</button>
                 <hr>
                 <a role="menuitem" href="#ayuda/exportar"><span class="ms">help</span>¿Qué formato elegir?</a>
@@ -2352,6 +2353,7 @@ Se usan los comentarios **seleccionados** o, si no hay selección, **todos los f
 | Informe Word (.doc) | Informe sencillo en blanco y negro, Arial 12, **solo con los comentarios sobre el criterio del informe** (⋮ › *Preferencias de informes*): resumen, indicadores, quién comenta, comentarios destacados |
 | CSV | UTF-8 compatible con Excel; conserva acentos y emojis |
 | JSON | Volver a importarlo en esta aplicación |
+| Informe PDF | El mismo informe que el Word, en PDF (A4, blanco y negro) para enviar o imprimir |
 | Informe HTML | El mismo informe que el Word, como página web para compartir o imprimir |
 
 Cada comentario incluye su **plataforma**.
@@ -2839,6 +2841,8 @@ function fbExtractor(){
     /(respondió|replied|a répondu|respondeu)/i
   ];
   var EXCL = /(ocultar|hide|menos|less|traduc|transl|masquer|esconder|calificar|rate this)/i;
+  // botones que cargan más comentarios de la lista (no se abren ni desaparecen: se pulsan mientras haya avance)
+  var LOAD_MORE_RE = /(ver|view|see|mostrar|show|cargar|load)\b.{0,25}\b(más|more|anteriores|previous|otros)\b.{0,15}\b(comentarios|comments)\b|\b(más|more) (comentarios|comments)\b/i;
   var REPLY_BTN_RE = /^.{0,60}\b(respuestas?|replies|reply|réponses?|respostas?|respondió|replied|a répondu|respondeu)\b.{0,20}$/i;
 
   function articles(){
@@ -3664,8 +3668,9 @@ function fbExtractor(){
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
         if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(nowCount > ck.c)))) return false;
-        // un botón que en sus dos últimas pulsaciones no cargó nada (y no cambió de texto) no se vuelve a pulsar
-        if (ck && ck.t === t && (ck.noEff || 0) >= 2) return false;
+        // un botón que en sus dos últimas pulsaciones no hizo nada (sigue igual) no se vuelve a pulsar;
+        // los de «Ver más comentarios» nunca se descartan así: Facebook tarda en cargar y no desaparecen al pulsarlos
+        if (ck && ck.t === t && (ck.noEff || 0) >= 2 && !LOAD_MORE_RE.test(t)) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
         return EXP.some(function(re){ return re.test(t); });
@@ -3697,9 +3702,10 @@ function fbExtractor(){
           try { b.scrollIntoView({ block: 'center' }); b.click(); } catch(e){}
           await sleep(450 + Math.random() * 450);
           bumpGen();   // la pulsación puede haber cargado comentarios: las listas se recalculan una vez
-          // efecto propio de este botón (y no de otros de la misma ronda): ¿aparecieron comentarios o desapareció el botón?
+          // efecto propio de este botón: los de respuestas desaparecen o cambian al abrirse; si sigue igual, no hizo nada
+          // (no se mira el recuento: la carga de Facebook puede tardar más que la pausa y un botón útil parecería muerto)
           var gone = !b.isConnected || !b.offsetParent || quickText(b).replace(/^[\s—–\-·•]+/, '') !== bt;
-          entry.noEff = gone || countNow() > curCount ? 0 : entry.noEff + 1;
+          entry.noEff = gone || loadingVisible() ? 0 : entry.noEff + 1;
         }
       } else {
         var before = countNow();
@@ -6385,7 +6391,7 @@ function renderPosts(){
 const EXT_LATEST = '1.4.0';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 // Extractor publicado en extension/extractor.js (firmado): las extensiones 1.4.0 o posteriores lo instalan solas.
 // Para corregir la extracción sin que nadie reinstale nada, basta con subir EXTRACTOR_LATEST y ejecutar tools/build_extension.py.
-const EXTRACTOR_LATEST = '1.4.7';
+const EXTRACTOR_LATEST = '1.4.8';
 const EXTRACTOR_MIN_EXT = '1.4.0';   // versión mínima de la extensión que puede usar este extractor
 const EXT_SRC = ['extension/', 'https://arlizheredia.github.io/social-comments-analyzer/extension/'];
 const EXT = { version:null, extractor:null, downloaded:null, userScripts:false, updates:false, waiters:new Map(), jobs:new Map() };
@@ -8306,6 +8312,7 @@ function doExport(kind){
       attachments:c.attachments, mentions:c.mentions, hashtags:c.hashtags, emojis:c.emojis, sentiment:c.sentiment, sentimentScore:c.sentimentScore,
       edited:c.edited, hidden:c.hidden, permalink:c.permalink, source:c.source, platform:c.platform }))},null,2), 'application/json');
   if(kind==='txt') download(`comentarios-${st}.txt`, summaryText(list)+'\n\n'+'─'.repeat(60)+'\n\n'+toText(list), 'text/plain;charset=utf-8');
+  if(kind==='pdf') return resultsReportModel(list).then(async m => { toast('Preparando el PDF…'); const d = reportDocument(m); try{ const pdf = await reportPdf(m); pdf.save(d.title + '.pdf'); toast('PDF descargado'); }catch(e){ toast('No se pudo generar el PDF directamente: se abre la impresión (elige «Guardar como PDF»)'); const wdw = window.open('', '_blank'); if(wdw){ wdw.document.write(d.html.replace('</body>', '<script>onload=()=>{print()}<\/script></body>')); wdw.document.close(); } } }).catch(e => toast('No se pudo crear el informe: ' + e.message));
   if(kind==='html' || kind==='word') return resultsReportModel(list).then(m => { const d = reportDocument(m); if(kind==='word') downloadWord(d, d.title); else download(d.title + '.html', d.html, 'text/html;charset=utf-8'); }).catch(e => toast('No se pudo crear el informe: ' + e.message));
   if(kind==='xlsx') exportXLSX(list);
 }
