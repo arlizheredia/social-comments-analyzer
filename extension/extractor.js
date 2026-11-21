@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// sca-extractor 1.4.5 · requiere extensión 1.4.0
+// sca-extractor 1.4.6 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -675,6 +675,12 @@ function fbExtractor(){
   // nombres del orden actual (Facebook los cambia: «Más relevantes» → «Más pertinentes»)
   var SORT_RE = /^((los )?más (relevantes|pertinentes|recientes)|comentarios (destacados|más relevantes|más pertinentes)|most relevant|top comments|newest|most recent|plus pertinents|les plus pertinents|plus récents|mais relevantes|mais recentes)$/i;
   var ALL_RE = /^(todos los comentarios|all comments|tous les commentaires|todos os comentários|alle kommentare|tutti i commenti)/i;
+  var PERT_RE = /^((los )?más (pertinentes|relevantes)|comentarios (destacados|más relevantes|más pertinentes)|most relevant|top comments|plus pertinents|les plus pertinents|mais relevantes)/i;
+  var REC_RE = /^((los )?más recientes|newest|most recent|plus récents|mais recentes)/i;
+  // comentarios a revisar: «pert» (más pertinentes), «rec» (más recientes) o «all» (todos); lo elige el usuario en la app
+  var ORDER = (AUTO && (String(AUTO.jobId || '').match(/~o=(pert|rec|all)/) || [])[1]) || 'all';
+  var ORDER_RE = { pert: PERT_RE, rec: REC_RE, all: ALL_RE }[ORDER];
+  var ORDER_TXT = { pert: 'Mostrando los comentarios más pertinentes…', rec: 'Mostrando los comentarios más recientes…', all: 'Mostrando todos los comentarios…' }[ORDER];
   // Estado del orden: 'cambiado' | 'ya' (ya mostraba todos) | 'sin-selector' | 'sin-opcion'
   var sortState = '', sortTries = 0, sortMenu = [], LOOP = { round: 0, second: false };   // LOOP: datos del bucle para el diagnóstico final
   function sortButtons(){ return Array.prototype.slice.call(root().querySelectorAll('div[role="button"],span[role="button"],[aria-haspopup="menu"]')).filter(function(b){ return b.offsetParent; }); }
@@ -693,8 +699,8 @@ function fbExtractor(){
     if (sortState === 'cambiado' || sortState === 'ya') return sortState;
     sortTries++;
     var bs = sortButtons();
-    if (bs.some(function(b){ return ALL_RE.test(sortText(b)); })) return (sortState = 'ya');
-    var sortBtn = bs.filter(function(b){ return SORT_RE.test(sortText(b)); })[0];
+    if (bs.some(function(b){ return ORDER_RE.test(sortText(b)); })) return (sortState = 'ya');   // ya muestra el orden pedido
+    var sortBtn = bs.filter(function(b){ var t = sortText(b); return SORT_RE.test(t) || ALL_RE.test(t); })[0];
     if (!sortBtn) return (sortState = 'sin-selector');
     try { sortBtn.scrollIntoView({ block: 'center' }); } catch(e){}
     press(sortBtn);
@@ -702,13 +708,13 @@ function fbExtractor(){
       await sleep(150);
       var items = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return m.offsetParent; });
       if (items.length && !sortMenu.length) sortMenu = items.map(function(m){ return (quickText(m).split('\n')[0] || '').slice(0, 40); }).slice(0, 6);
-      var item = items.filter(function(m){ return ALL_RE.test(quickText(m)); })[0];
+      var item = items.filter(function(m){ return ORDER_RE.test(quickText(m)); })[0];
       if (item){
-        press(item); status('Mostrando todos los comentarios…', true);
+        press(item); status(ORDER_TXT, true);
         for (var t2 = 0; t2 < 16; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; }
         // comprobar que el orden cambió (el botón muestra ahora «Todos los comentarios»); si no, se reintenta en otra ronda
         bumpGen();
-        var now = sortButtons().some(function(b){ return ALL_RE.test(sortText(b)); });
+        var now = sortButtons().some(function(b){ return ORDER_RE.test(sortText(b)); });
         return (sortState = now ? 'cambiado' : 'sin-confirmar');
       }
       if (t === 8 && !items.length) press(sortBtn);   // el menú no se abrió: segundo intento
@@ -782,6 +788,8 @@ function fbExtractor(){
       botonesRespuestas: document.querySelectorAll('[data-e2e^="view-more"],p[class*="ReplyActionText"]').length,
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
+    // qué comentarios se revisaron: el orden pedido y si se pudo aplicar (Instagram y TikTok muestran su propio orden)
+    data.order = TT || IG ? { pedido: ORDER, aplicado: 'red' } : { pedido: ORDER, aplicado: sortState === 'ya' || sortState === 'cambiado' ? ORDER : null };
     var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
     if (!TT && !IG && onOriginal){
       var pend = sortButtons().map(function(b){ return quickText(b).replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
@@ -930,8 +938,9 @@ function fbExtractor(){
         if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
         lastCollected = collected.length;
         // el total de la red incluye respuestas y a veces comentarios ocultos o eliminados: se acepta un 3 % de diferencia
-        if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)){
-          if (!TT && !IG && !secondPass && total && collected.length < total * 0.97){
+        var goal = ORDER === 'all' ? total : 0;   // solo con «todos» se intenta llegar al total de la red
+        if (idle >= (goal && collected.length < goal * 0.97 ? (TT ? 8 : 10) : 4)){
+          if (!TT && !IG && !secondPass && goal && collected.length < goal * 0.97){
             // segunda pasada: volver a intentar «Todos los comentarios», reiniciar los botones y recorrer el panel de nuevo
             secondPass = true; LOOP.second = true; idle = 0; clicks = new Map(); sortState = sortState === 'cambiado' || sortState === 'ya' ? sortState : '';   // también 'sin-confirmar'
             status('Faltan comentarios frente al total de Facebook: revisando de nuevo…', true);
@@ -947,7 +956,7 @@ function fbExtractor(){
       if (AUTO && Date.now() - lastCp > 30000) checkpoint();
       // botones que ya no cargan nada (respuestas eliminadas, «Ver más» sin efecto): sin comentarios nuevos durante 45 s
       // (90 s si aún falta más del 3 % del total) se da la extracción por terminada en lugar de seguir pulsándolos sin fin
-      var stallMs = tot && collected.length < tot * 0.97 ? 90000 : 45000;
+      var stallMs = ORDER === 'all' && tot && collected.length < tot * 0.97 ? 90000 : 45000;
       if (round > 3 && Date.now() - lastGrow > stallMs){ LOOP.sinAvance = Math.round((Date.now() - lastGrow) / 1000); break; }
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
       if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });

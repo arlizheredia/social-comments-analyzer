@@ -137,7 +137,7 @@ const TR = () => w.eval('TR');
 
     // 3. Detener y continuar: se pregunta si el seguimiento parcial va al historial
     d.querySelector('[data-ract="stop"]').click(); await wait(100);
-    check('Al detener se pregunta si se guarda en el historial (guardar, solo detener o seguir extrayendo)', d.getElementById('confirmDlg').open && /historial/.test(d.getElementById('cfText').textContent) && d.getElementById('cfOk').textContent === 'Guardar en el historial' && d.getElementById('cfAlt').textContent === 'Solo detener' && !d.getElementById('cfAlt').hidden && d.getElementById('cfCancel').textContent === 'Seguir extrayendo');
+    check('Al detener se avisa de que se guarda en el historial como parcial (detener y guardar, o seguir extrayendo)', d.getElementById('confirmDlg').open && /historial como parcial/.test(d.getElementById('cfText').textContent) && d.getElementById('cfOk').textContent === 'Detener y guardar' && d.getElementById('cfAlt').hidden && d.getElementById('cfCancel').textContent === 'Seguir extrayendo');
     d.getElementById('cfCancel').click(); await wait(300);
     check('«Seguir extrayendo» no detiene nada', !!TR().running);
     d.querySelector('[data-ract="stop"]').click(); await wait(100);
@@ -156,7 +156,10 @@ const TR = () => w.eval('TR');
       check('El detalle del historial ofrece «Continuar extracción» y ver los comentarios de lo parcial', !!d.querySelector('#histDetail [data-hd="resume"]') && !!d.querySelector('#histDetail [data-hdv]'));
       d.querySelector('#histDetail [data-hd="close"]').click(); }
     { const tt = TR().tracks.find(x => x.name === 'Lunes'), ih = w.eval('inHistory');
-      check('«Solo detener» no lo lleva al historial (lo extraído se conserva y se puede guardar después)', ih({ ...tt, inHist:false }) === false && ih({ ...tt, inHist:true }) === true); }
+      check('Un seguimiento detenido va al historial (si no se marcó, se puede guardar después)', ih({ ...tt, inHist:false }) === false && ih({ ...tt, inHist:true }) === true); }
+    { // qué comentarios se revisaron: frases del informe
+      const rl = w.reviewedLines, sr = w.summarizeReviewed;
+      check('Informe: indica qué comentarios se revisaron y si fue parcial', /más pertinentes de cada publicación/.test(rl(sr([{ order:'pert' }, { order:'pert' }])).join(' ')) && /todos los comentarios de cada publicación/.test(rl(sr([{ order:'all' }])).join(' ')) && /más pertinentes en 2 publicaciones y todos los comentarios en 1/.test(rl(sr([{ order:'pert' }, { order:'pert' }, { order:'all' }])).join(' ')) && /parcial en 1 publicación/.test(rl(sr([{ order:'all', partial:true }])).join(' ')), rl(sr([{ order:'pert' }, { order:'pert' }, { order:'all', partial:true }])).join(' | ')); }
     FAKE.hold = false; FAKE.stopped.clear();
     d.querySelector('[data-ract="start"]').click();
     await until(() => TR().tracks.find(t => t.name === 'Lunes').status === 'done', 30000);

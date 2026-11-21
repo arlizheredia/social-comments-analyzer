@@ -2025,7 +2025,7 @@ Da seguimiento diario a varias publicaciones de Facebook, Instagram y TikTok: gu
 1. **Publicaciones**: pega el enlace de cada publicación (o varias con *Añadir varias*) y dale un **nombre** para reconocerla en la lista. La red se detecta sola y no se duplican.
 2. **Crear seguimiento**: marca las publicaciones que quieras revisar hoy, pulsa **Crear seguimiento**, ponle nombre y fecha.
 3. **Iniciar**: la app extrae los comentarios de cada publicación y muestra el progreso por publicación y el **porcentaje total**.
-4. **Detener y guardar**: si ya tienes suficientes comentarios, detenlo en cualquier momento. Se guarda todo lo extraído, también lo que llevaba la publicación en curso (marcada como *parcial*). El seguimiento pasa al **Historial** como *Detenido · parcial*: ya puedes **ver sus comentarios** y **crear un informe** (también desde *Informes*). Cuando quieras, pulsa **Continuar** (o **Continuar extracción** en el historial) y seguirá con lo pendiente, completando la publicación parcial, incluso otro día.
+4. **Detener**: si ya tienes suficientes comentarios, detenlo en cualquier momento y confirma **Detener y guardar**. Se guarda todo lo extraído (también lo que llevaba la publicación en curso) y el seguimiento pasa al **Historial** como *Detenido · parcial*: ya puedes **ver sus comentarios** y **crear un informe**, que indicará que la extracción fue parcial. Cuando quieras, pulsa **Continuar** (o **Continuar extracción** en el historial) y seguirá con lo pendiente. Si cierras la ventana de extracción, esa publicación se da por terminada con lo recogido.
 5. Al terminar, el seguimiento pasa al **Historial**. Si alguna publicación (o todo el seguimiento) quedó **sin comentarios**, verás un aviso ámbar {ms:warning}: reintenta esa publicación con {ms:refresh}.
 6. Desde el historial creas **informes** o vuelves a ver sus comentarios.
 
@@ -2084,6 +2084,16 @@ Si una versión nueva cambia la propia extensión, *Seguimiento* mostrará **Act
 > Al pasar desde una versión anterior a la 1.4.0, después de copiar los archivos pulsa {ms:refresh} en la tarjeta de la extensión en `chrome://extensions` y recarga la app (solo esa vez).
 
 > Funciona con la app publicada en GitHub Pages, en `http://localhost` y abriendo el archivo directamente (para esto último activa *Permitir acceso a URLs de archivo* en los detalles de la extensión).
+
+## Qué comentarios se revisan {#ext-orden}
+
+En ⋮ › **Opciones de extracción** › *Comentarios a revisar (Facebook)* eliges entre:
+
+- **Más pertinentes** (por defecto): los que Facebook muestra primero (de amigos y con más interacciones). Es lo más rápido y suele bastar para un informe.
+- **Más recientes**: los últimos comentarios primero.
+- **Todos los comentarios**: incluye el posible spam; en publicaciones con miles de comentarios puede tardar mucho.
+
+Los comentarios de cada publicación se guardan **una sola vez** y en cada extracción solo se añaden los nuevos, aunque la publicación esté en varios seguimientos. Los **informes** y el **mensaje de WhatsApp** indican siempre qué comentarios se revisaron (*más pertinentes*, *más recientes* o *todos*) y si alguna extracción fue parcial.
 
 ## Dejarlo trabajando solo {#ext-desatendido}
 
@@ -2671,6 +2681,9 @@ Cada comentario incluye su **plataforma**.
       <span class="hint">Puedes seguir usando el ordenador mientras extrae. La ventana de trabajo siempre tiene tamaño de escritorio: en ventanas estrechas las redes muestran su versión móvil, sin comentarios.</span></label>
     <label class="check"><input type="checkbox" id="eoCareful"> Ritmo prudente para proteger tu cuenta (pausas variables y una pausa larga cada 5 publicaciones)</label>
     <label class="check"><input type="checkbox" id="eoKeep"> Dejar abiertas las pestañas al terminar</label>
+    <label class="field"><span class="lbl">Comentarios a revisar (Facebook)</span>
+      <select class="input" id="eoOrder"><option value="pert">Más pertinentes (recomendado)</option><option value="rec">Más recientes</option><option value="all">Todos los comentarios (puede tardar mucho)</option></select>
+      <span class="hint">Facebook ordena los comentarios de tres maneras. «Más pertinentes» es lo que Facebook muestra por defecto y es lo más rápido; «Todos» incluye el posible spam y en publicaciones con miles de comentarios puede tardar mucho. Los informes indican qué comentarios se revisaron.</span></label>
     <label class="field"><span class="lbl">Tiempo máximo por publicación (minutos)</span><input class="input" type="number" id="eoMax" min="2" max="180"></label>
     <label class="field"><span class="lbl">Pausa entre publicaciones (segundos)</span><input class="input" type="number" id="eoGap" min="0" max="120"></label>
     <label class="field"><span class="lbl">Reintentos automáticos ante fallos (máximo 10)</span><input class="input" type="number" id="eoRetries" min="1" max="10">
@@ -3425,6 +3438,12 @@ function fbExtractor(){
   // nombres del orden actual (Facebook los cambia: «Más relevantes» → «Más pertinentes»)
   var SORT_RE = /^((los )?más (relevantes|pertinentes|recientes)|comentarios (destacados|más relevantes|más pertinentes)|most relevant|top comments|newest|most recent|plus pertinents|les plus pertinents|plus récents|mais relevantes|mais recentes)$/i;
   var ALL_RE = /^(todos los comentarios|all comments|tous les commentaires|todos os comentários|alle kommentare|tutti i commenti)/i;
+  var PERT_RE = /^((los )?más (pertinentes|relevantes)|comentarios (destacados|más relevantes|más pertinentes)|most relevant|top comments|plus pertinents|les plus pertinents|mais relevantes)/i;
+  var REC_RE = /^((los )?más recientes|newest|most recent|plus récents|mais recentes)/i;
+  // comentarios a revisar: «pert» (más pertinentes), «rec» (más recientes) o «all» (todos); lo elige el usuario en la app
+  var ORDER = (AUTO && (String(AUTO.jobId || '').match(/~o=(pert|rec|all)/) || [])[1]) || 'all';
+  var ORDER_RE = { pert: PERT_RE, rec: REC_RE, all: ALL_RE }[ORDER];
+  var ORDER_TXT = { pert: 'Mostrando los comentarios más pertinentes…', rec: 'Mostrando los comentarios más recientes…', all: 'Mostrando todos los comentarios…' }[ORDER];
   // Estado del orden: 'cambiado' | 'ya' (ya mostraba todos) | 'sin-selector' | 'sin-opcion'
   var sortState = '', sortTries = 0, sortMenu = [], LOOP = { round: 0, second: false };   // LOOP: datos del bucle para el diagnóstico final
   function sortButtons(){ return Array.prototype.slice.call(root().querySelectorAll('div[role="button"],span[role="button"],[aria-haspopup="menu"]')).filter(function(b){ return b.offsetParent; }); }
@@ -3443,8 +3462,8 @@ function fbExtractor(){
     if (sortState === 'cambiado' || sortState === 'ya') return sortState;
     sortTries++;
     var bs = sortButtons();
-    if (bs.some(function(b){ return ALL_RE.test(sortText(b)); })) return (sortState = 'ya');
-    var sortBtn = bs.filter(function(b){ return SORT_RE.test(sortText(b)); })[0];
+    if (bs.some(function(b){ return ORDER_RE.test(sortText(b)); })) return (sortState = 'ya');   // ya muestra el orden pedido
+    var sortBtn = bs.filter(function(b){ var t = sortText(b); return SORT_RE.test(t) || ALL_RE.test(t); })[0];
     if (!sortBtn) return (sortState = 'sin-selector');
     try { sortBtn.scrollIntoView({ block: 'center' }); } catch(e){}
     press(sortBtn);
@@ -3452,13 +3471,13 @@ function fbExtractor(){
       await sleep(150);
       var items = Array.prototype.slice.call(document.querySelectorAll('[role="menuitem"],[role="menuitemradio"],[role="option"]')).filter(function(m){ return m.offsetParent; });
       if (items.length && !sortMenu.length) sortMenu = items.map(function(m){ return (quickText(m).split('\n')[0] || '').slice(0, 40); }).slice(0, 6);
-      var item = items.filter(function(m){ return ALL_RE.test(quickText(m)); })[0];
+      var item = items.filter(function(m){ return ORDER_RE.test(quickText(m)); })[0];
       if (item){
-        press(item); status('Mostrando todos los comentarios…', true);
+        press(item); status(ORDER_TXT, true);
         for (var t2 = 0; t2 < 16; t2++){ await sleep(150); if (!loadingVisible() && t2 >= 3) break; }
         // comprobar que el orden cambió (el botón muestra ahora «Todos los comentarios»); si no, se reintenta en otra ronda
         bumpGen();
-        var now = sortButtons().some(function(b){ return ALL_RE.test(sortText(b)); });
+        var now = sortButtons().some(function(b){ return ORDER_RE.test(sortText(b)); });
         return (sortState = now ? 'cambiado' : 'sin-confirmar');
       }
       if (t === 8 && !items.length) press(sortBtn);   // el menú no se abrió: segundo intento
@@ -3532,6 +3551,8 @@ function fbExtractor(){
       botonesRespuestas: document.querySelectorAll('[data-e2e^="view-more"],p[class*="ReplyActionText"]').length,
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
     data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
+    // qué comentarios se revisaron: el orden pedido y si se pudo aplicar (Instagram y TikTok muestran su propio orden)
+    data.order = TT || IG ? { pedido: ORDER, aplicado: 'red' } : { pedido: ORDER, aplicado: sortState === 'ya' || sortState === 'cambiado' ? ORDER : null };
     var netTot = onOriginal ? netTotal() : 0; if (netTot) data.total = netTot;
     if (!TT && !IG && onOriginal){
       var pend = sortButtons().map(function(b){ return quickText(b).replace(/^[\s—–\-·•]+/, ''); }).filter(function(t){ return t && t.length < 80 && !EXCL.test(t) && EXP.some(function(re){ return re.test(t); }); });
@@ -3680,8 +3701,9 @@ function fbExtractor(){
         if (after > before || collected.length > lastCollected) idle = 0;   // siguen llegando comentarios: continuar
         lastCollected = collected.length;
         // el total de la red incluye respuestas y a veces comentarios ocultos o eliminados: se acepta un 3 % de diferencia
-        if (idle >= (total && collected.length < total * 0.97 ? (TT ? 8 : 10) : 4)){
-          if (!TT && !IG && !secondPass && total && collected.length < total * 0.97){
+        var goal = ORDER === 'all' ? total : 0;   // solo con «todos» se intenta llegar al total de la red
+        if (idle >= (goal && collected.length < goal * 0.97 ? (TT ? 8 : 10) : 4)){
+          if (!TT && !IG && !secondPass && goal && collected.length < goal * 0.97){
             // segunda pasada: volver a intentar «Todos los comentarios», reiniciar los botones y recorrer el panel de nuevo
             secondPass = true; LOOP.second = true; idle = 0; clicks = new Map(); sortState = sortState === 'cambiado' || sortState === 'ya' ? sortState : '';   // también 'sin-confirmar'
             status('Faltan comentarios frente al total de Facebook: revisando de nuevo…', true);
@@ -3697,7 +3719,7 @@ function fbExtractor(){
       if (AUTO && Date.now() - lastCp > 30000) checkpoint();
       // botones que ya no cargan nada (respuestas eliminadas, «Ver más» sin efecto): sin comentarios nuevos durante 45 s
       // (90 s si aún falta más del 3 % del total) se da la extracción por terminada en lugar de seguir pulsándolos sin fin
-      var stallMs = tot && collected.length < tot * 0.97 ? 90000 : 45000;
+      var stallMs = ORDER === 'all' && tot && collected.length < tot * 0.97 ? 90000 : 45000;
       if (round > 3 && Date.now() - lastGrow > stallMs){ LOOP.sinAvance = Math.round((Date.now() - lastGrow) / 1000); break; }
       status('Desplegando comentarios · ronda ' + round + ' · ' + countNow() + (tot ? ' de ' + tot : ' visibles'), true);
       if (AUTO) AUTO.emit({ type: 'progress', round: round, count: collected.length, visible: countNow(), total: tot || null });
@@ -4122,7 +4144,7 @@ function fromExtractor(obj){
   const author = obj.postAuthor ? (platform!=='facebook' ? '@'+String(obj.postAuthor).replace(/^@/,'') : obj.postAuthor) : '';
   // Instagram publica la fecha exacta (atributo datetime); Facebook solo tiempos relativos.
   const exact = c => c.datetime && !isNaN(Date.parse(c.datetime)) ? new Date(c.datetime).toISOString() : null;
-  return { meta:{ url:obj.url, title: caption ? caption.slice(0,160) : obj.title, postAuthor:author, postDate: obj.postDate||'', extractedAt:obj.extractedAt, source:'Extractor de navegador', platform, netTotal:+obj.total || 0, diag:obj.diag || null },
+  return { meta:{ url:obj.url, title: caption ? caption.slice(0,160) : obj.title, postAuthor:author, postDate: obj.postDate||'', extractedAt:obj.extractedAt, source:'Extractor de navegador', platform, netTotal:+obj.total || 0, order:obj.order || null, diag:obj.diag || null },
     comments:raw.map(c=>({
       id:c.id, parentId:c.parentId, authorName:c.authorName, authorId:c.authorId, authorUrl:c.authorUrl, authorAvatar:c.authorAvatar,
       badges:c.badges, text:c.text, createdAt: exact(c) || parseFbDate(c.dateText, base) || parseFbDate(c.labelDate, base), dateText:c.dateText, dateApprox: !exact(c),
@@ -6351,7 +6373,7 @@ function renderPosts(){
 const EXT_LATEST = '1.4.0';   // versión del ZIP publicado en downloads/ (la comprueba tools/build_extension.py)
 // Extractor publicado en extension/extractor.js (firmado): las extensiones 1.4.0 o posteriores lo instalan solas.
 // Para corregir la extracción sin que nadie reinstale nada, basta con subir EXTRACTOR_LATEST y ejecutar tools/build_extension.py.
-const EXTRACTOR_LATEST = '1.4.5';
+const EXTRACTOR_LATEST = '1.4.6';
 const EXTRACTOR_MIN_EXT = '1.4.0';   // versión mínima de la extensión que puede usar este extractor
 const EXT_SRC = ['extension/', 'https://arlizheredia.github.io/social-comments-analyzer/extension/'];
 const EXT = { version:null, extractor:null, downloaded:null, userScripts:false, updates:false, waiters:new Map(), jobs:new Map() };
@@ -6360,7 +6382,7 @@ if(PREF.get('eoGap') === null) PREF.set('eoGap', '6');
 // el antiguo máximo de 20 min por publicación cortaba las publicaciones grandes (más de ~1000 comentarios): pasa a 60
 if(PREF.get('eoMax') === '20' && PREF.get('eoMaxMig') !== '1'){ PREF.set('eoMax', '60'); PREF.set('eoMaxMig', '1'); }
 const verLt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for(let i = 0; i < 3; i++){ if((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
-function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', maxMinutes:+PREF.get('eoMax', '60') || 60, gap:+PREF.get('eoGap', '4') || 0,
+function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', order:['pert', 'rec', 'all'].includes(PREF.get('eoOrder')) ? PREF.get('eoOrder') : 'pert', maxMinutes:+PREF.get('eoMax', '60') || 60, gap:+PREF.get('eoGap', '4') || 0,
   retries:Math.min(10, Math.max(1, Math.round(+PREF.get('eoRetries', '10')) || 10)), retryBase:Math.max(0.01, +PREF.get('eoRetryBase', '15') || 15), careful:PREF.get('eoCareful', '1') === '1' }; }
 function renderExt(){
   const on = !!EXT.version, old = on && verLt(EXT.version, EXT_LATEST);
@@ -6432,7 +6454,7 @@ function openExtAutoDlg(){ EXT.autoAsked = true; $('#extAutoDlg').showModal(); }
 // Prefijo de los guardados parciales que el extractor envía dentro de los avisos de progreso
 const CP_TAG = '\u0001sca-cp:';
 function extExtract(url, onProgress){
-  const jobId = uid('j_'), opts = extOpts();
+  const opts = extOpts(), jobId = uid('j_') + '~o=' + opts.order;   // el orden pedido viaja en el identificador (lo lee el extractor)
   return { jobId, promise:new Promise((resolve, reject) => {
     // sin noticias de la extensión durante 3 min (o más del tiempo máximo por publicación) → fallo reintentable
     let last = Date.now();
@@ -6525,6 +6547,8 @@ const emptyPosts = t => t.postIds.filter(id => t.items[id] && t.items[id].status
 // Comentarios extraídos de una publicación; si la red indica bastantes más, se avisa (su total incluye respuestas y a veces comentarios ocultos)
 function itemCountTxt(it){
   const n = it.count || 0, tot = it.total || 0;
+  // con «más pertinentes» o «más recientes» no se espera llegar al total de la red: no es una extracción incompleta
+  if(it.order && it.order !== 'all') return `${countTxt(n, 'comentario', 'comentarios')} · ${ORDER_NAME[it.order].replace(/^comentarios /, '')}`;
   if(tot && n < tot * 0.9 && tot - n >= 3) return `${fmtN(n)} de ${fmtN(tot)} comentarios <span class="warn-chip" title="La red indica ${fmtN(tot)} comentarios (incluye respuestas y a veces comentarios ocultos o eliminados). Reintenta la publicación para completar la extracción."><span class="ms">warning</span>Incompleta</span>`;
   return countTxt(n, 'comentario', 'comentarios');
 }
@@ -6547,7 +6571,7 @@ const hasResult = it => !!it && (it.status === 'done' || it.saved > 0 || (it.par
 function trackProgress(t){
   const ids = t.postIds, n = ids.length || 1;
   let done = 0, frac = 0;
-  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && it.total) frac += Math.min(.99, (it.count || 0) / it.total); else if(it.status === 'running') frac += .1; });
+  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && it.total && (it.order || 'all') === 'all') frac += Math.min(.99, (it.count || 0) / it.total); else if(it.status === 'running' && it.count) frac += .5; else if(it.status === 'running') frac += .1; });
   const comments = ids.reduce((s, id) => { const it = t.items[id]; return s + (it.status === 'running' ? Math.max(it.count || 0, it.saved || 0) : (it.count || it.saved || 0)); }, 0);
   return { pct:Math.min(100, Math.round((done + frac) / n * 100)), done, n:ids.length, comments, errors:ids.filter(id => t.items[id].status === 'error').length };
 }
@@ -6570,6 +6594,7 @@ function renderRuns(){
   const slot = $('#runDetailSlot'); if(slot) slot.replaceWith(RUN_DET); else $('#runList').after(RUN_DET);
   renderRunDetail();
 }
+const ORDER_NAME = { pert:'comentarios más pertinentes', rec:'comentarios más recientes', all:'todos los comentarios' };
 function itemIcon(it){ if(it.status === 'pending' && it.partial && it.count) return 'radio_button_partial'; return { pending:'radio_button_unchecked', running:'progress_activity', done:'check_circle', error:'error', skipped:'do_not_disturb_on' }[it.status] || 'radio_button_unchecked'; }
 function renderRunDetail(){
   const t = TR.tracks.find(x => x.id === TR.open && x.status !== 'done');
@@ -6597,7 +6622,7 @@ function renderRunDetail(){
       const m = it.method || methodFor(p);
       const waiting = it.status === 'running' && it.retry && it.phase === 'retry';   // esperando para reintentar (no extrayendo)
       const sub = waiting ? `<span class="warn-txt"><span class="ms">autorenew</span>${it.retry.offline ? 'Sin conexión: esperando a que vuelva para el ' : 'Reintento '}${it.retry.attempt} de ${it.retry.max}${it.retry.offline ? '' : ' en ' + fmtSecs(it.retry.left)}</span> · último error: ${esc(it.retry.error.slice(0, 140))}`
-        : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios`) + (it.attempts > 1 && it.retry ? ` · intento ${it.attempts} de ${it.retry.max}` : '')
+        : it.status === 'running' ? (it.phase === 'opening' ? 'Abriendo la publicación…' : (it.order || 'all') === 'all' ? `Extrayendo… ${fmtN(it.count || 0)}${it.total ? ' de ' + fmtN(it.total) : ''} comentarios` : `Extrayendo los ${ORDER_NAME[it.order]}… ${fmtN(it.count || 0)}${it.total ? ' (la publicación tiene ' + fmtN(it.total) + ' en total)' : ''}`) + (it.attempts > 1 && it.retry ? ` · intento ${it.attempts} de ${it.retry.max}` : '')
         : it.status === 'done' && !it.count ? `<span class="warn-txt"><span class="ms">warning</span>Sin comentarios: la extracción no encontró ninguno. Reinténtala con <span class="ms" style="font-size:15px">refresh</span>.</span>`
         : it.status === 'done' ? `${itemCountTxt(it)} · ${METHOD_TXT[it.method] || ''}${it.finishedAt ? ' · ' + new Date(it.finishedAt).toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }) : ''}${it.partial ? ' · parcial' : ''}`
         : it.status === 'error' ? esc(it.error || 'Error') + (it.saved ? ` · <b>se conservan ${countTxt(it.saved, 'comentario guardado', 'comentarios guardados')}</b>` : '') : it.status === 'skipped' ? 'Omitida'
@@ -6610,7 +6635,7 @@ function renderRunDetail(){
           ${hasResult(it) && !(running && it.status === 'running') ? `<button class="btn text sm" data-iact="view"><span class="ms">forum</span>Ver comentarios</button>` : ''}
           ${!running && ['error', 'skipped', 'done'].includes(it.status) ? `<button class="icon-btn sm" data-iact="retry" aria-label="Volver a extraer" title="Volver a extraer"><span class="ms">refresh</span></button>` : ''}
           ${!running && it.status === 'pending' ? `<button class="icon-btn sm" data-iact="skip" aria-label="Omitir" title="Omitir"><span class="ms">do_not_disturb_on</span></button>` : ''}
-          ${(it.status === 'error' || (it.status === 'done' && it.total && (it.count || 0) < it.total * 0.9) || (it.status === 'done' && it.diag && (it.diag.botonesSinPulsarAlFinal || []).length)) && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
+          ${(it.status === 'error' || (it.status === 'done' && (it.order || 'all') === 'all' && it.total && (it.count || 0) < it.total * 0.9) || (it.status === 'done' && it.diag && (it.diag.botonesSinPulsarAlFinal || []).length)) && it.diag ? `<button class="btn text sm" data-iact="diag"><span class="ms">bug_report</span>Copiar diagnóstico</button>` : ''}
           ${waiting ? `<button class="btn tonal sm" data-iact="retrynow"><span class="ms">refresh</span>Reintentar ahora</button>` : ''}
           ${p.url ? `<a class="icon-btn sm" href="${esc(p.url)}" target="_blank" rel="noopener" aria-label="Abrir publicación" title="Abrir publicación"><span class="ms">open_in_new</span></a>` : ''}
         </div>
@@ -6670,6 +6695,7 @@ async function collectPost(t, p, it, onProg){
     }finally{ gAbort = null; }
   }
   if(!EXT.version) throw new Error('La extensión de Chrome no está instalada o no responde. Instálala (Seguimiento › Descargar extensión) y recarga la página.');
+  it.order = extOpts().order;
   const job = extExtract(p.url, msg => onProg({ phase:msg.phase, count:msg.count, total:msg.total }));
   RUN.job = job.jobId;
   const r = await job.promise; RUN.job = null;
@@ -6821,10 +6847,10 @@ function renderRunCardsOnly(){
 async function askStop(t){
   const pr = trackProgress(t);
   const v = await askConfirm({ title:'¿Detener el seguimiento?',
-    html:`Hasta ahora se han extraído <b>${countTxt(pr.comments, 'comentario', 'comentarios')}</b>.<br><br>¿Quieres guardar en el historial este seguimiento parcial para analizarlo y crear informes? En cualquier caso, lo extraído se conserva y podrás continuar la extracción en otro momento.`,
-    ok:'Guardar en el historial', alt:'Solo detener', cancelText:'Seguir extrayendo' });
-  if(v === false || TR.running !== t.id) return;   // sigue extrayendo
-  t.inHist = v === true;
+    html:`Hasta ahora se han extraído <b>${countTxt(pr.comments, 'comentario', 'comentarios')}</b>.<br><br>El seguimiento se guardará en el historial como <b>parcial</b>, con lo extraído hasta ahora, para que puedas ver los comentarios y crear informes. Podrás continuar la extracción en otro momento.`,
+    ok:'Detener y guardar', cancelText:'Seguir extrayendo' });
+  if(v !== true || TR.running !== t.id) return;   // sigue extrayendo
+  t.inHist = true;
   stopTracking();
 }
 function stopTracking(){
@@ -6861,7 +6887,7 @@ function renderHistory(){
     const pr = trackProgress(t), sel = TR.hsel.has(t.id);
     return `<div class="hrow${sel ? ' sel' : ''}" data-hid="${esc(t.id)}">
       <input type="checkbox" class="hsel" ${sel ? 'checked' : ''} aria-label="Seleccionar ${esc(t.name)}">
-      <div style="min-width:0"><div class="ht"><span class="ht-name">${esc(t.name)}</span>${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : ''}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
+      <div style="min-width:0"><div class="ht"><span class="ht-name">${esc(t.name)}</span>${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : t.postIds.some(id => t.items[id] && t.items[id].partial) ? '<span class="stchip paused"><span class="ms">incomplete_circle</span>Completado · parcial</span>' : ''}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
       <div class="hsent" data-hsent="${esc(t.id)}"></div>
       <div class="pacts"><button class="icon-btn sm" data-hact="view" aria-label="Ver comentarios por publicación" title="Ver comentarios por publicación"><span class="ms">forum</span></button>
         <button class="icon-btn sm needs-ai" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
@@ -6985,8 +7011,8 @@ function initTracking(){
   $('#extAutoOpen').onclick = () => { window.postMessage({ source:'sca-app', type:'open-settings' }, '*'); $('#extAutoDlg').close(); };
   // al volver de los ajustes de Chrome se comprueba si ya se dio el permiso
   document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && EXT.version) window.postMessage({ source:'sca-app', type:'ping' }, '*'); });
-  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
-  $('#eoSave').onclick = () => { PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(180, Math.max(2, +$('#eoMax').value || 60)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
+  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoOrder').value = o.order; $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
+  $('#eoSave').onclick = () => { PREF.set('eoOrder', $('#eoOrder').value); PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(180, Math.max(2, +$('#eoMax').value || 60)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
   addEventListener('beforeunload', e => { if(TR.running){ e.preventDefault(); e.returnValue = ''; } });
   extDetect(); setTimeout(extDetect, 800);
   setTimeout(requestSessions, 900); setInterval(requestSessions, 60000);
@@ -7200,9 +7226,39 @@ async function buildReport(tids, terms, focusQ, onProg){
   m.postCmp = comparePosts(m);
   m.postKpi = postKpis(m, terms, perTrack);
   const sf = m.summary.fl || 0;
-  m.summary = [...m.summary.slice(0, sf), ...compareSummary(m), ...m.summary.slice(sf)];
+  m.reviewed = await reviewedInfo(tids);
+  m.summary = [...m.summary.slice(0, sf), ...reviewedLines(m.reviewed), ...compareSummary(m), ...m.summary.slice(sf)];
   return m;
 }
+// Qué comentarios se revisaron en las publicaciones del informe y cuáles quedaron a medias
+async function reviewedInfo(tids){
+  const ts = tids.map(id => TR.tracks.find(t => t.id === id)).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date)), last = new Map();
+  for(const t of ts) for(const r of await DB.resultsOfRaw(t.id)){
+    const it = t.items[r.postId] || {}, o = r.meta && r.meta.order;
+    last.set(r.postId, { order:o ? (o.aplicado === 'red' ? 'red' : o.aplicado || o.pedido) : null, partial:!!(r.partial || it.partial || (t.status === 'paused' && it.status !== 'done')) });
+  }
+  return summarizeReviewed([...last.values()]);
+}
+function summarizeReviewed(list){
+  const by = {}; list.forEach(x => { if(x.order) by[x.order] = (by[x.order] || 0) + 1; });
+  return { by, n:list.length, partial:list.filter(x => x.partial).length };
+}
+const REV_LABEL = { pert:'más pertinentes', rec:'más recientes', all:'todos los comentarios', red:'los que muestra la red' };
+// Frases para el informe: qué se revisó y, si hace falta, que la extracción fue parcial
+function reviewedLines(rv){
+  if(!rv) return [];
+  const out = [], ks = Object.keys(rv.by);
+  if(ks.length === 1){
+    const k = ks[0];
+    out.push(k === 'all' ? 'Se revisaron todos los comentarios de cada publicación.'
+      : k === 'pert' ? 'Se revisaron los comentarios más pertinentes de cada publicación (los que Facebook muestra primero), por lo que puede que no estén todos.'
+      : k === 'rec' ? 'Se revisaron los comentarios más recientes de cada publicación, por lo que puede que no estén todos.'
+      : 'Se revisaron los comentarios en el orden que muestra cada red social.');
+  } else if(ks.length > 1) out.push('Comentarios revisados: ' + ks.map(k => `${REV_LABEL[k]} en ${countTxt(rv.by[k], 'publicación', 'publicaciones')}`).join(', ').replace(/, ([^,]*)$/, ' y $1') + '.');
+  if(rv.partial) out.push(`La extracción fue parcial en ${countTxt(rv.partial, 'publicación', 'publicaciones')}: se usan los comentarios extraídos hasta que se detuvo.`);
+  return out;
+}
+const reviewedLabel = rv => { const ks = rv ? Object.keys(rv.by) : []; return !ks.length ? '' : ks.length === 1 ? (ks[0] === 'all' ? 'Todos los comentarios' : ks[0] === 'pert' ? 'Más pertinentes (los que Facebook muestra primero)' : ks[0] === 'rec' ? 'Más recientes' : 'Los que muestra cada red') + (rv.partial ? ' · extracción parcial' : '') : 'Mixto: ' + ks.map(k => REV_LABEL[k]).join(', ') + (rv.partial ? ' · extracción parcial' : ''); };
 // Filas de la comparativa: seguimiento más reciente frente al anterior
 function compareRows(m){
   const c = m.cur, p = m.prev;
@@ -7440,7 +7496,7 @@ function renderReport(){
   const tbl = (head, rows) => `<div class="rtable-wrap"><table class="rtable"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
   const people = (arr, k, lbl, empty) => arr.length ? tbl(`<th>Persona</th><th class="num">${lbl}</th><th class="num">Comentarios</th>`, arr.map(a => `<tr><td>${esc(a.name)}${a.team ? ' <span class="qteam">Equipo</span>' : ''}</td><td class="num">${a[k]}</td><td class="num">${a.n}</td></tr>`).join('')) : `<p class="small muted">${empty}</p>`;
   $('#repOut').innerHTML = `<div class="report" id="reportDoc">
-    <div class="rep-cover"><h2>Informe de comentarios${ab}</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · ${esc(m.generatedAt.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' }))}</p></div>
+    <div class="rep-cover"><h2>Informe de comentarios${ab}</h2><p>${esc(m.tracks.length === 1 ? m.first.name + ' · ' + fmtDay(m.first.date) : `${m.tracks.length} seguimientos · del ${fmtDay(m.first.date)} al ${fmtDay(m.last.date)}`)} · ${countTxt(m.posts.length, 'publicación', 'publicaciones')} · ${esc(m.generatedAt.toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' }))}</p>${reviewedLabel(m.reviewed) ? `<p>Comentarios revisados: ${esc(reviewedLabel(m.reviewed))}</p>` : ''}</div>
     <section class="card rep-sec"><h3><span class="ms">summarize</span>Resumen</h3><ul class="rep-sum">${m.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
     <section class="card rep-sec"><h3><span class="ms">speed</span>Indicadores por publicación</h3><p class="sub">Cada publicación en su seguimiento más reciente, comparada con el anterior en que aparece${f ? '. Solo comentarios' + ab : ''}.</p>
       ${(m.postKpi || []).map(pk => `<div class="pkpi"><h4 class="viz-h4"><i class="pdot ${platDot(pk.platform)}"></i> <b>${esc(pk.label)}</b>${pk.url ? `<a class="purl" href="${esc(pk.url)}" target="_blank" rel="noopener">${esc(shortUrl(pk.url))}</a>` : ''}</h4>
@@ -7543,6 +7599,7 @@ function reportDocument(m){
     <p><b>Fecha:</b> ${e(today.charAt(0).toUpperCase() + today.slice(1))}</p>
     ${author ? `<p><b>Elaborado por:</b> ${e(author)}</p>` : ''}
     ${brand ? `<p><b>Cliente / marca:</b> ${e(brand)}</p>` : ''}
+    ${reviewedLabel(m.reviewed) ? `<p><b>Comentarios revisados:</b> ${e(reviewedLabel(m.reviewed))}</p>` : ''}
     <p><b>Periodo analizado:</b> ${e(period)} (${countTxt(m.tracks.length, 'seguimiento', 'seguimientos')}, ${countTxt(m.posts.length, 'publicación', 'publicaciones')})</p>
   </div>
   <h2>Resumen</h2>
@@ -7609,6 +7666,8 @@ async function resultsReportModel(list){
   const m = computeReportModel(fl, team, [{ id:'resultados', name:S.meta.title || 'Análisis de comentarios', date:day, postIds:[] }], [], terms, [], focusCtx(focus, items));
   m.rivals = detectRivals(fl);
   m.postKpi = postKpis(m, terms, [{ t:m.tracks[0], list:fl }]);
+  const o = S.meta && S.meta.order;
+  if(o){ m.reviewed = summarizeReviewed([{ order:o.aplicado === 'red' ? 'red' : o.aplicado || o.pedido, partial:!!S.meta.partial }]); m.summary = [...m.summary.slice(0, m.summary.fl || 0), ...reviewedLines(m.reviewed), ...m.summary.slice(m.summary.fl || 0)]; }
   return m;
 }
 // PDF A4 en blanco y negro con pie de página "Informe de comentarios · fecha — Página X de Y"
@@ -7981,7 +8040,8 @@ function whatsappMessage(m, tone = 'cercano'){
   L.push(`📊 *Informe de comentarios${brand ? ' · ' + brand : ''}*`);
   L.push(m.prev ? `Seguimiento del ${day(m.last.date)}, comparado con el del ${day(m.prevT.date)}.` : `Seguimiento del ${day(m.last.date)}.`);
   L.push('');
-  if(fq) L.push(`Se revisaron *${countTxt(c.focus ? c.focus.total : others.length, 'comentario', 'comentarios')}*.`);
+  const rk = m.reviewed ? Object.keys(m.reviewed.by) : [], rv = rk.length === 1 ? { pert:' (los más pertinentes de cada publicación)', rec:' (los más recientes de cada publicación)', all:' (todos los de cada publicación)' }[rk[0]] || '' : '';
+  if(fq) L.push(`Se revisaron *${countTxt(c.focus ? c.focus.total : others.length, 'comentario', 'comentarios')}*${rv}${m.reviewed && m.reviewed.partial ? ', con extracción parcial' : ''}.`);
   else L.push(`Se analizaron *${countTxt(c.list.length, 'comentario', 'comentarios')}* de ${countTxt(c.authorsN, 'persona', 'personas')}${vsPrev}.`);
   const aboutTxt = crit ? `Sobre *${crit}* ${about.length === 1 ? 'hay 1 comentario' : `hay ${about.length} comentarios`}${fq ? vsPrev : ''}` : 'De ellos';
   if(about.length) L.push(`${aboutTxt}: *${pos.length} ${pos.length === 1 ? 'positivo' : 'positivos'}* 👍 y *${neg.length} ${neg.length === 1 ? 'negativo' : 'negativos'}* 👎${about.length - pos.length - neg.length ? ` (el resto, neutrales)` : ''}.`);
