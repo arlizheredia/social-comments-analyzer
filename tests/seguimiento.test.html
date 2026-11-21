@@ -166,10 +166,10 @@ const TR = () => w.eval('TR');
     { const src = TR().tracks.find(x => x.name === 'Lunes'), pid = src.postIds[0], pp = TR().posts.find(x => x.id === pid), DBx = w.eval('DB');
       // copia temporal (no altera los datos del resto de pruebas): 5 comentarios guardados
       const tt = { id:'t_tmp_merge', date:src.date, postIds:[pid], items:{ [pid]:{ status:'pending' } } };
-      const orig = await DBx.get('results', src.id + '|' + pid); await DBx.put('results', { ...orig, key:tt.id + '|' + pid, tid:tt.id });
+      const orig = await DBx.getResult(src.id + '|' + pid); await DBx.saveResult({ ...orig, key:tt.id + '|' + pid, tid:tt.id }, orig.comments);
       // volver a extraer con menos comentarios (la red mostró menos) no borra lo ya guardado
       await w.storeResult(tt, pp, { meta:{ platform:pp.platform }, comments:[{ id:'nuevo-1', authorName:'Nueva Persona', text:'Comentario nuevo' }] }, 'extension', false);
-      const r1 = await DBx.get('results', tt.id + '|' + pid);
+      const r1 = await DBx.getResult(tt.id + '|' + pid);
       check('Volver a extraer fusiona con lo guardado: no se pierde ningún comentario (5 anteriores + 1 nuevo)', r1.comments.length === 6 && tt.items[pid].count === 6 && tt.items[pid].saved === 6, r1.comments.length + ' guardados');
       check('Una publicación con comentarios guardados sigue accesible aunque falle al volver a extraerla', w.eval('hasResult')({ status:'error', saved:6, count:0 }) === true);
       // la extensión deja de dar noticias: lo que entrega al pedírselo se guarda (fusionado) antes de reintentar
@@ -178,10 +178,12 @@ const TR = () => w.eval('TR');
       w.eval(`extExtract = (url) => ({ jobId:'jw', promise:Promise.resolve({ type:'result', watchdog:true, stopped:true, data:window.__wdData }) })`);
       let wdErr = ''; try{ await w.collectPost(tt, pp, tt.items[pid], () => {}); }catch(e){ wdErr = e.message; }
       w.extExtract = bk;
-      const r2 = await DBx.get('results', tt.id + '|' + pid);
+      const r2 = await DBx.getResult(tt.id + '|' + pid);
       check('Si la extensión deja de dar noticias, se guarda lo que entregó y se reintenta (sin perder nada)', /se guardó lo recogido y se reintenta/.test(wdErr) && r2.comments.length === 6 && tt.items[pid].partial === true, wdErr + ' · ' + r2.comments.length);
       await DBx.del('results', tt.id + '|' + pid).catch(() => {}); }
     check('Los comentarios de cada publicación quedan guardados en IndexedDB', stored.length === 3 && stored.every(r => r.comments.length >= 5));
+    { const raw = await w.eval('DB').resultsOfRaw(t1.id), pcs = await w.eval('DB').all('pcomments');
+      check('Almacenamiento: los comentarios se guardan una vez por publicación y el seguimiento solo guarda sus claves', raw.length === 3 && raw.every(r => !r.comments && r.keys.length === 5) && pcs.length >= 3 && pcs.every(pc => pc.comments.length >= 5), JSON.stringify(raw.map(r => [r.keys.length, !!r.comments]))); }
     check('La lista aprende el autor de la publicación', TR().posts.every(p => /kanasta24/i.test(p.author)), TR().posts.map(p => p.author).join(', '));
     await until(() => d.querySelectorAll('#histList .hrow').length === 1, 5000).catch(() => {});
     check('El historial muestra el seguimiento', d.querySelectorAll('#histList .hrow').length === 1 && /Lunes/.test(d.getElementById('histList').textContent));
@@ -243,7 +245,7 @@ const TR = () => w.eval('TR');
     w.openTrackDlg([igP.id]); d.getElementById('trackDate').value = '2026-11-16'; d.getElementById('trackName').value = 'Ventana cerrada';
     d.getElementById('trackStart').click();
     await until(() => { const t = TR().tracks.find(x => x.name === 'Ventana cerrada'); return t && t.status === 'done' && !TR().running; }, 20000).catch(() => {});
-    { const tc = TR().tracks.find(x => x.name === 'Ventana cerrada'), it = tc.items[igP.id], rs = await w.eval('DB').get('results', tc.id + '|' + igP.id);
+    { const tc = TR().tracks.find(x => x.name === 'Ventana cerrada'), it = tc.items[igP.id], rs = await w.eval('DB').getResult(tc.id + '|' + igP.id);
       check('Si el usuario cierra la ventana de extracción, se da por terminada y se guarda lo recibido por partes', tc.status === 'done' && it.status === 'done' && it.count === 2 && rs && rs.comments.length === 2, JSON.stringify({ st:tc.status, it:[it.status, it.count] })); }
     FAKE.cpClose[igP.url] = false;
     // 4d. Detener con la pestaña congelada (no entrega el resultado final): se guarda lo recibido por partes y va al historial
@@ -253,7 +255,7 @@ const TR = () => w.eval('TR');
     await until(() => { const t = TR().tracks.find(x => x.name === 'Congelada'); return t && t.items[igP.id].count === 2; }, 10000).catch(() => {});
     d.querySelector('[data-ract="stop"]').click(); await wait(100); d.getElementById('cfOk').click();
     await until(() => !TR().running, 20000).catch(() => {});
-    { const tz = TR().tracks.find(x => x.name === 'Congelada'), it = tz.items[igP.id], rs = await w.eval('DB').get('results', tz.id + '|' + igP.id);
+    { const tz = TR().tracks.find(x => x.name === 'Congelada'), it = tz.items[igP.id], rs = await w.eval('DB').getResult(tz.id + '|' + igP.id);
       check('Detener con la pestaña congelada: se guarda lo recibido por partes y «Guardar en el historial» funciona', it.partial && rs && rs.comments.length === 2 && w.eval('inHistory')(tz), JSON.stringify({ st:tz.status, it:[it.status, it.count, it.partial], hist:w.eval('inHistory')(tz) })); }
     FAKE.cpFreeze[igP.url] = false; FAKE.stopped.clear();
     for(const n of ['Reintentos', 'Sin sesión', 'Ventana cerrada', 'Congelada']){ const t = TR().tracks.find(x => x.name === n); if(t) await w.eval(`DB.delTracking('${t.id}')`); }
