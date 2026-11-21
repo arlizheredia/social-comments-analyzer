@@ -1086,6 +1086,10 @@ body.no-ai .needs-ai{display:none!important}
 .hrow.sel{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
 .hrow input[type=checkbox]{width:18px;height:18px;margin:0}
 .hrow .ht{font-weight:600;font-size:14px}
+/* nombre y estado en una fila, centrados en vertical; el nombre se recorta si no cabe */
+.hrow .ht:has(.stchip){display:flex;align-items:center;gap:8px;min-width:0}
+.hrow .ht-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.hrow .ht .stchip{flex:none}
 .hrow .hs{font-size:12px;color:var(--on-surface-variant)}
 .hrow .hsent{width:140px}
 .hrow .hsent small{display:block;font-size:11px;color:var(--on-surface-variant);margin-top:4px;text-align:right}
@@ -6806,7 +6810,7 @@ function renderHistory(){
     const pr = trackProgress(t), sel = TR.hsel.has(t.id);
     return `<div class="hrow${sel ? ' sel' : ''}" data-hid="${esc(t.id)}">
       <input type="checkbox" class="hsel" ${sel ? 'checked' : ''} aria-label="Seleccionar ${esc(t.name)}">
-      <div style="min-width:0"><div class="ht">${esc(t.name)}${t.status === 'paused' ? ' <span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : ''}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
+      <div style="min-width:0"><div class="ht"><span class="ht-name">${esc(t.name)}</span>${t.status === 'paused' ? '<span class="stchip paused"><span class="ms">pause_circle</span>Detenido · parcial</span>' : ''}</div><div class="hs">${esc(fmtDay(t.date))} · ${countTxt(pr.n, 'publicación', 'publicaciones')} · ${commentsTxt(t)}</div></div>
       <div class="hsent" data-hsent="${esc(t.id)}"></div>
       <div class="pacts"><button class="icon-btn sm" data-hact="view" aria-label="Ver comentarios por publicación" title="Ver comentarios por publicación"><span class="ms">forum</span></button>
         <button class="icon-btn sm needs-ai" data-hact="report" aria-label="Informe de este seguimiento" title="Informe de este seguimiento"><span class="ms">analytics</span></button>
