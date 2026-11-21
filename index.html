@@ -4701,7 +4701,7 @@ function renderStats(){
   const spanTxt = !dates.length ? '—' : span<36e5 ? Math.round(span/6e4)+' min' : span<864e5*2 ? Math.round(span/36e5)+' h' : Math.round(span/864e5)+' días';
   const range = !dates.length ? 'sin fechas' : dayTxt(mn)===dayTxt(mx) ? dayTxt(mn) : dayTxt(mn)+' – '+dayTxt(mx);
   const cards = [
-    ['forum','Total',fmtN(st.total),'comentarios y respuestas'],
+    ['forum','Total de comentarios revisados',fmtN(st.total),'comentarios y respuestas'],
     ['chat_bubble','Comentarios',fmtN(st.comments),pctTxt(st.comments,st.total)+' del total'],
     ['reply','Respuestas',fmtN(st.replies),pctTxt(st.replies,st.total)+' del total'],
     ['group','Autores únicos',fmtN(st.uniqueAuthors),st.uniqueAuthors?fmtDec(st.total/st.uniqueAuthors)+' comentarios por autor':''],
@@ -7288,7 +7288,7 @@ function compareRows(m){
   const negP = x => x && x.s.total ? Math.round(x.s.neg / x.s.total * 100) : null;
   const rows = [];
   rows.push(
-    { k:'Comentarios', a:c.list.length, b:p && p.list.length, good:'up' },
+    { k:'Total de comentarios revisados', a:c.list.length, b:p && p.list.length, good:'up' },
     { k:'Comentarios nuevos', a:m.curNew, b:m.prevNew, good:'up' },
     { k:'Personas que comentan', a:c.authorsN, b:p && p.authorsN, good:'up' },
     { k:'Interacciones', a:c.st.reacts, b:p && p.st.reacts, good:'up' },
@@ -8261,7 +8261,7 @@ function summaryText(list){
   const st = computeStats(list), m=S.meta;
   return [
     'RESUMEN DE COMENTARIOS', m.title?`Publicación: ${m.title}`:'', m.url?`URL: ${m.url}`:'', m.extractedAt?`Obtenido: ${fmtDate(m.extractedAt)}`:'', '',
-    `Total: ${st.total} (comentarios: ${st.comments}, respuestas: ${st.replies})`,
+    `Total de comentarios revisados: ${st.total} (comentarios: ${st.comments}, respuestas: ${st.replies})`,
     `Autores únicos: ${st.uniqueAuthors}`, `Reacciones totales: ${st.reacts}`, `Longitud media: ${st.avgLen} caracteres`,
     `Preguntas: ${st.q} · Con adjuntos: ${st.att}`,
     `Sentimiento: ${st.pos} positivos, ${st.neu} neutrales, ${st.neg} negativos`, '',
@@ -8282,7 +8282,7 @@ async function exportXLSX(list){
     const st=computeStats(list);
     const ws2 = XLSX.utils.aoa_to_sheet([
       ['Resumen'],['Publicación',S.meta.title||''],['URL',S.meta.url||''],['Obtenido',S.meta.extractedAt?fmtDate(S.meta.extractedAt):''],[],
-      ['Total',st.total],['Comentarios',st.comments],['Respuestas',st.replies],['Autores únicos',st.uniqueAuthors],['Reacciones',st.reacts],
+      ['Total de comentarios revisados',st.total],['Comentarios',st.comments],['Respuestas',st.replies],['Autores únicos',st.uniqueAuthors],['Reacciones',st.reacts],
       ['Longitud media',st.avgLen],['Positivos',st.pos],['Neutrales',st.neu],['Negativos',st.neg],[],
       ['Autor','Comentarios','Reacciones'], ...st.authors.map(a=>[a.name,a.count,a.reactions]),[],
       ['Palabra','Frecuencia'], ...st.words
