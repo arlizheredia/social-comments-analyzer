@@ -2088,13 +2088,13 @@ Si una versión nueva cambia la propia extensión, *Seguimiento* mostrará **Act
 
 ## Qué comentarios se revisan {#ext-orden}
 
-En ⋮ › **Opciones de extracción** › *Comentarios a revisar (Facebook)* eliges entre:
+Al crear o editar un seguimiento que tiene publicaciones de **Facebook**, el diálogo pregunta *Comentarios a revisar* y *Máximo por publicación* (se guardan con el seguimiento y se proponen los últimos usados). Puedes elegir entre:
 
 - **Más pertinentes**: los que Facebook muestra primero (de amigos y con más interacciones). Es lo más rápido y suele bastar para un informe.
 - **Más recientes**: los últimos comentarios primero.
 - **Todos los comentarios** (por defecto): incluye el posible spam.
 
-**Máximo de comentarios por publicación** (por defecto, 1500; o *Sin límite*): al llegar a ese número termina la extracción de esa publicación, sea cual sea el tipo elegido. Los informes indican cuándo se alcanzó.
+**Máximo por publicación** (por defecto, 1500; o *Sin límite*): al llegar a ese número termina la extracción de esa publicación de Facebook, sea cual sea el tipo elegido. Los informes indican cuándo se alcanzó.
 
 Los comentarios de cada publicación se guardan **una sola vez** y en cada extracción solo se añaden los nuevos, aunque la publicación esté en varios seguimientos. Los **informes** y el **mensaje de WhatsApp** indican siempre qué comentarios se revisaron (*más pertinentes*, *más recientes* o *todos*) y si alguna extracción fue parcial.
 
@@ -2636,6 +2636,17 @@ Cada comentario incluye su **plataforma**.
     <h3 class="team-h">Publicaciones <span class="muted" id="trackN"></span></h3>
     <div class="tlist" id="trackPosts"></div>
     <div class="help-note" id="trackMethods"><span class="ms">info</span><div></div></div>
+    <div id="trackFb" class="hidden">
+      <h3 class="team-h">Comentarios de Facebook</h3>
+      <div class="row" style="gap:12px;flex-wrap:wrap;align-items:flex-start">
+        <label class="field" style="flex:1 1 220px"><span class="lbl">Comentarios a revisar</span>
+          <select class="input" id="trackOrder"><option value="all">Todos los comentarios</option><option value="pert">Más pertinentes</option><option value="rec">Más recientes</option></select></label>
+        <div class="field" style="flex:1 1 220px"><label class="lbl" for="trackLimit">Máximo por publicación</label>
+          <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><input class="input" type="number" id="trackLimit" min="50" step="50" style="max-width:140px">
+            <label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="trackNoLimit"> Sin límite</label></div></div>
+      </div>
+      <p class="small muted" style="margin:4px 0 0">Se aplica a las publicaciones de Facebook de este seguimiento. «Todos» incluye el posible spam; «Más pertinentes» es lo que Facebook muestra por defecto y es lo más rápido. Los informes indican qué comentarios se revisaron.</p>
+    </div>
   </div>
   <div class="dlg-actions">
     <span style="margin-right:auto"><a class="hlp" href="#ayuda/seguimiento"><span class="ms">help</span>Ayuda</a></span>
@@ -2685,13 +2696,6 @@ Cada comentario incluye su **plataforma**.
       <span class="hint">Puedes seguir usando el ordenador mientras extrae. La ventana de trabajo siempre tiene tamaño de escritorio: en ventanas estrechas las redes muestran su versión móvil, sin comentarios.</span></label>
     <label class="check"><input type="checkbox" id="eoCareful"> Ritmo prudente para proteger tu cuenta (pausas variables y una pausa larga cada 5 publicaciones)</label>
     <label class="check"><input type="checkbox" id="eoKeep"> Dejar abiertas las pestañas al terminar</label>
-    <label class="field"><span class="lbl">Comentarios a revisar (Facebook)</span>
-      <select class="input" id="eoOrder"><option value="all">Todos los comentarios</option><option value="pert">Más pertinentes</option><option value="rec">Más recientes</option></select>
-      <span class="hint">Facebook ordena los comentarios de tres maneras. «Todos» incluye el posible spam; «Más pertinentes» es lo que Facebook muestra por defecto y es lo más rápido. Los informes indican qué comentarios se revisaron.</span></label>
-    <div class="field"><label class="lbl" for="eoLimit">Máximo de comentarios por publicación</label>
-      <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><input class="input" type="number" id="eoLimit" min="50" step="50" style="max-width:160px">
-        <label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="eoNoLimit"> Sin límite</label></div>
-      <span class="hint">Al llegar a este número, la extracción de esa publicación termina. Vale para los tres tipos. Por defecto, 1500.</span></div>
     <label class="field"><span class="lbl">Tiempo máximo por publicación (minutos)</span><input class="input" type="number" id="eoMax" min="2" max="180"></label>
     <label class="field"><span class="lbl">Pausa entre publicaciones (segundos)</span><input class="input" type="number" id="eoGap" min="0" max="120"></label>
     <label class="field"><span class="lbl">Reintentos automáticos ante fallos (máximo 10)</span><input class="input" type="number" id="eoRetries" min="1" max="10">
@@ -6400,8 +6404,7 @@ if(PREF.get('eoGap') === null) PREF.set('eoGap', '6');
 // el antiguo máximo de 20 min por publicación cortaba las publicaciones grandes (más de ~1000 comentarios): pasa a 60
 if(PREF.get('eoMax') === '20' && PREF.get('eoMaxMig') !== '1'){ PREF.set('eoMax', '60'); PREF.set('eoMaxMig', '1'); }
 const verLt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for(let i = 0; i < 3; i++){ if((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
-function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1', order:['pert', 'rec', 'all'].includes(PREF.get('eoOrder')) ? PREF.get('eoOrder') : 'all',
-  limit:PREF.get('eoNoLimit', '0') === '1' ? 0 : Math.max(50, Math.round(+PREF.get('eoLimit', '1500')) || 1500), maxMinutes:+PREF.get('eoMax', '60') || 60, gap:+PREF.get('eoGap', '4') || 0,
+function extOpts(){ const win = ['small', 'minimized', 'normal'].includes(PREF.get('eoWin')) ? PREF.get('eoWin') : 'small'; return { window:win, visible:win === 'normal', keepOpen:PREF.get('eoKeep', '0') === '1',  maxMinutes:+PREF.get('eoMax', '60') || 60, gap:+PREF.get('eoGap', '4') || 0,
   retries:Math.min(10, Math.max(1, Math.round(+PREF.get('eoRetries', '10')) || 10)), retryBase:Math.max(0.01, +PREF.get('eoRetryBase', '15') || 15), careful:PREF.get('eoCareful', '1') === '1' }; }
 function renderExt(){
   const on = !!EXT.version, old = on && verLt(EXT.version, EXT_LATEST);
@@ -6472,8 +6475,9 @@ function extWatchUpdate(){
 function openExtAutoDlg(){ EXT.autoAsked = true; $('#extAutoDlg').showModal(); }
 // Prefijo de los guardados parciales que el extractor envía dentro de los avisos de progreso
 const CP_TAG = '\u0001sca-cp:';
-function extExtract(url, onProgress){
-  const opts = extOpts(), jobId = uid('j_') + '~o=' + opts.order + '~l=' + opts.limit;   // el orden pedido viaja en el identificador (lo lee el extractor)
+// fb: { order, limit } de las publicaciones de Facebook (del seguimiento); en otras redes, todos y sin límite
+function extExtract(url, onProgress, fb){
+  const opts = extOpts(), cfg = fb || { order:'all', limit:0 }, jobId = uid('j_') + '~o=' + cfg.order + '~l=' + cfg.limit;   // el orden pedido viaja en el identificador (lo lee el extractor)
   return { jobId, promise:new Promise((resolve, reject) => {
     // sin noticias de la extensión durante 3 min (o más del tiempo máximo por publicación) → fallo reintentable
     let last = Date.now();
@@ -6525,12 +6529,17 @@ function openTrackDlg(postIds, tid){
   $('#trackTitle').textContent = t ? 'Editar seguimiento' : 'Nuevo seguimiento';
   $('#trackName').value = t ? t.name : 'Seguimiento del ' + new Date().toLocaleDateString('es', { day:'numeric', month:'long', year:'numeric' });
   $('#trackDate').value = t ? t.date : todayISO();
+  // comentarios de Facebook: los del seguimiento (al editar) o los últimos usados
+  const fo = t && t.fbOrder ? t.fbOrder : (['all', 'pert', 'rec'].includes(PREF.get('fbOrder')) ? PREF.get('fbOrder') : 'all');
+  const fl = t && t.fbLimit != null ? t.fbLimit : (PREF.get('fbNoLimit') === '1' ? 0 : Math.max(50, +PREF.get('fbLimit', '1500') || 1500));
+  $('#trackOrder').value = fo; $('#trackNoLimit').checked = !fl; $('#trackLimit').value = fl || +PREF.get('fbLimit', '1500') || 1500; $('#trackLimit').disabled = !fl;
   renderTrackDlg(); $('#trackDlg').showModal();
   refreshSessions().then(() => { if($('#trackDlg').open) renderTrackDlg(); });
 }
 function renderTrackDlg(){
   const ids = TR.draft.ids, posts = ids.map(id => TR.posts.find(p => p.id === id)).filter(Boolean);
   $('#trackN').textContent = '(' + posts.length + ')';
+  $('#trackFb').classList.toggle('hidden', !posts.some(p => p.platform === 'facebook'));
   $('#trackPosts').innerHTML = posts.map(p => { const m = methodFor(p); return `<div class="titem"><i class="pdot ${platDot(p.platform)}"></i><span class="tt" title="${esc(p.url)}">${esc(postLabel(p))}</span><span class="mchip ${m}">${METHOD_TXT[m]}</span><button class="icon-btn sm" data-rmpost="${esc(p.id)}" aria-label="Quitar ${esc(postLabel(p))}" title="Quitar"><span class="ms">close</span></button></div>`; }).join('') || '<p class="small muted">No hay publicaciones. Ciérralo y selecciona algunas en la lista.</p>';
   const ms = posts.map(methodFor), n = k => ms.filter(x => x === k).length;
   const lines = [];
@@ -6552,6 +6561,9 @@ async function saveTrack(start){
   let t = TR.draft.tid ? TR.tracks.find(x => x.id === TR.draft.tid) : null;
   if(!t){ t = { id:uid('t_'), createdAt:new Date().toISOString(), status:'draft', items:{} }; TR.tracks.unshift(t); }
   t.name = $('#trackName').value.trim() || 'Seguimiento'; t.date = $('#trackDate').value || todayISO(); t.postIds = ids;
+  // comentarios de Facebook de este seguimiento (y se recuerdan como los últimos usados)
+  t.fbOrder = $('#trackOrder').value; t.fbLimit = $('#trackNoLimit').checked ? 0 : Math.max(50, Math.round(+$('#trackLimit').value) || 1500);
+  PREF.set('fbOrder', t.fbOrder); PREF.set('fbNoLimit', t.fbLimit ? '0' : '1'); if(t.fbLimit) PREF.set('fbLimit', String(t.fbLimit));
   ids.forEach(id => { t.items[id] ||= { status:'pending', count:0 }; });
   Object.keys(t.items).forEach(id => { if(!ids.includes(id)) delete t.items[id]; });
   await DB.put('trackings', t);
@@ -6721,8 +6733,9 @@ async function collectPost(t, p, it, onProg){
     }finally{ gAbort = null; }
   }
   if(!EXT.version) throw new Error('La extensión de Chrome no está instalada o no responde. Instálala (Seguimiento › Descargar extensión) y recarga la página.');
-  it.order = extOpts().order; it.limit = extOpts().limit;
-  const job = extExtract(p.url, msg => onProg({ phase:msg.phase, count:msg.count, total:msg.total }));
+  const fb = p.platform === 'facebook' ? { order:t.fbOrder || 'all', limit:t.fbLimit != null ? t.fbLimit : 1500 } : null;
+  it.order = fb ? fb.order : null; it.limit = fb ? fb.limit : 0;
+  const job = extExtract(p.url, msg => onProg({ phase:msg.phase, count:msg.count, total:msg.total }), fb);
   RUN.job = job.jobId;
   const r = await job.promise; RUN.job = null;
   // la extensión no entregó el resultado final (pestaña congelada, detenido, ventana cerrada): se usa lo recibido por partes
@@ -7037,9 +7050,9 @@ function initTracking(){
   $('#extAutoOpen').onclick = () => { window.postMessage({ source:'sca-app', type:'open-settings' }, '*'); $('#extAutoDlg').close(); };
   // al volver de los ajustes de Chrome se comprueba si ya se dio el permiso
   document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && EXT.version) window.postMessage({ source:'sca-app', type:'ping' }, '*'); });
-  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoOrder').value = o.order; $('#eoNoLimit').checked = !o.limit; $('#eoLimit').value = PREF.get('eoLimit', '1500'); $('#eoLimit').disabled = !o.limit; $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
-  $('#eoNoLimit').onchange = () => { $('#eoLimit').disabled = $('#eoNoLimit').checked; };
-  $('#eoSave').onclick = () => { PREF.set('eoOrder', $('#eoOrder').value); PREF.set('eoNoLimit', $('#eoNoLimit').checked ? '1' : '0'); PREF.set('eoLimit', String(Math.max(50, Math.round(+$('#eoLimit').value) || 1500))); PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(180, Math.max(2, +$('#eoMax').value || 60)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
+  $('#segOpts').onclick = () => { closeMenus(); const o = extOpts(); $('#eoCareful').checked = o.careful; $('#eoWin').value = o.window; $('#eoRetries').value = o.retries; $('#eoRetryBase').value = o.retryBase; $('#eoKeep').checked = o.keepOpen; $('#eoMax').value = o.maxMinutes; $('#eoGap').value = o.gap; $('#extOptsDlg').showModal(); };
+  $('#trackNoLimit').onchange = () => { $('#trackLimit').disabled = $('#trackNoLimit').checked; };
+  $('#eoSave').onclick = () => { PREF.set('eoWin', $('#eoWin').value); PREF.set('eoCareful', $('#eoCareful').checked ? '1' : '0'); PREF.set('eoRetries', String(Math.min(10, Math.max(1, Math.round(+$('#eoRetries').value) || 10)))); PREF.set('eoRetryBase', String(Math.min(120, Math.max(5, +$('#eoRetryBase').value || 15)))); PREF.set('eoKeep', $('#eoKeep').checked ? '1' : '0'); PREF.set('eoMax', String(Math.min(180, Math.max(2, +$('#eoMax').value || 60)))); PREF.set('eoGap', String(Math.min(120, Math.max(0, +$('#eoGap').value || 0)))); $('#extOptsDlg').close(); toast('Opciones guardadas'); };
   addEventListener('beforeunload', e => { if(TR.running){ e.preventDefault(); e.returnValue = ''; } });
   extDetect(); setTimeout(extDetect, 800);
   setTimeout(requestSessions, 900); setInterval(requestSessions, 60000);

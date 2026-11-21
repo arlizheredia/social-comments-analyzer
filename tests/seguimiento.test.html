@@ -124,6 +124,7 @@ const TR = () => w.eval('TR');
     check('Sin sesión en Instagram no se puede iniciar: el diálogo lo indica', d.getElementById('trackStart').disabled && /No es posible iniciar el seguimiento/.test(d.getElementById('trackMethods').textContent) && /Instagram/.test(d.getElementById('trackMethods').textContent) && !!d.querySelector('#trackMethods a[href*="instagram.com/accounts/login"]'), d.getElementById('trackMethods').textContent.slice(0, 220));
     FAKE.sess.instagram = true; w.requestSessions(); await until(() => !d.getElementById('trackStart').disabled, 5000).catch(() => {});
     check('Al iniciar sesión en Instagram se habilita “Guardar e iniciar”', !d.getElementById('trackStart').disabled);
+    check('Con publicaciones de Facebook, el diálogo pregunta qué comentarios revisar y el máximo (por defecto: todos, 1500)', !d.getElementById('trackFb').classList.contains('hidden') && d.getElementById('trackOrder').value === 'all' && d.getElementById('trackLimit').value === '1500' && !d.getElementById('trackNoLimit').checked);
     check('El diálogo muestra las publicaciones y el método (extensión)', d.querySelectorAll('#trackPosts .titem').length === 3 && d.querySelectorAll('#trackPosts .mchip.extension').length === 3);
     d.getElementById('trackDate').value = '2026-11-15'; d.getElementById('trackName').value = 'Lunes';
     FAKE.hold = true;
@@ -160,7 +161,7 @@ const TR = () => w.eval('TR');
     { // qué comentarios se revisaron: frases del informe
       const rl = w.reviewedLines, sr = w.summarizeReviewed;
       check('Informe: avisa cuando se alcanzó el máximo de comentarios configurado', /con un máximo de 1\.?500 por publicación/.test(rl(sr([{ order:'all', limit:1500 }, { order:'all' }])).join(' ')) && /se alcanzó el máximo de 1\.?500 comentarios/.test(rl(sr([{ order:'all', limit:1500 }, { order:'all' }])).join(' ')), rl(sr([{ order:'all', limit:1500 }])).join(' | '));
-      check('Opciones: por defecto «Todos los comentarios» y máximo de 1500 por publicación', w.extOpts().order === 'all' && w.extOpts().limit === 1500, JSON.stringify({ o:w.extOpts().order, l:w.extOpts().limit }));
+      check('Las opciones generales ya no incluyen el orden ni el máximo de Facebook', !d.getElementById('eoOrder') && !d.getElementById('eoLimit') && w.extOpts().order === undefined);
       check('Informe: indica qué comentarios se revisaron y si fue parcial', /más pertinentes de cada publicación/.test(rl(sr([{ order:'pert' }, { order:'pert' }])).join(' ')) && /todos los comentarios de cada publicación/.test(rl(sr([{ order:'all' }])).join(' ')) && /más pertinentes en 2 publicaciones y todos los comentarios en 1/.test(rl(sr([{ order:'pert' }, { order:'pert' }, { order:'all' }])).join(' ')) && /parcial en 1 publicación/.test(rl(sr([{ order:'all', partial:true }])).join(' ')), rl(sr([{ order:'pert' }, { order:'pert' }, { order:'all', partial:true }])).join(' | ')); }
     FAKE.hold = false; FAKE.stopped.clear();
     d.querySelector('[data-ract="start"]').click();
