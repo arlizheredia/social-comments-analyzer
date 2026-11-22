@@ -1,5 +1,5 @@
 // GENERADO desde index.html (fbExtractor) por tools/build_extension.py — no editar a mano.
-// sca-extractor 1.4.8 · requiere extensión 1.4.0
+// sca-extractor 1.4.9 · requiere extensión 1.4.0
 (function(){
 function fbExtractor(){
   // Modo automático: lo activa la extensión de Chrome (seguimientos). Sin pausas ni preguntas; informa del progreso y del resultado.
@@ -294,13 +294,13 @@ function fbExtractor(){
   // tope de comentarios nuevos o cambiados que se leen en cada llamada: el resto se lee en la siguiente (la pestaña no se bloquea)
   var snapBudget = 300, snapPending = false;
   function extractAll(){
-    var arts = articles(); var res = [], seen = {}, fresh = 0; snapPending = false;
+    var arts = articles(); var res = [], seen = {}, fresh = 0, t0 = Date.now(); snapPending = false;
     arts.forEach(function(a, i){
       try {
         var sig = (a.textContent || '').length + ':' + a.getElementsByTagName('a').length + ':' + a.getElementsByTagName('img').length;
         var hit = artCache.get(a), c;
         if (hit && hit.sig === sig) c = Object.assign({}, hit.c);
-        else { if (fresh >= snapBudget){ snapPending = true; return; } fresh++; c = extractOne(a); artCache.set(a, { sig: sig, c: Object.assign({}, c) }); }
+        else { if (fresh >= snapBudget || (fresh && Date.now() - t0 > 40)){ snapPending = true; return; } fresh++; c = extractOne(a); artCache.set(a, { sig: sig, c: Object.assign({}, c) }); }
         var key = c.id || (c.authorName + '|' + c.text);
         if (seen[key]) return; seen[key] = 1;
         c.order = i; res.push(c);
@@ -539,6 +539,7 @@ function fbExtractor(){
       var m = l.match(FB_TOTAL_RE); if (m && e.offsetParent){ var n = parseCount(m[1]); if (n) cands.push({ e: e, n: n }); }
     });
     if (!cands.length) Array.prototype.slice.call(document.querySelectorAll('span,div[role="button"]')).forEach(function(e){
+      if (e.childElementCount > 3) return;   // contenedores grandes: su texto no es un recuento (y leerlo es costoso)
       var t = quickText(e); if (t.length > 30 || !e.offsetParent) return;
       var m = t.match(/^(\d[\d.,]*\s*(?:k|mil|m)?)\s*(comentarios?|comments?|commentaires?|comentários?)$/i); if (m){ var n = parseCount(m[1]); if (n) cands.push({ e: e, n: n }); }
     });
@@ -550,9 +551,10 @@ function fbExtractor(){
     cands.sort(function(a, b){ return (b.d - a.d) || (b.v - a.v) || (a.i - b.i); });
     return cands[0].n;
   }
+  var totalAt = 0;
   function netTotal(){
-    if (totalGen === gen) return totalCache;
-    totalCache = TT ? ttTotal() : IG ? 0 : fbTotal(); totalGen = gen; return totalCache;
+    if (totalGen === gen || (totalCache && Date.now() - totalAt < 15000)) return totalCache;
+    totalCache = TT ? ttTotal() : IG ? 0 : fbTotal(); totalGen = gen; totalAt = Date.now(); return totalCache;
   }
   function ttHandle(a){ var m = ((a && a.getAttribute('href')) || '').match(/^\/@([^/?#]+)/); return m ? decodeURIComponent(m[1]) : ''; }
   function ttLevel(n){ var e = n.querySelector('[data-e2e^="comment-level-"]'); var m = e ? (e.getAttribute('data-e2e') || '').match(/(\d+)$/) : null; return m ? +m[1] : 0; }
@@ -781,7 +783,7 @@ function fbExtractor(){
     bumpGen();
     var onOriginal = postKey() === startKey;
     // última lectura por tandas, cediendo el control entre una y otra (antes era de golpe y congelaba la pestaña con miles de comentarios)
-    if (onOriginal && !useCollectedOnly){ for (var k = 0; k < 40; k++){ snapshot(true); if (!snapPending) break; await sleep(0); } }
+    if (onOriginal && !useCollectedOnly){ for (var k = 0; k < 800; k++){ snapshot(true); if (!snapPending) break; await sleep(k % 10 === 9 ? 30 : 0); } }
     var comments = collected.map(function(c, i){ c.order = i; return c; });
     if (LIMIT && comments.length > LIMIT){ comments = comments.slice(0, LIMIT); LOOP.limite = true; }   // exactamente el máximo pedido
     var postAuthor = meta.postAuthor || '', postCaption = meta.postCaption || '', postDate = meta.postDate || '';
@@ -792,7 +794,7 @@ function fbExtractor(){
       principales: comments.filter(function(c){ return !c.isReply; }).length, respuestas: comments.filter(function(c){ return c.isReply; }).length,
       botonesRespuestas: document.querySelectorAll('[data-e2e^="view-more"],p[class*="ReplyActionText"]').length,
       panel: !!document.querySelector('[class*="DivCommentListContainer"],[data-e2e="comment-list"]') };
-    data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal;
+    data.diag = data.diag || {}; data.diag.cambioDePublicacion = !onOriginal; data.diag.esperasPorLentitud = LOOP.esperas || 0;
     // qué comentarios se revisaron: el orden pedido y si se pudo aplicar (Instagram y TikTok muestran su propio orden)
     data.order = TT || IG ? { pedido: ORDER, aplicado: 'red' } : { pedido: ORDER, aplicado: sortState === 'ya' || sortState === 'cambiado' ? ORDER : null };
     data.order.limite = LIMIT; data.order.alcanzado = !!LOOP.limite;
@@ -892,8 +894,9 @@ function fbExtractor(){
       // el recuento se calcula una vez por ronda: antes se pedía por cada botón candidato (miles de veces)
       var nowCount = countNow();
       var btns = cand.filter(function(b){
-        if (!b.offsetParent) return false;
+        if (b.childElementCount > 12) return false;   // contenedores, no botones de «ver más»
         var t = quickText(b).replace(/^[\s—–\-·•]+/, '');
+        if (!t || t.length > 80) return false;
         // Un botón se puede volver a pulsar si su texto cambió ("Ver 68 más" -> "Ver 58 más"); si no, máximo 4 veces
         var ck = clicks.get(b);
         if (ck && (ck.all >= 3000 || (ck.n >= (ck.t === t ? 4 : 60) && !(nowCount > ck.c)))) return false;
@@ -902,7 +905,7 @@ function fbExtractor(){
         if (ck && ck.t === t && (ck.noEff || 0) >= 2 && !LOAD_MORE_RE.test(t)) return false;
         if (!t || t.length > 80 || EXCL.test(t)) return false;
         if ((IG || TT) && (IG_BTN_EXCL.test(t) || TT_BTN_EXCL.test(t))) return false;
-        return EXP.some(function(re){ return re.test(t); });
+        return EXP.some(function(re){ return re.test(t); }) && !!b.offsetParent;
       });
       if (IG){ // "Cargar más comentarios" es un botón con solo un icono
         Array.prototype.slice.call(r.querySelectorAll('svg[aria-label]')).forEach(function(s){
@@ -929,7 +932,16 @@ function fbExtractor(){
           clicks.set(b, entry);
           if (bt && pressed.length < 60) pressed.push(bt.replace(/\d+/g, 'N'));
           try { b.scrollIntoView({ block: 'center' }); b.click(); } catch(e){}
-          await sleep(450 + Math.random() * 450);
+          var want = 450 + Math.random() * 450, ts = Date.now();
+          await sleep(want);
+          var lag = Date.now() - ts - want;
+          // la red está ocupada pintando lo cargado: se deja respirar en vez de acumular más pulsaciones (evita «Página sin respuesta»)
+          if (lag > 1200 && !document.hidden){
+            LOOP.esperas = (LOOP.esperas || 0) + 1;
+            status('La página va lenta: esperando a que termine de cargar…', true);
+            await sleep(Math.min(8000, lag * 2));
+            if (lag > 3000){ bumpGen(); break; }   // ronda terminada: se recoge lo cargado antes de seguir
+          }
           bumpGen();   // la pulsación puede haber cargado comentarios: las listas se recalculan una vez
           // efecto propio de este botón: los de respuestas desaparecen o cambian al abrirse; si sigue igual, no hizo nada
           // (no se mira el recuento: la carga de Facebook puede tardar más que la pausa y un botón útil parecería muerto)
