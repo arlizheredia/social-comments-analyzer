@@ -2154,19 +2154,19 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 > El **seguimiento más reciente** de los elegidos es siempre el **principal**: sus indicadores encabezan el informe y se comparan con el seguimiento anterior (variación ▲/▼). La evolución, la audiencia y los temas cubren todo el periodo elegido.
 
 - **Valores por defecto**: el enfoque, los temas a vigilar, *Elaborado por* y *Cliente / marca* empiezan con tus preferencias (⋮ › **Preferencias de informes**, o **Valores por defecto** en el formulario del informe). Lo que cambies en un informe solo afecta a ese informe.
-- **Enfoque** (obligatorio): escribe el criterio del informe; por defecto, *Kanasta24 y comentarios relacionados*. Se buscan los comentarios que nombran el tema (también con otra ortografía, como *Canasta 24*) o que hablan claramente de él, y **todo el informe trata solo de esos comentarios**: indicadores, comparativa, evolución, publicaciones, quién comenta, quiénes hablan bien y quiénes critican, qué se dice, comentarios destacados y el mensaje para WhatsApp. El informe nombra el tema (por ejemplo, *Comentarios sobre Kanasta24*) y no menciona cómo se elaboró. Las respuestas de tu **equipo** cuentan en las cifras, en *Quién más comenta*, en *Quiénes hablan bien* y en los comentarios destacados (marcadas como *Equipo*), pero no entre *quiénes más critican* ni en lo pendiente de respuesta. La sección **Equipo y público** compara lo que dice el público (comentarios, personas y tono) con el trabajo del equipo (respuestas, quién respondió, comentarios respondidos y sin responder, tasa y tiempo de primera respuesta, y el tono de sus respuestas).
+- **Enfoque** (obligatorio): escribe el criterio del informe; por defecto, *Kanasta24 y comentarios relacionados*. Se buscan los comentarios que nombran el tema (también con otra ortografía, como *Canasta 24*) o que hablan claramente de él, y **todo el informe trata solo de esos comentarios**: indicadores, comparativa, evolución, publicaciones, quién comenta, quiénes hablan bien y quiénes critican, qué se dice, comentarios destacados y el mensaje para WhatsApp. El informe nombra el tema (por ejemplo, *Comentarios sobre Kanasta24*) y no menciona cómo se elaboró. Las respuestas de tu **equipo** cuentan en las cifras, en *Quién más comenta*, en *Quiénes hablan bien* y en los comentarios destacados (marcadas como *Equipo*), pero no entre *quiénes más critican* ni en lo pendiente de respuesta. La sección **Equipo y público** compara lo que dice el público (comentarios, personas y tono) con el trabajo del equipo (respuestas, quién respondió, comentarios respondidos, tasa y tiempo de primera respuesta, y el tono de sus respuestas). El informe **no incluye estadísticas del número de comentarios pendientes de respuesta**.
 - **Resumen** automático con las cifras clave del tema.
 - **Indicadores clave**: comentarios únicos, personas, interacciones, comentarios **positivos** y **negativos** y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
 - **Evolución por seguimiento**: comentarios por fecha y comentarios **nuevos** respecto a los seguimientos anteriores.
 - **Por publicación**, con su enlace; **quién más comenta**, **quiénes hablan bien** y **quiénes más critican**, y el desglose **Equipo y público**.
 - **Otras marcas y temas**: escribe los términos (p. ej. *envío, precio*) para medir cuántos de estos comentarios los mencionan.
-- Comentarios positivos y negativos destacados y preguntas pendientes.
+- Comentarios positivos y negativos destacados, preguntas pendientes y un cierre de **Conclusiones** con la valoración final del informe.
 
 ## Exportar y compartir {#inf-exportar}
 
 **Mensaje para WhatsApp**: genera un mensaje breve y **sin tecnicismos**: cuántos comentarios se revisaron, cuántos hablan del tema y cuántos son positivos y negativos, **quiénes comentan en contra** de la marca (con cuántos comentarios cada uno) y **algunos ejemplos** de lo que dicen, **quiénes más comentan a favor** y lo que sigue sin respuesta. No incluye opiniones. Sirve para situar a quienes reciban el informe en un chat o canal. Elige el tono (cercano, formal o muy breve), añade tu firma, edítalo y pulsa **Copiar mensaje** o **Abrir en WhatsApp**. Con **Redactar con IA** lo reescribe el modelo gratuito que configures ([cómo configurarlo](#ayuda/ia-config)).
 
-Los documentos exportados tienen un formato **sencillo, en blanco y negro y en Arial 12**: título, ficha (fecha, *Elaborado por*, *Cliente / marca* y periodo), resumen, indicadores, detalle por publicación, audiencia, comentarios destacados, con pie de página numerado. Rellena *Elaborado por* y *Cliente / marca* al elegir los seguimientos del informe.
+Los documentos exportados tienen un formato **sencillo, en blanco y negro y en Arial 12**: título, ficha (fecha, *Elaborado por*, *Cliente / marca* y periodo), resumen, indicadores, detalle por publicación, audiencia, comentarios destacados y **conclusiones** al final. Rellena *Elaborado por* y *Cliente / marca* al elegir los seguimientos del informe.
 
 | Opción | Resultado |
 |---|---|
@@ -2351,7 +2351,7 @@ Se usan los comentarios **seleccionados** o, si no hay selección, **todos los f
 |---|---|
 | Copiar como tabla | Pegar directamente en Excel o Google Sheets |
 | Excel (.xlsx) | Hoja *Comentarios* con todos los campos y hoja *Resumen* |
-| Informe Word (.doc) | Informe sencillo en blanco y negro, Arial 12, **solo con los comentarios sobre el criterio del informe** (⋮ › *Preferencias de informes*): resumen, indicadores, quién comenta, comentarios destacados |
+| Informe Word (.doc) | Informe sencillo en blanco y negro, Arial 12, **solo con los comentarios sobre el criterio del informe** (⋮ › *Preferencias de informes*): resumen, indicadores, quién comenta, comentarios destacados y conclusiones |
 | CSV | UTF-8 compatible con Excel; conserva acentos y emojis |
 | JSON | Volver a importarlo en esta aplicación |
 | Informe PDF | El mismo informe que el Word, en PDF (A4, blanco y negro) para enviar o imprimir |
@@ -7339,7 +7339,7 @@ function compareRows(m){
     { k:'Negativos', a:c.s.neg, b:p && p.s.neg, good:'down' },
     { k:'Preguntas', a:c.st.q, b:p && p.st.q, good:'down' }
   );
-  if(c.team) rows.push({ k:'Pendientes de respuesta', a:c.pending, b:p && p.pending, good:'down' }, { k:'Tasa de respuesta del equipo', a:c.respRate, b:p && p.respRate, good:'up', pct:true });
+  if(c.team) rows.push({ k:'Tasa de respuesta del equipo', a:c.respRate, b:p && p.respRate, good:'up', pct:true });
   return rows.map(r => {
     const has = r.b != null && r.a != null, d = has ? r.a - r.b : null;
     const val = v => v == null ? '—' : r.pct ? v + ' %' : r.signed ? sign(v) : fmtN(v);
@@ -7464,7 +7464,7 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
     split:teamSplit(list, nonTeam), opinions, negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? { ...focus, n:list.length, pct:focus.total ? Math.round(list.length / focus.total * 100) : 0 } : null };
   // por defecto el principal es el propio conjunto (sin seguimiento anterior); buildReport lo sustituye por el más reciente
   m.cur = m; m.prev = null; m.prevT = null; m.curNew = list.length; m.prevNew = null; m.cmp = compareRows(m); m.postCmp = [];
-  m.alerts = reportAlerts(m); m.recs = reportRecs(m); m.summary = reportSummary(m);
+  m.alerts = reportAlerts(m); m.recs = reportRecs(m); m.summary = reportSummary(m); m.conclusions = reportConclusions(m);
   return m;
 }
 // Desglose del informe: lo que dice el público frente al trabajo del equipo
@@ -7482,8 +7482,6 @@ function reportAlerts(m){
   else if(emptyP) a.push({ lvl:'mid', txt:`${countTxt(emptyP, 'publicación de los seguimientos quedó', 'publicaciones de los seguimientos quedaron')} sin comentarios.` });
   m.posts.filter(p => p.total >= 5 && p.negPct >= 30).forEach(p => a.push({ lvl:'high', txt:`“${p.label}” concentra un ${p.negPct} % de comentarios negativos (${fmtN(p.s.neg)} de ${fmtN(p.total)}).` }));
   if(m.byDate.length > 1 && m.negLast - m.negFirst >= 10) a.push({ lvl:'high', txt:`Los comentarios negativos${ab} aumentaron: pasaron de ${m.negFirst} a ${m.negLast} de cada 100 entre el primer y el último seguimiento.` });
-  if(m.team && m.openNeg) a.push({ lvl:m.openNeg >= 5 ? 'high' : 'mid', txt:`${countTxt(m.openNeg, 'comentario negativo sigue', 'comentarios negativos siguen')} sin respuesta del equipo.` });
-  if(m.team && m.openQ.length) a.push({ lvl:'mid', txt:`${countTxt(m.list.filter(c => !c.isTeam && c.isQuestion && c.needsTeam).length, 'pregunta sigue', 'preguntas siguen')} sin respuesta: son oportunidades para ayudar o vender.` });
   if(m.team && m.respRate != null && m.respRate < 50) a.push({ lvl:'mid', txt:`El equipo respondió poco: ${m.respRate} de cada 100 comentarios que pedían respuesta.` });
   if(!a.length) a.push({ lvl:'ok', txt:'No hay nada preocupante: el tono de los comentarios y la atención del equipo están bien.' });
   return a;
@@ -7491,7 +7489,7 @@ function reportAlerts(m){
 function reportRecs(m){
   const r = [], f = m.focus, ab = f ? ' sobre ' + f.name : '', de = f ? ' de ' + f.name : '';
   const names = arr => arr.slice(0, 3).map(a => a.name).join(', ');
-  if(m.team && (m.openNeg || m.openQ.length)) r.push(`Responder cuanto antes ${[m.openNeg ? countTxt(m.openNeg, 'comentario negativo', 'comentarios negativos') : '', m.openQ.length ? countTxt(m.list.filter(c => !c.isTeam && c.isQuestion && c.needsTeam).length, 'pregunta', 'preguntas') : ''].filter(Boolean).join(' y ')} que siguen sin respuesta.`);
+  if(m.team && (m.openNeg || m.openQ.length)) r.push(`Responder cuanto antes los comentarios negativos y las preguntas que siguen sin respuesta.`);
   if(m.detractors.length) r.push(`Escribir por privado a quienes más critican${ab} (${names(m.detractors)}) para entender qué pasó y resolverlo.`);
   const fans = m.ambassadors.filter(a => !a.team);
   if(fans.length) r.push(`Agradecer a quienes hablan bien${de} (${names(fans)}); sus opiniones pueden servir como testimonio.`);
@@ -7513,8 +7511,37 @@ function reportSummary(m){
   if(m.detractors.length || m.ambassadors.length) out.push([m.ambassadors.length ? `Quienes más hablan bien${de}: ${names(m.ambassadors)}` : '', m.detractors.length ? `quienes más lo critican: ${names(m.detractors)}` : ''].filter(Boolean).join('; ').replace(/^q/, 'Q') + '.');
   if(f && m.opinions && m.opinions.length && m.opinions[0].n > 1) out.push(`La opinión que más se repite sobre ${f.name} (${countTxt(m.opinions[0].n, 'comentario', 'comentarios')}): «${m.opinions[0].t}»`);
   if(m.byDate.length > 1){ const d = m.byDate[m.byDate.length - 1].nw; out.push(`En el último seguimiento aparecieron ${countTxt(d, 'comentario nuevo', 'comentarios nuevos')}${ab}; los negativos pasaron de ${m.negFirst} a ${m.negLast} de cada 100.`); }
-  if(m.team && m.answered + m.pending) out.push(`El equipo respondió ${fmtN(m.answered)} de los ${countTxt(m.answered + m.pending, 'comentario que pedía', 'comentarios que pedían')} respuesta${m.pending ? `; quedan ${countTxt(m.pending, 'sin responder', 'sin responder')}` : ''}${m.medRT != null ? ` y suele tardar unas ${fmtDec(m.medRT)} horas en responder` : ''}.`);
+  if(m.team && m.answered) out.push(`El equipo respondió ${countTxt(m.answered, 'comentario', 'comentarios')}${m.medRT != null ? ` y suele tardar unas ${fmtDec(m.medRT)} horas en responder` : ''}.`);
   if(m.posts.length > 1) out.push(`Donde más se comenta${ab} es en “${m.posts[0].label}” (${countTxt(m.posts[0].total, 'comentario', 'comentarios')}).`);
+  return out;
+}
+// Conclusiones: cierre valorativo del informe (ideas y aspectos relevantes, en tono conclusivo)
+function reportConclusions(m){
+  const out = [], f = m.focus, ab = f ? ' sobre ' + f.name : '', de = f ? ' de ' + f.name : '';
+  const share = (a, b) => b ? Math.round(a / b * 100) : 0;
+  const posPct = share(m.s.pos, m.s.total), negPct = share(m.s.neg, m.s.total);
+  const verdict = m.nss >= 20 ? 'favorable' : m.nss <= -10 ? 'desfavorable' : 'dividida';
+  out.push(`Valoración general: la conversación${ab} es ${verdict}. ${posPct} de cada 100 comentarios son positivos y ${negPct} negativos, sobre ${countTxt(m.list.length, 'comentario', 'comentarios')} de ${countTxt(m.posts.length, 'publicación', 'publicaciones')}${m.tracks.length > 1 ? ' en ' + countTxt(m.tracks.length, 'seguimiento', 'seguimientos') : ''}.`);
+  if(m.byDate.length > 1){
+    const d = m.negLast - m.negFirst, last = m.byDate[m.byDate.length - 1];
+    out.push(`Tendencia: las críticas ${d > 0 ? 'ganaron peso' : d < 0 ? 'perdieron peso' : 'se mantuvieron'} entre el primer y el último seguimiento (de ${m.negFirst} a ${m.negLast} de cada 100${d ? `, ${d > 0 ? '+' : ''}${d} puntos` : ''}); en el último aparecieron ${countTxt(last.nw, 'comentario nuevo', 'comentarios nuevos')}.`);
+  }
+  const solid = m.posts.filter(p => p.total >= 3);
+  if(solid.length > 1){
+    const best = [...solid].sort((a, b) => b.nss - a.nss)[0], worst = [...solid].sort((a, b) => a.nss - b.nss)[0];
+    out.push(`Dónde se concentra: “${m.posts[0].label}” reúne ${countTxt(m.posts[0].total, 'comentario', 'comentarios')}; la publicación con mejor valoración es “${best.label}” y la más criticada, “${worst.label}” (${worst.negPct} % de comentarios negativos).`);
+  } else if(m.posts.length){
+    out.push(`Dónde se concentra: la conversación${ab} se concentra en “${m.posts[0].label}” (${countTxt(m.posts[0].total, 'comentario', 'comentarios')}), con ${posPct} de cada 100 comentarios positivos y ${negPct} negativos.`);
+  }
+  if(m.opinions && m.opinions.length){
+    const o = m.opinions[0];
+    out.push(`Idea dominante: ${o.s === 'negativo' ? 'la crítica' : o.s === 'positivo' ? 'el elogio' : 'la opinión'} que más se repite es «${o.t}» (${countTxt(o.n, 'comentario', 'comentarios')}).`);
+  }
+  if(m.team && m.respRate != null){
+    out.push(`Atención del equipo: respondió ${m.respRate} de cada 100 comentarios que pedían respuesta${m.medRT != null ? `, con una primera respuesta en unas ${fmtDec(m.medRT)} horas` : ''}.`);
+  }
+  const fans = m.ambassadors.filter(a => !a.team).length, critics = m.detractors.length;
+  out.push(`En conjunto, ${m.nss >= 20 ? 'hay una base de opinión favorable que conviene cuidar y aprovechar' : m.nss <= -10 ? 'las críticas superan a los elogios y deben atenderse antes de que se extiendan' : 'la opinión está repartida, así que cada conversación cuenta'}${critics ? `; ${countTxt(critics, 'persona concentra', 'personas concentran')} las principales críticas` : ''}${fans ? ` y ${countTxt(fans, 'persona habla', 'personas hablan')} bien${de}` : ''}.`);
   return out;
 }
 const miniSeg = s => s.total ? `<span class="mini-seg" title="${s.pos} positivos · ${s.neu} neutrales · ${s.neg} negativos">${[['var(--viz-neg)', s.neg], ['var(--viz-neu)', s.neu], ['var(--viz-pos)', s.pos]].filter(x => x[1]).map(([c, v]) => `<i style="flex:${v} 1 0;background:${c}"></i>`).join('')}</span>` : '';
@@ -7529,7 +7556,7 @@ function splitSection(m, ab){
     <div class="rep-grid">
       <div><h4 class="viz-h4">Público</h4><div class="kpis">${kpi('Comentarios', fmtN(P.n), countTxt(P.people, 'persona', 'personas'))}${kpi('Positivos', fmtN(P.s.pos), pctTxt(P.s.pos, P.n))}${kpi('Negativos', fmtN(P.s.neg), pctTxt(P.s.neg, P.n))}</div>
         <div style="margin-top:8px">${miniSeg(P.s)}</div><p class="small muted" style="margin:6px 0 0">${tone(P.s)}</p></div>
-      <div><h4 class="viz-h4">Equipo</h4><div class="kpis">${kpi('Respuestas', fmtN(T.n), countTxt(T.members.length, 'persona del equipo', 'personas del equipo'))}${kpi('Comentarios respondidos', fmtN(m.answered), m.pending ? countTxt(m.pending, 'sin responder', 'sin responder') : 'ninguno pendiente')}${kpi('Tasa de respuesta', m.respRate != null ? m.respRate + ' %' : '—', m.medRT != null ? 'primera respuesta en ~' + fmtDec(m.medRT) + ' h' : '')}</div>
+      <div><h4 class="viz-h4">Equipo</h4><div class="kpis">${kpi('Respuestas', fmtN(T.n), countTxt(T.members.length, 'persona del equipo', 'personas del equipo'))}${kpi('Comentarios respondidos', fmtN(m.answered), 'del equipo')}${kpi('Tasa de respuesta', m.respRate != null ? m.respRate + ' %' : '—', m.medRT != null ? 'primera respuesta en ~' + fmtDec(m.medRT) + ' h' : '')}</div>
         ${T.members.length ? `<p class="small" style="margin:8px 0 0">Quién respondió: ${T.members.slice(0, 5).map(x => `${esc(x.name)} (${x.n})`).join(', ')}.</p>` : ''}
         <p class="small muted" style="margin:6px 0 0">Tono de sus respuestas: ${tone(T.s)}</p></div>
     </div></section>`;
@@ -7576,7 +7603,7 @@ function renderReport(){
       <div class="viz-plot" id="repChartDates"></div>
       <div style="margin-top:12px">${tbl('<th>Fecha</th><th>Seguimiento</th><th class="num">Comentarios</th><th class="num">Nuevos</th><th class="sent">Tono</th><th class="num">Positivos</th><th class="num">Negativos</th>', m.byDate.map(d => `<tr><td>${esc(fmtDay(d.t.date))}</td><td>${esc(d.t.name)}</td><td class="num">${fmtN(d.total)}</td><td class="num">${fmtN(d.nw)}</td><td class="sent">${miniSeg({ total:d.total, pos:d.pos, neg:d.neg, neu:d.neu })}</td><td class="num">${fmtN(d.pos)}</td><td class="num">${fmtN(d.neg)}</td></tr>`).join(''))}</div></section>` : ''}
     <section class="card rep-sec"><h3><span class="ms">article</span>Por publicación</h3><p class="sub">Dónde se habla más${de}.</p>
-      ${tbl(`<th>Publicación</th><th>Red</th><th class="num">Comentarios</th><th class="sent">Tono</th><th class="num">Positivos</th><th class="num">Negativos</th>${m.team ? '<th class="num">Sin responder</th>' : ''}`, m.posts.map(p => `<tr><td>${esc(p.label)}${p.url ? `<a class="purl" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortUrl(p.url))}</a>` : ''}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num">${fmtN(p.total)}</td><td class="sent">${miniSeg(p.s)}</td><td class="num">${fmtN(p.s.pos)}</td><td class="num">${fmtN(p.s.neg)}</td>${m.team ? `<td class="num">${fmtN(p.pending)}</td>` : ''}</tr>`).join(''))}
+      ${tbl(`<th>Publicación</th><th>Red</th><th class="num">Comentarios</th><th class="sent">Tono</th><th class="num">Positivos</th><th class="num">Negativos</th>`, m.posts.map(p => `<tr><td>${esc(p.label)}${p.url ? `<a class="purl" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(shortUrl(p.url))}</a>` : ''}</td><td><i class="pdot ${platDot(p.platform)}"></i> ${esc(platName(p.platform))}</td><td class="num">${fmtN(p.total)}</td><td class="sent">${miniSeg(p.s)}</td><td class="num">${fmtN(p.s.pos)}</td><td class="num">${fmtN(p.s.neg)}</td></tr>`).join(''))}
     </section>
     <div class="rep-grid">
       <section class="card rep-sec viz-card"><h3><span class="ms">groups</span>Quién más comenta${ab}</h3>${rankedBars(m.topAuthors.slice(0, 8).map(a => ({ l:a.name + (a.team ? ' (equipo)' : ''), v:a.n })), 'rauthor', { unit:'comentarios' })}</section>
@@ -7596,6 +7623,7 @@ function renderReport(){
       <section class="card rep-sec"><h3><span class="ms">thumb_down</span>Comentarios negativos destacados</h3><div class="qlist">${m.topNeg.map(qItem).join('') || '<p class="small muted">Sin comentarios negativos.</p>'}</div></section>
     </div>
     ${m.team && m.openQ.length ? `<section class="card rep-sec"><h3><span class="ms">help</span>Preguntas sin responder</h3><div class="qlist">${m.openQ.slice(0, 5).map(qItem).join('')}</div></section>` : ''}
+    <section class="card rep-sec"><h3><span class="ms">fact_check</span>Conclusiones</h3><ul class="rep-sum">${(m.conclusions || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
     <p class="no-print" style="margin:4px 0 12px"><button class="btn tonal sm" id="repOpenList"><span class="ms">forum</span>Ver y responder estos comentarios</button></p>
   </div>`;
   if(m.byDate.length > 1){ const W = chartW('#repChartDates'); $('#repChartDates').innerHTML = columnChart(dates, { W, h:chartH(W), label:'Comentarios por seguimiento' }); }
@@ -7612,13 +7640,13 @@ function reportText(m){
   (m.postKpi || []).forEach(pk => { L.push('', `${pk.label} (${platName(pk.platform)})${pk.url ? ' · ' + pk.url : ''}`, `${trackRef(pk.tA)}${pk.tB ? ' comparado con ' + trackRef(pk.tB) : ' · sin un seguimiento anterior de esta publicación'}`);
     pk.rows.forEach(r => L.push(`  ${r.k}: ${r.A}` + (pk.hasPrev ? ` (antes ${r.B}; ${r.D})` : ''))); });
   if(m.byDate.length > 1){ H('Evolución por seguimiento'); m.byDate.forEach(d => L.push(`${fmtDay(d.t.date)} · ${d.t.name}: ${fmtN(d.total)} comentarios, ${fmtN(d.nw)} nuevos, ${countTxt(d.pos, 'positivo', 'positivos')} y ${countTxt(d.neg, 'negativo', 'negativos')}`)); }
-  H('Por publicación'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)})${p.url ? ' · ' + p.url : ''}: ${fmtN(p.total)} comentarios, ${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')}${m.team ? `, ${fmtN(p.pending)} sin responder` : ''}`));
+  H('Por publicación'); m.posts.forEach(p => L.push(`${p.label} (${platName(p.platform)})${p.url ? ' · ' + p.url : ''}: ${fmtN(p.total)} comentarios, ${countTxt(p.s.pos, 'positivo', 'positivos')} y ${countTxt(p.s.neg, 'negativo', 'negativos')}`));
   H('Quién más comenta' + ab); m.topAuthors.slice(0, 5).forEach((a, i) => L.push(`${i + 1}. ${a.name}${a.team ? ' (equipo)' : ''}: ${countTxt(a.n, 'comentario', 'comentarios')}`));
   if(m.ambassadors.length){ H('Quiénes hablan bien' + de); m.ambassadors.slice(0, 5).forEach(a => L.push(`• ${a.name}${a.team ? ' (equipo)' : ''} (${countTxt(a.pos, 'positivo', 'positivos')})`)); }
   if(m.detractors.length){ H('Quiénes más critican'); m.detractors.slice(0, 5).forEach(a => L.push(`• ${a.name} (${countTxt(a.neg, 'negativo', 'negativos')})`)); }
   if(m.team && m.split){ const P = m.split.pub, T = m.split.team; H('Equipo y público');
     L.push(`Público: ${countTxt(P.n, 'comentario', 'comentarios')} de ${countTxt(P.people, 'persona', 'personas')} (${countTxt(P.s.pos, 'positivo', 'positivos')}, ${countTxt(P.s.neu, 'neutral', 'neutrales')} y ${countTxt(P.s.neg, 'negativo', 'negativos')})`,
-      `Equipo: ${countTxt(T.n, 'respuesta', 'respuestas')} de ${countTxt(T.members.length, 'persona', 'personas')}; ${fmtN(m.answered)} comentarios respondidos, ${fmtN(m.pending)} sin responder${m.respRate != null ? ', tasa de respuesta ' + m.respRate + ' %' : ''}${m.medRT != null ? ', primera respuesta en ~' + fmtDec(m.medRT) + ' h' : ''}`);
+      `Equipo: ${countTxt(T.n, 'respuesta', 'respuestas')} de ${countTxt(T.members.length, 'persona', 'personas')}; ${fmtN(m.answered)} comentarios respondidos${m.respRate != null ? ', tasa de respuesta ' + m.respRate + ' %' : ''}${m.medRT != null ? ', primera respuesta en ~' + fmtDec(m.medRT) + ' h' : ''}`);
     if(T.members.length) L.push('Quién respondió: ' + T.members.slice(0, 5).map(x => `${x.name} (${x.n})`).join(', ')); }
   if(m.opinions && m.opinions.length){ H('Qué se dice' + ab); m.opinions.forEach(o => L.push(`• «${o.t}» (${opMeta(o)})`)); }
   if((m.rivals || []).length){ H('Posibles referencias a la competencia'); m.rivals.forEach(r => L.push(`• ${r.name}: ${countTxt(r.n, 'comentario', 'comentarios')} (${countTxt(r.neg, 'negativo', 'negativos')})${r.sample ? ' · «' + r.sample.text.slice(0, 140) + '» — ' + (r.sample.authorName || '') : ''}`)); }
@@ -7626,6 +7654,7 @@ function reportText(m){
   H('Comentarios negativos destacados'); m.topNeg.forEach(c => L.push(`• ${c.authorName}${c.isTeam ? ' (equipo)' : ''}: ${c.text.slice(0, 240)}`));
   H('Comentarios positivos destacados'); m.topPos.forEach(c => L.push(`• ${c.authorName}${c.isTeam ? ' (equipo)' : ''}: ${c.text.slice(0, 240)}`));
   if(m.team && m.openQ.length){ H('Preguntas sin responder'); m.openQ.slice(0, 5).forEach(c => L.push(`• ${c.authorName}: ${c.text.slice(0, 240)}`)); }
+  if(m.conclusions && m.conclusions.length){ H('Conclusiones'); m.conclusions.forEach(x => L.push('• ' + x)); }
   return L.join('\n').trim();
 }
 // Documento del informe para exportar: sencillo, en blanco y negro, Arial 12 (independiente del tema de la app)
@@ -7681,8 +7710,8 @@ function reportDocument(m){
   if(m.byDate.length > 1) b += `<div class="avoid"><h2>Evolución por seguimiento</h2>
   <table><thead><tr><th>Fecha</th><th>Seguimiento</th><th class="n">Comentarios</th><th class="n">Nuevos</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
   ${m.byDate.map(d => `<tr><td>${e(fmtDay(d.t.date))}</td><td>${e(d.t.name)}</td><td class="n">${n(d.total)}</td><td class="n">${n(d.nw)}</td><td class="n">${n(d.pos)}</td><td class="n">${n(d.neg)}</td></tr>`).join('')}</tbody></table></div>`;
-  b += `<div class="avoid"><h2>Por publicación</h2><table><thead><tr><th>Publicación</th><th>Red</th><th class="n">Comentarios</th><th class="n">Positivos</th><th class="n">Negativos</th>${m.team ? '<th class="n">Sin responder</th>' : ''}</tr></thead><tbody>
-    ${m.posts.map(p => `<tr><td>${e(p.label)}${p.url ? `<br><a class="url" href="${e(p.url)}">${e(p.url)}</a>` : ''}</td><td>${e(platName(p.platform))}</td><td class="n">${n(p.total)}</td><td class="n">${n(p.s.pos)}</td><td class="n">${n(p.s.neg)}</td>${m.team ? `<td class="n">${n(p.pending)}</td>` : ''}</tr>`).join('')}</tbody></table></div>`;
+  b += `<div class="avoid"><h2>Por publicación</h2><table><thead><tr><th>Publicación</th><th>Red</th><th class="n">Comentarios</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
+    ${m.posts.map(p => `<tr><td>${e(p.label)}${p.url ? `<br><a class="url" href="${e(p.url)}">${e(p.url)}</a>` : ''}</td><td>${e(platName(p.platform))}</td><td class="n">${n(p.total)}</td><td class="n">${n(p.s.pos)}</td><td class="n">${n(p.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
   b += `<h2>Quiénes comentan${ab}</h2>
   <div class="avoid"><h3>Quién más comenta</h3>${OL(m.topAuthors.slice(0, 5).map(a => `${e(a.name)}${a.team ? ' (equipo)' : ''}: ${countTxt(a.n, 'comentario', 'comentarios')}`))}</div>
   ${m.ambassadors.length ? `<div class="avoid"><h3>Quiénes hablan bien${de}</h3>${UL(m.ambassadors.slice(0, 5).map(a => `${e(a.name)}${a.team ? ' (equipo)' : ''} (${countTxt(a.pos, 'positivo', 'positivos')})`))}</div>` : ''}
@@ -7692,7 +7721,7 @@ function reportDocument(m){
     b += `<div class="avoid"><h2>Equipo y público</h2><table><thead><tr><th></th><th class="n">Comentarios</th><th class="n">Personas</th><th class="n">Positivos</th><th class="n">Neutrales</th><th class="n">Negativos</th></tr></thead><tbody>
       <tr><td>Público</td><td class="n">${n(P.n)}</td><td class="n">${n(P.people)}</td><td class="n">${n(P.s.pos)}</td><td class="n">${n(P.s.neu)}</td><td class="n">${n(P.s.neg)}</td></tr>
       <tr><td>Equipo</td><td class="n">${n(T.n)}</td><td class="n">${n(T.members.length)}</td><td class="n">${n(T.s.pos)}</td><td class="n">${n(T.s.neu)}</td><td class="n">${n(T.s.neg)}</td></tr></tbody></table>
-      <p>El equipo respondió ${n(m.answered)} comentarios${m.pending ? ` y quedan ${n(m.pending)} sin responder` : ' y no queda ninguno pendiente'}${m.respRate != null ? ` (tasa de respuesta del ${m.respRate} %)` : ''}${m.medRT != null ? `; la primera respuesta llega en unas ${fmtDec(m.medRT)} horas` : ''}.${T.members.length ? ' Quién respondió: ' + T.members.slice(0, 5).map(x => `${e(x.name)} (${x.n})`).join(', ') + '.' : ''}</p></div>`; }
+      <p>El equipo respondió ${n(m.answered)} comentarios${m.respRate != null ? ` (tasa de respuesta del ${m.respRate} %)` : ''}${m.medRT != null ? `; la primera respuesta llega en unas ${fmtDec(m.medRT)} horas` : ''}.${T.members.length ? ' Quién respondió: ' + T.members.slice(0, 5).map(x => `${e(x.name)} (${x.n})`).join(', ') + '.' : ''}</p></div>`; }
   if((m.rivals || []).length) b += `<div class="avoid"><h2>Posibles referencias a la competencia</h2><p class="small">Otras marcas o negocios que aparecen en estos comentarios (detección automática por el texto).</p><table><thead><tr><th>Marca o negocio</th><th class="n">Comentarios</th><th class="n">Negativos</th><th>Ejemplo</th></tr></thead><tbody>
     ${m.rivals.map(r => `<tr><td>${e(r.name)}</td><td class="n">${n(r.n)}</td><td class="n">${n(r.neg)}</td><td>${r.sample ? '«' + e(r.sample.text.slice(0, 140)) + (r.sample.text.length > 140 ? '…' : '') + '» — ' + e(r.sample.authorName || '') : ''}</td></tr>`).join('')}</tbody></table></div>`;
   if(m.watch.length) b += `<div class="avoid"><h2>Otras marcas y temas</h2><table><thead><tr><th>Término</th><th class="n">Menciones</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
@@ -7701,6 +7730,7 @@ function reportDocument(m){
   <h3>Negativos</h3>${m.topNeg.map(quote).join('') || '<p>Sin comentarios negativos.</p>'}
   <h3>Positivos</h3>${m.topPos.map(quote).join('') || '<p>Sin comentarios positivos.</p>'}`;
   if(m.team && m.openQ.length) b += `<h2>Preguntas sin responder</h2>${m.openQ.slice(0, 5).map(quote).join('')}`;
+  if(m.conclusions && m.conclusions.length) b += `<div class="avoid"><h2>Conclusiones</h2>${UL(m.conclusions)}</div>`;
   const title = reportName(m.last && m.last.date);
   return { body:`<div class="scadoc">${b}</div>`, css:DOC_CSS, title,
     html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${e(title)}</title><style>body{margin:2cm;background:#fff}${DOC_CSS}</style></head><body><div class="scadoc">${b}</div></body></html>` };
@@ -7736,17 +7766,57 @@ async function resultsReportModel(list){
   if(o){ m.reviewed = summarizeReviewed([{ order:o.aplicado === 'red' ? 'red' : o.aplicado || o.pedido, partial:!!S.meta.partial }]); m.summary = [...m.summary.slice(0, m.summary.fl || 0), ...reviewedLines(m.reviewed), ...m.summary.slice(m.summary.fl || 0)]; }
   return m;
 }
-// PDF A4 en blanco y negro con pie de página "Informe de comentarios · fecha — Página X de Y"
+// PDF A4 en blanco y negro. Se dibuja por bloques de una página: así un informe largo no
+// genera un lienzo gigante (el navegador se quedaba sin memoria y bloqueaba el equipo).
 async function reportPdf(m){
-  if(!window.html2pdf) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+  if(!window.html2canvas) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if(!(window.jspdf && window.jspdf.jsPDF)) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const jsPDF = window.jspdf && window.jspdf.jsPDF;
+  if(!jsPDF || !window.html2canvas) throw new Error('No se pudo cargar el generador de PDF');
   const d = reportDocument(m);
   const box = document.createElement('div');
   box.style.cssText = 'position:fixed;left:-10000px;top:0;width:680px;background:#fff';
   box.innerHTML = `<style>${d.css}.scadoc{max-width:none}</style>${d.body}`;
   document.body.appendChild(box);
   try{
-    const pdf = await html2pdf().set({ margin:[20, 20, 20, 20], image:{ type:'jpeg', quality:.98 }, html2canvas:{ scale:2, backgroundColor:'#ffffff' },
-      jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }, pagebreak:{ mode:['css', 'legacy'], avoid:['tr', 'li', '.avoid', 'h2', 'h3'] } }).from(box.querySelector('.scadoc')).toPdf().get('pdf');
+    const el = box.querySelector('.scadoc');
+    const M = 20, PW = 210 - M * 2, PH = 297 - M * 2, W = 680;   // márgenes, ancho y alto útiles (mm/px)
+    const mm = PW / W, SCALE = 1.5;                              // mm por píxel CSS y resolución
+    const pageCss = Math.floor(PH / mm), maxPx = 12e6;           // alto de página en píxeles CSS y tope de memoria
+    const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+    const nodes = [...el.children];
+    const sheet = document.createElement('div');
+    sheet.className = 'scadoc'; sheet.style.cssText = `width:${W}px;display:flow-root;background:#fff`;
+    el.appendChild(sheet);   // dentro del informe: hereda sus estilos
+    let first = true;
+    const addSheet = async wrap => {
+      const h = Math.max(1, wrap.scrollHeight);
+      const sc = Math.min(SCALE, Math.max(.6, Math.sqrt(maxPx / (W * h))));   // un bloque muy alto se dibuja con menos resolución
+      const canvas = await window.html2canvas(wrap, { scale:sc, backgroundColor:'#ffffff', logging:false, useCORS:false });
+      const sliceH = Math.floor(PH / mm * sc);
+      for(let y = 0; y < canvas.height; y += sliceH){
+        const sh = Math.min(sliceH, canvas.height - y);
+        if(!first) pdf.addPage();
+        const c = document.createElement('canvas');
+        c.width = canvas.width; c.height = sh;
+        c.getContext('2d').drawImage(canvas, 0, y, canvas.width, sh, 0, 0, canvas.width, sh);
+        pdf.addImage(c.toDataURL('image/jpeg', .9), 'JPEG', M, M, PW, sh / sc * mm);
+        c.width = c.height = 0;
+        first = false;
+      }
+      canvas.width = canvas.height = 0;
+      wrap.textContent = '';
+    };
+    for(const node of nodes){
+      sheet.appendChild(node);
+      if(sheet.children.length > 1 && sheet.scrollHeight > pageCss){
+        const last = sheet.lastElementChild; sheet.removeChild(last);   // el último bloque pasa a la página siguiente
+        await addSheet(sheet);
+        sheet.appendChild(last);
+      }
+      if(sheet.children.length === 1 && sheet.scrollHeight > pageCss * 1.02) await addSheet(sheet);
+    }
+    if(sheet.children.length) await addSheet(sheet);
     try{ pdf.setProperties({ title:d.title }); }catch(e){}
     return pdf;
   } finally { box.remove(); }
@@ -8120,10 +8190,7 @@ function whatsappMessage(m, tone = 'cercano'){
     }
     // a favor: solo quienes más comentan
     if(fans.length) L.push('', `👍 ${formal ? 'Quienes más comentaron a favor' : 'Quienes más comentan a favor'}: ${withN(fans)}.`);
-    const todo = [];
-    if(pendNeg) todo.push(countTxt(pendNeg, 'comentario negativo sigue', 'comentarios negativos siguen') + ' sin respuesta');
-    if(pendQ) todo.push(countTxt(pendQ, 'pregunta sigue', 'preguntas siguen') + ' pendiente' + (pendQ === 1 ? '' : 's'));
-    if(todo.length) L.push('', `⏳ ${todo.join(' y ')}.`);
+    if(pendNeg || pendQ) L.push('', '⏳ Hay comentarios negativos y preguntas sin responder.');
   }
   L.push('', formal ? 'Se adjunta el informe completo con todo el detalle.' : tone === 'breve' ? 'Se adjunta el informe completo 👇' : 'Se adjunta el informe completo con el detalle 👇');
   return L.join('\n');
