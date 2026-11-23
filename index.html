@@ -6621,10 +6621,14 @@ function trackWhen(t){
 }
 function trackProgress(t){
   const ids = t.postIds, n = ids.length || 1;
-  let done = 0, frac = 0;
-  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running' && (it.limit || (it.total && (it.order || 'all') === 'all'))){ const goal = (it.order || 'all') === 'all' && it.total ? (it.limit ? Math.min(it.total, it.limit) : it.total) : it.limit; frac += Math.min(.99, (it.count || 0) / goal); } else if(it.status === 'running' && it.count) frac += .5; else if(it.status === 'running') frac += .1; });
+  let done = 0, frac = 0, hasRunning = false;
+  ids.forEach(id => { const it = t.items[id]; if(['done', 'skipped', 'error'].includes(it.status)) done++; else if(it.status === 'running'){ hasRunning = true; if(it.limit || (it.total && (it.order || 'all') === 'all')){ const goal = (it.order || 'all') === 'all' && it.total ? (it.limit ? Math.min(it.total, it.limit) : it.total) : it.limit; frac += Math.min(.99, (it.count || 0) / goal); } else if(it.count) frac += .5; else frac += .1; } });
   const comments = ids.reduce((s, id) => { const it = t.items[id]; return s + (it.status === 'running' ? Math.max(it.count || 0, it.saved || 0) : (it.count || it.saved || 0)); }, 0);
-  return { pct:Math.min(100, Math.round((done + frac) / n * 100)), done, n:ids.length, comments, errors:ids.filter(id => t.items[id].status === 'error').length };
+  // Si queda alguna publicación en progreso (running), el porcentaje general nunca llega al 100 %:
+  // el redondeo de (done + frac) / n podría mostrar 100 % aunque la última publicación aún no termine.
+  const raw = Math.round((done + frac) / n * 100);
+  const pct = hasRunning ? Math.min(99, raw) : Math.min(100, raw);
+  return { pct, done, n:ids.length, comments, errors:ids.filter(id => t.items[id].status === 'error').length };
 }
 const ST_TXT = { draft:['edit_note', 'Borrador'], running:['progress_activity', 'En curso'], paused:['pause_circle', 'En pausa'], done:['task_alt', 'Completado'] };
 // El detalle no es un panel aparte: es la propia tarjeta del seguimiento abierto, desplegada en su sitio de la lista
@@ -7489,14 +7493,19 @@ function reportAlerts(m){
 function reportRecs(m){
   const r = [], f = m.focus, ab = f ? ' sobre ' + f.name : '', de = f ? ' de ' + f.name : '';
   const names = arr => arr.slice(0, 3).map(a => a.name).join(', ');
-  if(m.team && (m.openNeg || m.openQ.length)) r.push(`Responder cuanto antes los comentarios negativos y las preguntas que siguen sin respuesta.`);
+  if(m.team && (m.openNeg || m.openQ.length)) r.push(`Responder cuanto antes los comentarios negativos y las preguntas que siguen sin respuesta (${m.openNeg} negativos y ${m.openQ.length} preguntas pendientes).`);
   if(m.detractors.length) r.push(`Escribir por privado a quienes más critican${ab} (${names(m.detractors)}) para entender qué pasó y resolverlo.`);
   const fans = m.ambassadors.filter(a => !a.team);
-  if(fans.length) r.push(`Agradecer a quienes hablan bien${de} (${names(fans)}); sus opiniones pueden servir como testimonio.`);
+  if(fans.length) r.push(`Agradecer a quienes hablan bien${de} (${names(fans)}); sus opiniones pueden servir como testimonio y caso de éxito.`);
   const best = [...m.posts].filter(p => p.total >= 3).sort((a, b) => b.nss - a.nss)[0];
   if(m.posts.length > 1 && best && best.nss > 20) r.push(`Repetir lo que funcionó en “${best.label}”, la publicación con mejores opiniones (${countTxt(best.s.pos, 'comentario positivo', 'comentarios positivos')} y ${countTxt(best.s.neg, 'negativo', 'negativos')}).`);
-
+  const worst = [...m.posts].filter(p => p.total >= 3).sort((a, b) => a.nss - b.nss)[0];
+  if(m.posts.length > 1 && worst && worst.nss < -20) r.push(`Revisar “${worst.label}”, la publicación más criticada (${worst.negPct} % de comentarios negativos): identificar la causa y corregirla.`);
+  if(m.openQ.length > 5) r.push(`Crear respuestas estándar o preguntas frecuentes (FAQ) para las dudas que más se repiten y agilizar la atención del equipo.`);
+  if(m.s.neg / m.s.total > 0.4) r.push(`Considerar una encuesta de satisfacción a clientes para conocer qué mejorar y revertir la tendencia negativa.`);
   if(m.medRT != null && m.medRT > 12) r.push(`Responder más rápido: ahora la primera respuesta tarda unas ${fmtDec(m.medRT)} horas; lo ideal es menos de 2 a 4 horas.`);
+  const recurring = m.recurring || 0;
+  if(recurring > 0) r.push(`Dar seguimiento personalizado a los ${recurring} autores que comentaron en más de una ocasión; son una audiencia fiel.`);
   return r;
 }
 function reportSummary(m){
@@ -7520,11 +7529,19 @@ function reportConclusions(m){
   const out = [], f = m.focus, ab = f ? ' sobre ' + f.name : '', de = f ? ' de ' + f.name : '';
   const share = (a, b) => b ? Math.round(a / b * 100) : 0;
   const posPct = share(m.s.pos, m.s.total), negPct = share(m.s.neg, m.s.total);
+  const neuPct = share(m.s.neu, m.s.total);
   const verdict = m.nss >= 20 ? 'favorable' : m.nss <= -10 ? 'desfavorable' : 'dividida';
-  out.push(`Valoración general: la conversación${ab} es ${verdict}. ${posPct} de cada 100 comentarios son positivos y ${negPct} negativos, sobre ${countTxt(m.list.length, 'comentario', 'comentarios')} de ${countTxt(m.posts.length, 'publicación', 'publicaciones')}${m.tracks.length > 1 ? ' en ' + countTxt(m.tracks.length, 'seguimiento', 'seguimientos') : ''}.`);
+  out.push(`Valoración general: la conversación${ab} es ${verdict}. ${posPct} de cada 100 comentarios son positivos, ${negPct} negativos y ${neuPct} neutrales, sobre ${countTxt(m.list.length, 'comentario', 'comentarios')} de ${countTxt(m.posts.length, 'publicación', 'publicaciones')}${m.tracks.length > 1 ? ' en ' + countTxt(m.tracks.length, 'seguimiento', 'seguimientos') : ''}.`);
   if(m.byDate.length > 1){
     const d = m.negLast - m.negFirst, last = m.byDate[m.byDate.length - 1];
-    out.push(`Tendencia: las críticas ${d > 0 ? 'ganaron peso' : d < 0 ? 'perdieron peso' : 'se mantuvieron'} entre el primer y el último seguimiento (de ${m.negFirst} a ${m.negLast} de cada 100${d ? `, ${d > 0 ? '+' : ''}${d} puntos` : ''}); en el último aparecieron ${countTxt(last.nw, 'comentario nuevo', 'comentarios nuevos')}.`);
+    const totalTrend = m.byDate[m.byDate.length - 1].total - (m.byDate[0] ? m.byDate[0].total : 0);
+    out.push(`Tendencia: las críticas ${d > 0 ? 'ganaron peso' : d < 0 ? 'perdieron peso' : 'se mantuvieron'} entre el primer y el último seguimiento (de ${m.negFirst} a ${m.negLast} de cada 100${d ? `, ${d > 0 ? '+' : ''}${d} puntos` : ''}); el volumen de comentarios ${totalTrend > 0 ? 'creció' : totalTrend < 0 ? 'disminuyó' : 'se mantuvo estable'} y en el último aparecen ${countTxt(last.nw, 'comentario nuevo', 'comentarios nuevos')}.`);
+  }
+  const plats = {};
+  m.list.forEach(c => plats[c.platform] = (plats[c.platform] || 0) + 1);
+  const platEntries = Object.entries(plats).sort((a, b) => b[1] - a[1]);
+  if(platEntries.length > 1){
+    out.push(`Plataforma con más actividad: ${platEntries[0][0]} concentra ${Math.round(platEntries[0][1] / m.list.length * 100)} % de los comentarios${platEntries.length > 2 ? ', seguido de ' + platEntries.slice(1).map(p => p[0] + ' (' + Math.round(p[1] / m.list.length * 100) + ' %)').join(', ') : ''}.`);
   }
   const solid = m.posts.filter(p => p.total >= 3);
   if(solid.length > 1){
@@ -7536,12 +7553,18 @@ function reportConclusions(m){
   if(m.opinions && m.opinions.length){
     const o = m.opinions[0];
     out.push(`Idea dominante: ${o.s === 'negativo' ? 'la crítica' : o.s === 'positivo' ? 'el elogio' : 'la opinión'} que más se repite es «${o.t}» (${countTxt(o.n, 'comentario', 'comentarios')}).`);
+    if(m.opinions.length > 1){
+      const o2 = m.opinions[1];
+      out.push(`Otra opinión frecuente: «${o2.t}» (${countTxt(o2.n, 'comentario', 'comentarios')}, ${o2.s}).`);
+    }
   }
-  if(m.team && m.respRate != null){
-    out.push(`Atención del equipo: respondió ${m.respRate} de cada 100 comentarios que pedían respuesta${m.medRT != null ? `, con una primera respuesta en unas ${fmtDec(m.medRT)} horas` : ''}.`);
+  if(m.watch && m.watch.length){
+    const topWatch = m.watch.sort((a, b) => b.n - a.n)[0];
+    if(topWatch) out.push(`Tema vigilado más mencionado: “${topWatch.term}” aparece en ${countTxt(topWatch.n, 'comentario', 'comentarios')} (${topWatch.pct} % del total).`);
   }
   const fans = m.ambassadors.filter(a => !a.team).length, critics = m.detractors.length;
-  out.push(`En conjunto, ${m.nss >= 20 ? 'hay una base de opinión favorable que conviene cuidar y aprovechar' : m.nss <= -10 ? 'las críticas superan a los elogios y deben atenderse antes de que se extiendan' : 'la opinión está repartida, así que cada conversación cuenta'}${critics ? `; ${countTxt(critics, 'persona concentra', 'personas concentran')} las principales críticas` : ''}${fans ? ` y ${countTxt(fans, 'persona habla', 'personas hablan')} bien${de}` : ''}.`);
+  const recurring = m.recurring || 0;
+  out.push(`En conjunto, ${m.nss >= 20 ? 'hay una base de opinión favorable que conviene cuidar y aprovechar' : m.nss <= -10 ? 'las críticas superan a los elogios y deben atenderse antes de que se extiendan' : 'la opinión está repartida, así que cada conversación cuenta'}${critics ? `; ${countTxt(critics, 'persona concentra', 'personas concentran')} las principales críticas` : ''}${fans ? ` y ${countTxt(fans, 'persona habla', 'personas hablan')} bien${de}` : ''}${recurring ? `, y ${recurring} autores comentaron en más de una ocasión` : ''}.`);
   return out;
 }
 const miniSeg = s => s.total ? `<span class="mini-seg" title="${s.pos} positivos · ${s.neu} neutrales · ${s.neg} negativos">${[['var(--viz-neg)', s.neg], ['var(--viz-neu)', s.neu], ['var(--viz-pos)', s.pos]].filter(x => x[1]).map(([c, v]) => `<i style="flex:${v} 1 0;background:${c}"></i>`).join('')}</span>` : '';
@@ -7677,7 +7700,31 @@ const DOC_CSS = `.scadoc,.scadoc *{color:#000!important;background:#fff!importan
   .scadoc .small{font-size:10pt}
   .scadoc a.url{font-size:9.5pt;word-break:break-all;text-decoration:underline}
   .scadoc .q{margin:0 0 5pt}
-  .scadoc .avoid,.scadoc tr,.scadoc li{page-break-inside:avoid;break-inside:avoid}`;
+  .scadoc .avoid,.scadoc tr,.scadoc li{page-break-inside:avoid;break-inside:avoid}
+  /* Gráficos estadísticos del informe (blanco y negro, tablas HTML) */
+  .scadoc .rep-table{width:100%;border-collapse:collapse;margin:8pt 0;font-size:10pt;font-family:Arial,Helvetica,sans-serif}
+  .scadoc .rep-table caption{caption-side:top;text-align:left;font-weight:bold;margin:0 0 4pt;font-size:11pt}
+  .scadoc .rep-table th,.scadoc .rep-table td{border:0.5pt solid #000;padding:2pt 4pt;text-align:left}
+  .scadoc .rep-table th{background:#f0f0f0;font-weight:bold}
+  .scadoc .rep-bar-cell{vertical-align:middle;padding:2pt 0}
+  .scadoc .rep-bar-wrap{position:relative;border:0.5pt solid #000;background:#fff}
+  .scadoc .rep-bar{background:#000}
+  .scadoc .rep-hbar{background:#000}
+  .scadoc .rep-val{font-weight:bold;margin-left:4pt;font-size:9pt}
+  .scadoc .rep-label{font-size:9pt;white-space:nowrap}
+  .scadoc .rep-sent{width:100%;table-layout:fixed;border-collapse:collapse;margin:4pt 0}
+  .scadoc .rep-seg-cell{height:20px;color:#fff;font-weight:bold;font-size:9pt;text-align:center;vertical-align:middle}
+  .scadoc .rep-seg-neg{background:#333}
+  .scadoc .rep-seg-neu{background:#999}
+  .scadoc .rep-seg-pos{background:#000}
+  .scadoc .rep-sent-legend{display:flex;gap:12px;font-size:10pt;margin-top:2pt}
+  .scadoc .rep-sent-item{display:flex;align-items:center;gap:4px}
+  .scadoc .rep-sent-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .scadoc .rep-sent-dot.rep-sent-neg{background:#333}
+  .scadoc .rep-sent-dot.rep-sent-neu{background:#999}
+  .scadoc .rep-sent-dot.rep-sent-pos{background:#000}
+  .scadoc .rep-viz-empty{padding:12pt;text-align:center;color:#666;font-size:10pt}
+  .scadoc .rep-viz-empty span{font-size:24px;margin-bottom:4pt;display:block}`;
 function reportDocument(m){
   const e = esc, n = fmtN;
   const UL = items => items.map(x => `<p class="li">•&nbsp;&nbsp;${x}</p>`).join('');
@@ -7720,17 +7767,29 @@ function reportDocument(m){
   if(m.team && m.split){ const P = m.split.pub, T = m.split.team;
     b += `<div class="avoid"><h2>Equipo y público</h2><table><thead><tr><th></th><th class="n">Comentarios</th><th class="n">Personas</th><th class="n">Positivos</th><th class="n">Neutrales</th><th class="n">Negativos</th></tr></thead><tbody>
       <tr><td>Público</td><td class="n">${n(P.n)}</td><td class="n">${n(P.people)}</td><td class="n">${n(P.s.pos)}</td><td class="n">${n(P.s.neu)}</td><td class="n">${n(P.s.neg)}</td></tr>
-      <tr><td>Equipo</td><td class="n">${n(T.n)}</td><td class="n">${n(T.members.length)}</td><td class="n">${n(T.s.pos)}</td><td class="n">${n(T.s.neu)}</td><td class="n">${n(T.s.neg)}</td></tr></tbody></table>
-      <p>El equipo respondió ${n(m.answered)} comentarios${m.respRate != null ? ` (tasa de respuesta del ${m.respRate} %)` : ''}${m.medRT != null ? `; la primera respuesta llega en unas ${fmtDec(m.medRT)} horas` : ''}.${T.members.length ? ' Quién respondió: ' + T.members.slice(0, 5).map(x => `${e(x.name)} (${x.n})`).join(', ') + '.' : ''}</p></div>`; }
+      <tr><td>Equipo</td><td class="n">${n(T.n)}</td><td class="n">${n(T.members.length)}</td><td class="n">${n(T.s.pos)}</td><td class="n">${n(T.s.neu)}</td><td class="n">${n(T.s.neg)}</td></tr></tbody></table></div>`; }
+
   if((m.rivals || []).length) b += `<div class="avoid"><h2>Posibles referencias a la competencia</h2><p class="small">Otras marcas o negocios que aparecen en estos comentarios (detección automática por el texto).</p><table><thead><tr><th>Marca o negocio</th><th class="n">Comentarios</th><th class="n">Negativos</th><th>Ejemplo</th></tr></thead><tbody>
     ${m.rivals.map(r => `<tr><td>${e(r.name)}</td><td class="n">${n(r.n)}</td><td class="n">${n(r.neg)}</td><td>${r.sample ? '«' + e(r.sample.text.slice(0, 140)) + (r.sample.text.length > 140 ? '…' : '') + '» — ' + e(r.sample.authorName || '') : ''}</td></tr>`).join('')}</tbody></table></div>`;
   if(m.watch.length) b += `<div class="avoid"><h2>Otras marcas y temas</h2><table><thead><tr><th>Término</th><th class="n">Menciones</th><th class="n">Positivos</th><th class="n">Negativos</th></tr></thead><tbody>
     ${m.watch.map(w => `<tr><td>${e(w.term)}</td><td class="n">${n(w.n)}</td><td class="n">${n(w.s.pos)}</td><td class="n">${n(w.s.neg)}</td></tr>`).join('')}</tbody></table></div>`;
+  // Límites de seguridad para informes muy grandes: menos destacados y resumen más corto
+  // para que el HTML (y el PDF vía html2canvas) no crezca descontroladamente.
+  const big = (m.list && m.list.length) > 1000;
+  const negShow = m.topNeg.slice(0, big ? 3 : 5);
+  const posShow = m.topPos.slice(0, big ? 3 : 5);
+  const tot = Math.max(1, m.s.pos + m.s.neu + m.s.neg);
+  if(m.s.pos + m.s.neu + m.s.neg > 0){
+    b += `<div class=\"avoid\"><h2>Sentimiento estimado</h2>
+    ${repSentimentBar(m.s.pos, m.s.neu, m.s.neg, { W: 640, h: 44 })}</div>`;
+  }
   b += `<h2>Comentarios destacados</h2>
-  <h3>Negativos</h3>${m.topNeg.map(quote).join('') || '<p>Sin comentarios negativos.</p>'}
-  <h3>Positivos</h3>${m.topPos.map(quote).join('') || '<p>Sin comentarios positivos.</p>'}`;
+  <h3>Negativos</h3>${negShow.map(quote).join('') || '<p>Sin comentarios negativos.</p>'}
+  <h3>Positivos</h3>${posShow.map(quote).join('') || '<p>Sin comentarios positivos.</p>'}`;
+  if(big) b += `<p class="small">Informe con ${fmtN(m.list.length)} comentarios: se muestran pocos destacados para mantener el documento ligero.</p>`;
   if(m.team && m.openQ.length) b += `<h2>Preguntas sin responder</h2>${m.openQ.slice(0, 5).map(quote).join('')}`;
   if(m.conclusions && m.conclusions.length) b += `<div class="avoid"><h2>Conclusiones</h2>${UL(m.conclusions)}</div>`;
+  if(m.recs && m.recs.length) b += `<div class="avoid"><h2>Recomendaciones</h2>${UL(m.recs)}</div>`;
   const title = reportName(m.last && m.last.date);
   return { body:`<div class="scadoc">${b}</div>`, css:DOC_CSS, title,
     html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${e(title)}</title><style>body{margin:2cm;background:#fff}${DOC_CSS}</style></head><body><div class="scadoc">${b}</div></body></html>` };
@@ -7741,7 +7800,7 @@ const reportName = iso => 'Informe de análisis de comentarios - K24 - ' + Strin
 function downloadWord(d, name){
     // Word: estilos directos (Word ignora parte del CSS); Arial 12, negro sobre blanco
     const wordCss = d.css.replace(/\.scadoc,\.scadoc \*/g, 'body,body *').replace(/\.scadoc /g, '').replace(/\.scadoc\{/g, 'body{')
-      + `@page Section1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.Section1{page:Section1}`;
+      + `body{font-family:Arial,Helvetica,sans-serif!important;font-size:12pt!important}@page Section1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.Section1{page:Section1}`;
     const word = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(d.title || 'Informe de análisis de comentarios')}</title>
       <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>${wordCss}</style></head>
       <body><div class="Section1">${d.body.replace(/^<div class="scadoc">|<\/div>$/g, '')}</div></body></html>`;
@@ -7766,9 +7825,95 @@ async function resultsReportModel(list){
   if(o){ m.reviewed = summarizeReviewed([{ order:o.aplicado === 'red' ? 'red' : o.aplicado || o.pedido, partial:!!S.meta.partial }]); m.summary = [...m.summary.slice(0, m.summary.fl || 0), ...reviewedLines(m.reviewed), ...m.summary.slice(m.summary.fl || 0)]; }
   return m;
 }
+// ---------- Gráficos estadísticos para informes (blanco y negro, tablas HTML) ----------
+// Las tablas HTML se renderizan correctamente tanto en Word (.doc) como en html2canvas (PDF).
+function repNiceScale(maxV){
+  maxV = Math.max(1, maxV);
+  const rough = maxV / 3, mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough / mag;
+  const step = Math.max(1, (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag);
+  const max = Math.ceil(maxV / step) * step;
+  return { max, step };
+}
+function repColumnChart(data, { W = 520, h = 180, label = 'Gráfico' } = {}){
+  if(!data.length) return '<div class="rep-viz-empty"><span class="ms">bar_chart</span><p>Sin datos disponibles</p></div>';
+  const sc = repNiceScale(Math.max(...data.map(d => d.v)));
+  const maxBar = 140; // alto máximo de barra en px
+  const maxV = sc.max || 1;
+  let s = '<table class="rep-table rep-cols"><caption class="rep-cap">' + esc(label) + '</caption><thead><tr><th>Valor</th><th>Comentarios</th></tr></thead><tbody>';
+  const every = Math.max(1, Math.ceil(data.length / 12));
+  data.forEach((d, i) => {
+    if(i % every !== 0 && i !== data.length - 1) return;
+    const pct = Math.round((d.v / maxV) * 100);
+    const barH = Math.max(4, (d.v / maxV) * maxBar);
+    s += '<tr><td class="rep-label">' + esc(d.l) + '</td><td class="rep-bar-cell"><div class="rep-bar-wrap" style="height:' + maxBar + 'px"><div class="rep-bar" style="height:' + barH + 'px"></div></div><span class="rep-val">' + fmtN(d.v) + '</span></td></tr>';
+  });
+  s += '</tbody></table>';
+  return s;
+}
+function repRankedBars(items, { W = 520, h = 200, unit = '' } = {}){
+  if(!items.length) return '<div class="rep-viz-empty"><span class="ms">bar_chart</span><p>Sin datos disponibles</p></div>';
+  const max = Math.max(...items.map(i => i.v)) || 1;
+  let s = '<table class="rep-table rep-hbars"><thead><tr><th>Autor / Término</th><th>Cantidad</th></tr></thead><tbody>';
+  items.forEach(i => {
+    const pct = Math.round((i.v / max) * 100);
+    const barW = Math.max(2, (i.v / max) * 200);
+    s += '<tr><td class="rep-label">' + esc(i.l) + '</td><td class="rep-bar-cell"><div class="rep-bar-wrap" style="width:200px"><div class="rep-hbar" style="width:' + barW + 'px"></div></div><span class="rep-val">' + fmtN(i.v) + (unit ? ' ' + unit : '') + '</span></td></tr>';
+  });
+  s += '</tbody></table>';
+  return s;
+}
+function repSentimentBar(pos, neu, neg, { W = 520, h = 40 } = {}){
+  const tot = Math.max(1, pos + neu + neg);
+  if(!tot) return '<div class="rep-viz-empty"><span class="ms">sentiment_neutral</span><p>Sin datos de sentimiento</p></div>';
+  const parts = [['neg', neg, 'Negativos'], ['neu', neu, 'Neutrales'], ['pos', pos, 'Positivos']].filter(p => p[1] > 0);
+  let s = '<table class="rep-table rep-sent"><tbody><tr>';
+  parts.forEach(([k, v, name]) => {
+    const pct = Math.round(v / tot * 100);
+    s += '<td class="rep-seg-cell rep-seg-' + k + '" style="width:' + pct + '%"><span class="rep-seg-txt">' + pct + ' % ' + fmtN(v) + '</span></td>';
+  });
+  s += '</tr></tbody></table><div class="rep-sent-legend">';
+  parts.forEach(([k, v, name]) => {
+    const pct = Math.round(v / tot * 100);
+    s += '<span class="rep-sent-item"><span class="rep-sent-dot rep-sent-' + k + '"></span>' + name + ' ' + pct + ' %</span>';
+  });
+  return s + '</div>';
+}
+function repActivityData(list){
+  const ts = list.map(c => c.createdTs).filter(t => !isNaN(t)).sort((a,b) => a - b);
+  if(!ts.length) return [];
+  const span = ts[ts.length - 1] - ts[0];
+  const unit = span < 2 * 864e5 ? 'hour' : 'day';
+  const keyOf = t => { const d = new Date(t); return unit === 'hour' ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()).getTime() : new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+  const counts = {}; ts.forEach(t => { const k = keyOf(t); counts[k] = (counts[k] || 0) + 1; });
+  const data = []; const start = keyOf(ts[0]), end = keyOf(ts[ts.length - 1]);
+  const d = new Date(start);
+  while(d.getTime() <= end){
+    const k = d.getTime();
+    data.push({ l: unit === 'hour' ? d.getHours() + ' h' : dayTxt(k), v: counts[k] || 0, tl: unit === 'hour' ? d.toLocaleDateString('es',{day:'numeric',month:'short'}) + ', ' + String(d.getHours()).padStart(2,'0') + ':00' : d.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'}) });
+    unit === 'hour' ? d.setHours(d.getHours() + 1) : d.setDate(d.getDate() + 1);
+  }
+  return data;
+}
+function repActivityData(list){
+  const ts = list.map(c => c.createdTs).filter(t => !isNaN(t)).sort((a,b) => a - b);
+  if(!ts.length) return [];
+  const span = ts[ts.length - 1] - ts[0];
+  const unit = span < 2 * 864e5 ? 'hour' : 'day';
+  const keyOf = t => { const d = new Date(t); return unit === 'hour' ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()).getTime() : new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+  const counts = {}; ts.forEach(t => { const k = keyOf(t); counts[k] = (counts[k] || 0) + 1; });
+  const data = []; const start = keyOf(ts[0]), end = keyOf(ts[ts.length - 1]);
+  const d = new Date(start);
+  while(d.getTime() <= end){
+    const k = d.getTime();
+    data.push({ l: unit === 'hour' ? d.getHours() + ' h' : dayTxt(k), v: counts[k] || 0, tl: unit === 'hour' ? d.toLocaleDateString('es',{day:'numeric',month:'short'}) + ', ' + String(d.getHours()).padStart(2,'0') + ':00' : d.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'}) });
+    unit === 'hour' ? d.setHours(d.getHours() + 1) : d.setDate(d.getDate() + 1);
+  }
+  return data;
+}
 // PDF A4 en blanco y negro. Se dibuja por bloques de una página: así un informe largo no
 // genera un lienzo gigante (el navegador se quedaba sin memoria y bloqueaba el equipo).
-async function reportPdf(m){
+async function reportPdf(m, onProg){
   if(!window.html2canvas) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
   if(!(window.jspdf && window.jspdf.jsPDF)) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const jsPDF = window.jspdf && window.jspdf.jsPDF;
@@ -7776,18 +7921,38 @@ async function reportPdf(m){
   const d = reportDocument(m);
   const box = document.createElement('div');
   box.style.cssText = 'position:fixed;left:-10000px;top:0;width:680px;background:#fff';
-  box.innerHTML = `<style>${d.css}.scadoc{max-width:none}</style>${d.body}`;
   document.body.appendChild(box);
   try{
-    const el = box.querySelector('.scadoc');
+    // Insertar el HTML del informe en chunks pequeños para no bloquear el hilo principal
+    // en informes con miles de comentarios (innerHTML masivo causa reflow y congelación).
+    const el = document.createElement('div');
+    el.className = 'scadoc';
+    el.style.cssText = 'max-width:none';
+    box.appendChild(el);
+    const style = document.createElement('style');
+    style.textContent = d.css;
+    box.insertBefore(style, el);
+    const html = d.body;
+    // Dividir el cuerpo en secciones por bloques de nivel de bloque para insertar de a poco
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const nodes = [...tmp.children];
+    const CHUNK = 4;   // nodos por lote (equilibra progreso y rendimiento)
+    let inserted = 0;
+    for(let i = 0; i < nodes.length; i += CHUNK){
+      const batch = nodes.slice(i, i + CHUNK);
+      for(const node of batch) el.appendChild(node);
+      inserted += batch.length;
+      if(onProg) onProg(Math.min(90, Math.round(inserted / nodes.length * 90)));
+      await new Promise(r => setTimeout(r, 0));   // cede al hilo principal para que respire
+    }
     const M = 20, PW = 210 - M * 2, PH = 297 - M * 2, W = 680;   // márgenes, ancho y alto útiles (mm/px)
     const mm = PW / W, SCALE = 1.5;                              // mm por píxel CSS y resolución
     const pageCss = Math.floor(PH / mm), maxPx = 12e6;           // alto de página en píxeles CSS y tope de memoria
     const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
-    const nodes = [...el.children];
     const sheet = document.createElement('div');
     sheet.className = 'scadoc'; sheet.style.cssText = `width:${W}px;display:flow-root;background:#fff`;
-    el.appendChild(sheet);   // dentro del informe: hereda sus estilos
+    el.appendChild(sheet);
     let first = true;
     const addSheet = async wrap => {
       const h = Math.max(1, wrap.scrollHeight);
@@ -7807,17 +7972,20 @@ async function reportPdf(m){
       canvas.width = canvas.height = 0;
       wrap.textContent = '';
     };
-    for(const node of nodes){
+    const all = [...el.children];
+    for(const node of all){
       sheet.appendChild(node);
       if(sheet.children.length > 1 && sheet.scrollHeight > pageCss){
-        const last = sheet.lastElementChild; sheet.removeChild(last);   // el último bloque pasa a la página siguiente
+        const last = sheet.lastElementChild; sheet.removeChild(last);
         await addSheet(sheet);
         sheet.appendChild(last);
+        if(onProg) onProg(Math.min(100, 90 + Math.round((all.indexOf(node) + 1) / all.length * 10)));
       }
       if(sheet.children.length === 1 && sheet.scrollHeight > pageCss * 1.02) await addSheet(sheet);
     }
     if(sheet.children.length) await addSheet(sheet);
     try{ pdf.setProperties({ title:d.title }); }catch(e){}
+    if(onProg) onProg(100);
     return pdf;
   } finally { box.remove(); }
 }
@@ -7831,12 +7999,25 @@ async function reportExport(kind){
     if(!wdw){ toast('Permite las ventanas emergentes para imprimir'); return; }
     wdw.document.write(d.html.replace('</body>', '<script>onload=()=>{print()}<\/script></body>')); wdw.document.close(); return;
   }
-  toast('Preparando el documento…');
   if(kind === 'html'){ download(name + '.html', d.html, 'text/html;charset=utf-8'); return; }
   if(kind === 'word'){ downloadWord(d, name); return; }
   if(kind === 'pdf'){
-    try{ const pdf = await reportPdf(m); pdf.save(name + '.pdf'); toast('PDF descargado'); }
-    catch(e){ toast('No se pudo generar el PDF directamente: se abre la impresión (elige “Guardar como PDF”)'); reportExport('print'); }
+    const total = (m.list && m.list.length) || 0;
+    let step = 0;
+    const prog = (txt, pct) => { $('#repOut').innerHTML = `<div class=\"empty-mini rep-gen\" role=\"status\" aria-live=\"polite\"><span class=\"ms\" style=\"color:var(--primary)\">${SPIN}</span><div style=\"display:grid;gap:8px;min-width:min(420px,70vw)\"><span>${esc(txt)}</span><span class=\"pbar${pct == null ? ' indet' : ''}\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\"${pct == null ? '' : ` aria-valuenow=\"${pct}\"`}><i style=\"width:${pct || 0}%\"></i></span></div></div>`; };
+    try{
+      prog(`Generando PDF (${fmtN(total)} comentarios)…`, 0);
+      const pdf = await reportPdf(m, p => { step++; prog(`Renderizando página ${step}…`, p); });
+      $('#repOut').innerHTML = '';
+      pdf.save(name + '.pdf');
+      toast('PDF descargado');
+    }
+    catch(e){
+      $('#repOut').innerHTML = '';
+      toast('No se pudo generar el PDF directamente: se abre la impresión (elige “Guardar como PDF”)');
+      reportExport('print');
+    }
+    return;
   }
 }
 async function reportCopy(){
