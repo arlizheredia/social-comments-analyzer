@@ -346,6 +346,8 @@ const TR = () => w.eval('TR');
     const rdocW = w.reportDocument(m).body, rtext = w.reportText(m);
     check('El informe no muestra «Puntos de atención» ni «Próximos pasos» (ni en Word ni en el texto)', !/Puntos de atención|Próximos pasos/i.test(d.getElementById('reportDoc').textContent + w.reportDocument(m).body + w.reportText(m)));
     check('Por publicación: cada fila muestra el enlace de la publicación (informe, Word y texto)', m.posts.every(p => /^https:\/\//.test(p.url)) && d.querySelectorAll('#reportDoc a.purl[href^="https://www.facebook.com/kanasta24/posts/"]').length >= 1 && /https:\/\/www\.facebook\.com\/kanasta24\/posts\/pfbid0abc123/.test(w.reportDocument(m).body) && /· https:\/\/www\.tiktok\.com\//.test(w.reportText(m)), JSON.stringify(m.posts.map(p => p.url)));
+    check('El informe no incluye la tasa de respuesta del equipo ni el número de pendientes', !/tasa de respuesta/i.test(rtxt + rdocW + rtext) && !/\d+\s+sin responder/i.test(rtxt + rdocW + rtext), (rtxt + rdocW + rtext).match(/tasa de respuesta|\d+\s+sin responder/i)?.[0]);
+    check('Conclusiones: cierre valorativo y última sección del informe', m.conclusions.length >= 3 && /<h2>Conclusiones<\/h2>/.test(rdocW) && /<h2>Conclusiones<\/h2>/.test(rdocW.slice(rdocW.lastIndexOf('<h2>'))) && /CONCLUSIONES/.test(rtext) && [...d.querySelectorAll('#reportDoc .rep-sec h3')].map(x => x.textContent.trim()).pop().includes('Conclusiones'));
     check('Texto y Word: centrados en el tema, sin «enfoque» ni IA', /INFORME DE COMENTARIOS SOBRE KANASTA24/.test(rtext) && /Informe de comentarios sobre Kanasta24/.test(rdocW) && !/enfoque|\bIA\b/i.test(rtext + rdocW.replace(/<[^>]+>/g, ' ')));
     check('El informe habla de positivos y negativos, sin “índice neto”', /Comentarios positivos/.test(rtxt) && !/índice neto/i.test(rtxt));
     check('Otras marcas y temas: no repite el propio tema (Kanasta24) ni muestra términos sin menciones («envío»)', !m.watch.some(x => x.term === 'Kanasta24') && !m.watch.some(x => x.term === 'envío'), JSON.stringify(m.watch.map(x => x.term)));
@@ -365,7 +367,7 @@ const TR = () => w.eval('TR');
     w.eval('buildReport = __bkBuild');
     // 6a. Los informes no redactan ningún resumen con IA
     await wait(900);
-    check('El informe no redacta resumen con IA: sin petición al modelo ni sección «Valoración»', w.eval('__aiN') === 0 && !d.getElementById('repAiOut') && !/Valoración/.test(d.getElementById('reportDoc').textContent), 'peticiones: ' + w.eval('__aiN'));
+    check('El informe no redacta resumen con IA: sin petición al modelo ni sección «Valoración»', w.eval('__aiN') === 0 && !d.getElementById('repAiOut') && ![...d.querySelectorAll('#reportDoc h1,#reportDoc h2,#reportDoc h3')].some(x => /Valoración/i.test(x.textContent)), 'peticiones: ' + w.eval('__aiN'));
     w.eval(`aiRequest = __aiBak`);
 
     // 6b. Mensaje para WhatsApp
@@ -432,7 +434,7 @@ const TR = () => w.eval('TR');
     const doc = files.find(f => /\.doc$/.test(f.name));
     let wordHtml = ''; if(doc) wordHtml = await doc.content.text();
     check('Word: se descarga un .doc con el informe', !!doc && /urn:schemas-microsoft-com:office:word/.test(wordHtml) && /Informe de comentarios/.test(wordHtml) && /<h2>Resumen<\/h2>/.test(wordHtml), doc ? doc.name + ' · ' + Math.round(wordHtml.length / 1024) + ' KB' : 'sin archivo');
-    check('Word: documento en blanco y negro con Arial 12, sin pie de página ni nota final', /Arial/.test(wordHtml) && /font-size:12pt/.test(wordHtml) && !/#(0b57d0|1877f2|d93025|188038|e8f0fe)/i.test(wordHtml) && !/mso-element:footer|NUMPAGES|Nota: el tono/.test(wordHtml));
+    check('Word: documento en blanco y negro con Arial 12 (o Liberation Sans), sin pie de página ni nota final', /Arial/.test(wordHtml) && /Liberation Sans/.test(wordHtml) && /font-size:12pt/.test(wordHtml) && !/#(0b57d0|1877f2|d93025|188038|e8f0fe)/i.test(wordHtml) && !/mso-element:footer|NUMPAGES|Nota: el tono/.test(wordHtml));
     check('Nombre del informe: «Informe de análisis de comentarios - K24 - <fecha>»', !!doc && /^Informe de análisis de comentarios - K24 - \d{2}-\d{2}-\d{4}\.doc$/.test(doc.name) && /<title>Informe de análisis de comentarios - K24 - \d{2}-\d{2}-\d{4}<\/title>/.test(wordHtml), doc && doc.name);
     const docB = w.reportDocument(m);
     check('Documento del informe: sin colores y con las secciones del modelo', !(docB.body.match(/#[0-9a-f]{3,6}\b|rgb\(/gi) || []).length && /Resumen/.test(docB.body) && /Indicadores por publicación/.test(docB.body) && (docB.body.match(/<h3>[^<]+\((Facebook|TikTok|Instagram)\)/g) || []).length === 3 && /<h2>Por publicación<\/h2>/.test(docB.body) && !/Próximos pasos/.test(docB.body));
@@ -440,8 +442,12 @@ const TR = () => w.eval('TR');
     check('HTML: se descarga un informe autónomo', files.some(f => /\.html$/.test(f.name) && /<table/.test(f.content)));
     // depende de la red: se reintenta hasta 3 veces antes de dar el fallo por bueno
     let pdfLoaded = false;
-    for(let k = 0; k < 3 && !pdfLoaded; k++){ pdfLoaded = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js' + (k ? '?r=' + k : '')).then(() => typeof w.html2pdf === 'function', () => false); if(!pdfLoaded) await wait(1500); }
-    check('PDF: la librería de PDF carga desde cdnjs', pdfLoaded);
+    for(let k = 0; k < 3 && !pdfLoaded; k++){
+      const a = await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js' + (k ? '?r=' + k : '')).then(() => typeof w.html2canvas === 'function', () => false);
+      const b = a && await w.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' + (k ? '?r=' + k : '')).then(() => !!(w.jspdf && w.jspdf.jsPDF), () => false);
+      pdfLoaded = a && b; if(!pdfLoaded) await wait(1500);
+    }
+    check('PDF: las librerías de PDF cargan desde cdnjs', pdfLoaded);
 
     w.eval('semEmbed = __semBak');
     // 8. Ver comentarios del informe y búsqueda por significado (modelo simulado: bolsa de palabras)

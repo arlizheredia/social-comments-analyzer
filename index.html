@@ -2154,9 +2154,9 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 > El **seguimiento más reciente** de los elegidos es siempre el **principal**: sus indicadores encabezan el informe y se comparan con el seguimiento anterior (variación ▲/▼). La evolución, la audiencia y los temas cubren todo el periodo elegido.
 
 - **Valores por defecto**: el enfoque, los temas a vigilar, *Elaborado por* y *Cliente / marca* empiezan con tus preferencias (⋮ › **Preferencias de informes**, o **Valores por defecto** en el formulario del informe). Lo que cambies en un informe solo afecta a ese informe.
-- **Enfoque** (obligatorio): escribe el criterio del informe; por defecto, *Kanasta24 y comentarios relacionados*. Se buscan los comentarios que nombran el tema (también con otra ortografía, como *Canasta 24*) o que hablan claramente de él, y **todo el informe trata solo de esos comentarios**: indicadores, comparativa, evolución, publicaciones, quién comenta, quiénes hablan bien y quiénes critican, qué se dice, comentarios destacados y el mensaje para WhatsApp. El informe nombra el tema (por ejemplo, *Comentarios sobre Kanasta24*) y no menciona cómo se elaboró. Las respuestas de tu **equipo** cuentan en las cifras, en *Quién más comenta*, en *Quiénes hablan bien* y en los comentarios destacados (marcadas como *Equipo*), pero no entre *quiénes más critican* ni en lo pendiente de respuesta. La sección **Equipo y público** compara lo que dice el público (comentarios, personas y tono) con el trabajo del equipo (respuestas, quién respondió, comentarios respondidos, tasa y tiempo de primera respuesta, y el tono de sus respuestas). El informe **no incluye estadísticas del número de comentarios pendientes de respuesta**.
+- **Enfoque** (obligatorio): escribe el criterio del informe; por defecto, *Kanasta24 y comentarios relacionados*. Se buscan los comentarios que nombran el tema (también con otra ortografía, como *Canasta 24*) o que hablan claramente de él, y **todo el informe trata solo de esos comentarios**: indicadores, comparativa, evolución, publicaciones, quién comenta, quiénes hablan bien y quiénes critican, qué se dice, comentarios destacados y el mensaje para WhatsApp. El informe nombra el tema (por ejemplo, *Comentarios sobre Kanasta24*) y no menciona cómo se elaboró. Las respuestas de tu **equipo** cuentan en las cifras, en *Quién más comenta*, en *Quiénes hablan bien* y en los comentarios destacados (marcadas como *Equipo*), pero no entre *quiénes más critican* ni en lo pendiente de respuesta. La sección **Equipo y público** compara lo que dice el público (comentarios, personas y tono) con el trabajo del equipo (respuestas, quién respondió, comentarios respondidos, tiempo de primera respuesta y el tono de sus respuestas). El informe **no incluye el número de comentarios pendientes de respuesta ni la tasa de respuesta del equipo**.
 - **Resumen** automático con las cifras clave del tema.
-- **Indicadores clave**: comentarios únicos, personas, interacciones, comentarios **positivos** y **negativos** y su variación, preguntas, **tasa de respuesta** y **tiempo de primera respuesta** del equipo.
+- **Indicadores clave**: comentarios únicos, personas, interacciones, comentarios **positivos** y **negativos** y su variación, preguntas y **tiempo de primera respuesta** del equipo.
 - **Evolución por seguimiento**: comentarios por fecha y comentarios **nuevos** respecto a los seguimientos anteriores.
 - **Por publicación**, con su enlace; **quién más comenta**, **quiénes hablan bien** y **quiénes más critican**, y el desglose **Equipo y público**.
 - **Otras marcas y temas**: escribe los términos (p. ej. *envío, precio*) para medir cuántos de estos comentarios los mencionan.
@@ -2166,7 +2166,7 @@ Crea un informe profesional a partir de uno o varios seguimientos del historial:
 
 **Mensaje para WhatsApp**: genera un mensaje breve y **sin tecnicismos**: cuántos comentarios se revisaron, cuántos hablan del tema y cuántos son positivos y negativos, **quiénes comentan en contra** de la marca (con cuántos comentarios cada uno) y **algunos ejemplos** de lo que dicen, **quiénes más comentan a favor** y lo que sigue sin respuesta. No incluye opiniones. Sirve para situar a quienes reciban el informe en un chat o canal. Elige el tono (cercano, formal o muy breve), añade tu firma, edítalo y pulsa **Copiar mensaje** o **Abrir en WhatsApp**. Con **Redactar con IA** lo reescribe el modelo gratuito que configures ([cómo configurarlo](#ayuda/ia-config)).
 
-Los documentos exportados tienen un formato **sencillo, en blanco y negro y en Arial 12**: título, ficha (fecha, *Elaborado por*, *Cliente / marca* y periodo), resumen, indicadores, detalle por publicación, audiencia, comentarios destacados y **conclusiones** al final. Rellena *Elaborado por* y *Cliente / marca* al elegir los seguimientos del informe.
+Los documentos exportados tienen un formato **sencillo, en blanco y negro y en Arial 12** (si Arial no está instalada, **Liberation Sans**): título, ficha (fecha, *Elaborado por*, *Cliente / marca* y periodo), resumen, indicadores, detalle por publicación, audiencia, comentarios destacados y **conclusiones** al final. Rellena *Elaborado por* y *Cliente / marca* al elegir los seguimientos del informe.
 
 | Opción | Resultado |
 |---|---|
@@ -2351,7 +2351,7 @@ Se usan los comentarios **seleccionados** o, si no hay selección, **todos los f
 |---|---|
 | Copiar como tabla | Pegar directamente en Excel o Google Sheets |
 | Excel (.xlsx) | Hoja *Comentarios* con todos los campos y hoja *Resumen* |
-| Informe Word (.doc) | Informe sencillo en blanco y negro, Arial 12, **solo con los comentarios sobre el criterio del informe** (⋮ › *Preferencias de informes*): resumen, indicadores, quién comenta, comentarios destacados y conclusiones |
+| Informe Word (.doc) | Informe sencillo en blanco y negro, Arial 12 (o Liberation Sans), **solo con los comentarios sobre el criterio del informe** (⋮ › *Preferencias de informes*): resumen, indicadores, quién comenta, comentarios destacados y conclusiones |
 | CSV | UTF-8 compatible con Excel; conserva acentos y emojis |
 | JSON | Volver a importarlo en esta aplicación |
 | Informe PDF | El mismo informe que el Word, en PDF (A4, blanco y negro) para enviar o imprimir |
@@ -7343,7 +7343,6 @@ function compareRows(m){
     { k:'Negativos', a:c.s.neg, b:p && p.s.neg, good:'down' },
     { k:'Preguntas', a:c.st.q, b:p && p.st.q, good:'down' }
   );
-  if(c.team) rows.push({ k:'Tasa de respuesta del equipo', a:c.respRate, b:p && p.respRate, good:'up', pct:true });
   return rows.map(r => {
     const has = r.b != null && r.a != null, d = has ? r.a - r.b : null;
     const val = v => v == null ? '—' : r.pct ? v + ' %' : r.signed ? sign(v) : fmtN(v);
@@ -7463,7 +7462,7 @@ function computeReportModel(list, team, tracks, byDate, terms, tids, focus){
   // Comparación primer/último seguimiento
   const fd = byDate[0] || { total:s.total, neg:s.neg }, ld = byDate[byDate.length - 1] || fd;
   const negShare = d => d.total ? Math.round(d.neg / d.total * 100) : 0;
-  const m = { tids, tracks, first, last, list, st, s, nss:nssOf(s), team, answered, pending, respRate:(answered + pending) ? Math.round(answered / (answered + pending) * 100) : null, medRT, rtN:rts.length,
+  const m = { tids, tracks, first, last, list, st, s, nss:nssOf(s), team, answered, pending, medRT, rtN:rts.length,
     byDate, posts, platRows, topAuthors, ambassadors, detractors, influencers, recurring, authorsN:authors.length, watch, topPos, topNeg, openQ, openNeg,
     split:teamSplit(list, nonTeam), opinions, negFirst:negShare(fd), negLast:negShare(ld), terms, generatedAt:new Date(), focus:focus ? { ...focus, n:list.length, pct:focus.total ? Math.round(list.length / focus.total * 100) : 0 } : null };
   // por defecto el principal es el propio conjunto (sin seguimiento anterior); buildReport lo sustituye por el más reciente
@@ -7486,7 +7485,6 @@ function reportAlerts(m){
   else if(emptyP) a.push({ lvl:'mid', txt:`${countTxt(emptyP, 'publicación de los seguimientos quedó', 'publicaciones de los seguimientos quedaron')} sin comentarios.` });
   m.posts.filter(p => p.total >= 5 && p.negPct >= 30).forEach(p => a.push({ lvl:'high', txt:`“${p.label}” concentra un ${p.negPct} % de comentarios negativos (${fmtN(p.s.neg)} de ${fmtN(p.total)}).` }));
   if(m.byDate.length > 1 && m.negLast - m.negFirst >= 10) a.push({ lvl:'high', txt:`Los comentarios negativos${ab} aumentaron: pasaron de ${m.negFirst} a ${m.negLast} de cada 100 entre el primer y el último seguimiento.` });
-  if(m.team && m.respRate != null && m.respRate < 50) a.push({ lvl:'mid', txt:`El equipo respondió poco: ${m.respRate} de cada 100 comentarios que pedían respuesta.` });
   if(!a.length) a.push({ lvl:'ok', txt:'No hay nada preocupante: el tono de los comentarios y la atención del equipo están bien.' });
   return a;
 }
@@ -7579,7 +7577,7 @@ function splitSection(m, ab){
     <div class="rep-grid">
       <div><h4 class="viz-h4">Público</h4><div class="kpis">${kpi('Comentarios', fmtN(P.n), countTxt(P.people, 'persona', 'personas'))}${kpi('Positivos', fmtN(P.s.pos), pctTxt(P.s.pos, P.n))}${kpi('Negativos', fmtN(P.s.neg), pctTxt(P.s.neg, P.n))}</div>
         <div style="margin-top:8px">${miniSeg(P.s)}</div><p class="small muted" style="margin:6px 0 0">${tone(P.s)}</p></div>
-      <div><h4 class="viz-h4">Equipo</h4><div class="kpis">${kpi('Respuestas', fmtN(T.n), countTxt(T.members.length, 'persona del equipo', 'personas del equipo'))}${kpi('Comentarios respondidos', fmtN(m.answered), 'del equipo')}${kpi('Tasa de respuesta', m.respRate != null ? m.respRate + ' %' : '—', m.medRT != null ? 'primera respuesta en ~' + fmtDec(m.medRT) + ' h' : '')}</div>
+      <div><h4 class="viz-h4">Equipo</h4><div class="kpis">${kpi('Respuestas', fmtN(T.n), countTxt(T.members.length, 'persona del equipo', 'personas del equipo'))}${kpi('Comentarios respondidos', fmtN(m.answered), 'del equipo')}${m.medRT != null ? kpi('Tiempo de primera respuesta', fmtDec(m.medRT) + ' h', 'valor típico') : ''}</div>
         ${T.members.length ? `<p class="small" style="margin:8px 0 0">Quién respondió: ${T.members.slice(0, 5).map(x => `${esc(x.name)} (${x.n})`).join(', ')}.</p>` : ''}
         <p class="small muted" style="margin:6px 0 0">Tono de sus respuestas: ${tone(T.s)}</p></div>
     </div></section>`;
@@ -7669,7 +7667,7 @@ function reportText(m){
   if(m.detractors.length){ H('Quiénes más critican'); m.detractors.slice(0, 5).forEach(a => L.push(`• ${a.name} (${countTxt(a.neg, 'negativo', 'negativos')})`)); }
   if(m.team && m.split){ const P = m.split.pub, T = m.split.team; H('Equipo y público');
     L.push(`Público: ${countTxt(P.n, 'comentario', 'comentarios')} de ${countTxt(P.people, 'persona', 'personas')} (${countTxt(P.s.pos, 'positivo', 'positivos')}, ${countTxt(P.s.neu, 'neutral', 'neutrales')} y ${countTxt(P.s.neg, 'negativo', 'negativos')})`,
-      `Equipo: ${countTxt(T.n, 'respuesta', 'respuestas')} de ${countTxt(T.members.length, 'persona', 'personas')}; ${fmtN(m.answered)} comentarios respondidos${m.respRate != null ? ', tasa de respuesta ' + m.respRate + ' %' : ''}${m.medRT != null ? ', primera respuesta en ~' + fmtDec(m.medRT) + ' h' : ''}`);
+      `Equipo: ${countTxt(T.n, 'respuesta', 'respuestas')} de ${countTxt(T.members.length, 'persona', 'personas')}; ${fmtN(m.answered)} comentarios respondidos${m.medRT != null ? ', primera respuesta en ~' + fmtDec(m.medRT) + ' h' : ''}`);
     if(T.members.length) L.push('Quién respondió: ' + T.members.slice(0, 5).map(x => `${x.name} (${x.n})`).join(', ')); }
   if(m.opinions && m.opinions.length){ H('Qué se dice' + ab); m.opinions.forEach(o => L.push(`• «${o.t}» (${opMeta(o)})`)); }
   if((m.rivals || []).length){ H('Posibles referencias a la competencia'); m.rivals.forEach(r => L.push(`• ${r.name}: ${countTxt(r.n, 'comentario', 'comentarios')} (${countTxt(r.neg, 'negativo', 'negativos')})${r.sample ? ' · «' + r.sample.text.slice(0, 140) + '» — ' + (r.sample.authorName || '') : ''}`)); }
@@ -7680,8 +7678,8 @@ function reportText(m){
   if(m.conclusions && m.conclusions.length){ H('Conclusiones'); m.conclusions.forEach(x => L.push('• ' + x)); }
   return L.join('\n').trim();
 }
-// Documento del informe para exportar: sencillo, en blanco y negro, Arial 12 (independiente del tema de la app)
-const DOC_CSS = `.scadoc,.scadoc *{color:#000!important;background:#fff!important;font-family:Arial,Helvetica,sans-serif!important;box-shadow:none!important;text-shadow:none!important}
+// Documento del informe para exportar: sencillo, en blanco y negro, Arial 12 (o Liberation Sans), independiente del tema de la app
+const DOC_CSS = `.scadoc,.scadoc *{color:#000!important;background:#fff!important;font-family:Arial,'Liberation Sans',sans-serif!important;box-shadow:none!important;text-shadow:none!important}
   .scadoc{font-size:12pt;line-height:1.45;max-width:17cm;margin:0 auto}
   .scadoc h1{font-size:17pt;font-weight:bold;margin:0 0 14pt;padding-bottom:3pt;border-bottom:1.5pt solid #000}
   .scadoc h2{font-size:13pt;font-weight:bold;margin:16pt 0 5pt}
@@ -7702,7 +7700,7 @@ const DOC_CSS = `.scadoc,.scadoc *{color:#000!important;background:#fff!importan
   .scadoc .q{margin:0 0 5pt}
   .scadoc .avoid,.scadoc tr,.scadoc li{page-break-inside:avoid;break-inside:avoid}
   /* Gráficos estadísticos del informe (blanco y negro, tablas HTML) */
-  .scadoc .rep-table{width:100%;border-collapse:collapse;margin:8pt 0;font-size:10pt;font-family:Arial,Helvetica,sans-serif}
+  .scadoc .rep-table{width:100%;border-collapse:collapse;margin:8pt 0;font-size:10pt;font-family:Arial,'Liberation Sans',sans-serif}
   .scadoc .rep-table caption{caption-side:top;text-align:left;font-weight:bold;margin:0 0 4pt;font-size:11pt}
   .scadoc .rep-table th,.scadoc .rep-table td{border:0.5pt solid #000;padding:2pt 4pt;text-align:left}
   .scadoc .rep-table th{background:#f0f0f0;font-weight:bold}
@@ -7788,19 +7786,19 @@ function reportDocument(m){
   <h3>Positivos</h3>${posShow.map(quote).join('') || '<p>Sin comentarios positivos.</p>'}`;
   if(big) b += `<p class="small">Informe con ${fmtN(m.list.length)} comentarios: se muestran pocos destacados para mantener el documento ligero.</p>`;
   if(m.team && m.openQ.length) b += `<h2>Preguntas sin responder</h2>${m.openQ.slice(0, 5).map(quote).join('')}`;
-  if(m.conclusions && m.conclusions.length) b += `<div class="avoid"><h2>Conclusiones</h2>${UL(m.conclusions)}</div>`;
   if(m.recs && m.recs.length) b += `<div class="avoid"><h2>Recomendaciones</h2>${UL(m.recs)}</div>`;
+  if(m.conclusions && m.conclusions.length) b += `<div class="avoid"><h2>Conclusiones</h2>${UL(m.conclusions)}</div>`;
   const title = reportName(m.last && m.last.date);
   return { body:`<div class="scadoc">${b}</div>`, css:DOC_CSS, title,
     html:`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${e(title)}</title><style>body{margin:2cm;background:#fff}${DOC_CSS}</style></head><body><div class="scadoc">${b}</div></body></html>` };
 }
 // Nombre del informe: «Informe de análisis de comentarios - K24 - 20-11-2026» (fecha del seguimiento más reciente)
 const reportName = iso => 'Informe de análisis de comentarios - K24 - ' + String(iso || todayISO()).slice(0, 10).split('-').reverse().join('-');
-// Word (.doc) en blanco y negro, Arial 12
+// Word (.doc) en blanco y negro, Arial 12 (o Liberation Sans)
 function downloadWord(d, name){
-    // Word: estilos directos (Word ignora parte del CSS); Arial 12, negro sobre blanco
+    // Word: estilos directos (Word ignora parte del CSS); Arial 12 (o Liberation Sans), negro sobre blanco
     const wordCss = d.css.replace(/\.scadoc,\.scadoc \*/g, 'body,body *').replace(/\.scadoc /g, '').replace(/\.scadoc\{/g, 'body{')
-      + `body{font-family:Arial,Helvetica,sans-serif!important;font-size:12pt!important}@page Section1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.Section1{page:Section1}`;
+      + `body{font-family:Arial,'Liberation Sans',sans-serif!important;font-size:12pt!important}@page Section1{size:21cm 29.7cm;margin:2cm 2cm 2cm 2cm}div.Section1{page:Section1}`;
     const word = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(d.title || 'Informe de análisis de comentarios')}</title>
       <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>${wordCss}</style></head>
       <body><div class="Section1">${d.body.replace(/^<div class="scadoc">|<\/div>$/g, '')}</div></body></html>`;
@@ -7933,23 +7931,21 @@ async function reportPdf(m, onProg){
     style.textContent = d.css;
     box.insertBefore(style, el);
     const html = d.body;
-    // Dividir el cuerpo en secciones por bloques de nivel de bloque para insertar de a poco
+    // Se insertan las secciones por lotes: el informe aparece por partes y la pestaña respira
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    const nodes = [...tmp.children];
-    const CHUNK = 4;   // nodos por lote (equilibra progreso y rendimiento)
-    let inserted = 0;
+    const nodes = [...(tmp.firstElementChild ? tmp.firstElementChild.children : [])];
+    const CHUNK = 8;
     for(let i = 0; i < nodes.length; i += CHUNK){
-      const batch = nodes.slice(i, i + CHUNK);
-      for(const node of batch) el.appendChild(node);
-      inserted += batch.length;
-      if(onProg) onProg(Math.min(90, Math.round(inserted / nodes.length * 90)));
-      await new Promise(r => setTimeout(r, 0));   // cede al hilo principal para que respire
+      for(const node of nodes.slice(i, i + CHUNK)) el.appendChild(node);
+      if(onProg) onProg(Math.min(85, Math.round((i + CHUNK) / Math.max(1, nodes.length) * 85)));
+      await new Promise(r => setTimeout(r, 0));
     }
     const M = 20, PW = 210 - M * 2, PH = 297 - M * 2, W = 680;   // márgenes, ancho y alto útiles (mm/px)
     const mm = PW / W, SCALE = 1.5;                              // mm por píxel CSS y resolución
     const pageCss = Math.floor(PH / mm), maxPx = 12e6;           // alto de página en píxeles CSS y tope de memoria
     const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+    const all = [...el.children];   // secciones del informe, antes de añadir la hoja de render
     const sheet = document.createElement('div');
     sheet.className = 'scadoc'; sheet.style.cssText = `width:${W}px;display:flow-root;background:#fff`;
     el.appendChild(sheet);
@@ -7972,7 +7968,6 @@ async function reportPdf(m, onProg){
       canvas.width = canvas.height = 0;
       wrap.textContent = '';
     };
-    const all = [...el.children];
     for(const node of all){
       sheet.appendChild(node);
       if(sheet.children.length > 1 && sheet.scrollHeight > pageCss){
@@ -8003,17 +7998,16 @@ async function reportExport(kind){
   if(kind === 'word'){ downloadWord(d, name); return; }
   if(kind === 'pdf'){
     const total = (m.list && m.list.length) || 0;
-    let step = 0;
     const prog = (txt, pct) => { $('#repOut').innerHTML = `<div class=\"empty-mini rep-gen\" role=\"status\" aria-live=\"polite\"><span class=\"ms\" style=\"color:var(--primary)\">${SPIN}</span><div style=\"display:grid;gap:8px;min-width:min(420px,70vw)\"><span>${esc(txt)}</span><span class=\"pbar${pct == null ? ' indet' : ''}\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\"${pct == null ? '' : ` aria-valuenow=\"${pct}\"`}><i style=\"width:${pct || 0}%\"></i></span></div></div>`; };
     try{
       prog(`Generando PDF (${fmtN(total)} comentarios)…`, 0);
-      const pdf = await reportPdf(m, p => { step++; prog(`Renderizando página ${step}…`, p); });
-      $('#repOut').innerHTML = '';
+      const pdf = await reportPdf(m, p => prog(p < 90 ? 'Preparando el informe…' : 'Renderizando páginas…', p));
       pdf.save(name + '.pdf');
+      renderReport();
       toast('PDF descargado');
     }
     catch(e){
-      $('#repOut').innerHTML = '';
+      renderReport();
       toast('No se pudo generar el PDF directamente: se abre la impresión (elige “Guardar como PDF”)');
       reportExport('print');
     }
@@ -8025,7 +8019,7 @@ async function reportCopy(){
   const text = reportText(m);
   try{
     const d = reportDocument(m);
-    const htmlCopy = d.body.replace('<div class="scadoc">', '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12pt;color:#000">').replace(/<h1>/, '<h1 style="font-size:17pt;border-bottom:1.5pt solid #000">');
+    const htmlCopy = d.body.replace('<div class="scadoc">', '<div style="font-family:Arial,\'Liberation Sans\',sans-serif;font-size:12pt;color:#000">').replace(/<h1>/, '<h1 style="font-size:17pt;border-bottom:1.5pt solid #000">');
     await navigator.clipboard.write([new ClipboardItem({ 'text/plain':new Blob([text], { type:'text/plain' }), 'text/html':new Blob([htmlCopy], { type:'text/html' }) })]);
     toast('Informe copiado: pégalo en Word, Google Docs o un correo (con formato)');
   }catch(e){ copyText(text, 'Informe copiado como texto'); }
